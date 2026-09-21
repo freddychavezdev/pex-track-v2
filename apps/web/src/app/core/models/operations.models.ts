@@ -13,6 +13,7 @@ export interface WorkOrderSummary {
   code: string;
   customer_name: string | null;
   address: string;
+  task_type: WorkOrderType;
   status: WorkOrderStatus;
   priority: number;
   scheduled_for: string;

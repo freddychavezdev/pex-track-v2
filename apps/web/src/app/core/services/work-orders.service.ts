@@ -9,7 +9,7 @@ export class WorkOrdersService {
   async listForDay(date: string): Promise<WorkOrderSummary[]> {
     const { data, error } = await this.supabase.requireClient()
       .from('work_orders')
-      .select('id, code, customer_name, address, status, priority, scheduled_for, assigned_team_id')
+      .select('id, code, customer_name, address, task_type, status, priority, scheduled_for, assigned_team_id')
       .eq('scheduled_for', date)
       .order('priority', { ascending: true })
       .order('code');
