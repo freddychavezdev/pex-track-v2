@@ -107,6 +107,8 @@ grant execute on function public.add_my_work_order_note(uuid, text, uuid) to aut
 
 -- Keep the mobile projection narrow while exposing the most recent note for
 -- the technician to review and edit before dictating a new observation.
+drop function if exists public.my_assigned_work_orders();
+
 create or replace function public.my_assigned_work_orders()
 returns table (
   id uuid,
