@@ -24,3 +24,5 @@ La autenticación, asignación de cuadrilla y sincronización idempotente con Su
 Importe el repositorio `freddychavezdev/pex-track-v2` en Vercel usando la raíz del repositorio. El archivo `vercel.json` ya configura la instalación, compilación, SPA fallback y encabezados de seguridad desde `apps/web`. La aplicación usa la URL y la clave publicable configuradas en `apps/web/src/environments/environment.ts`; si se decide externalizarlas durante el pipeline, use únicamente `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`, nunca una clave `service_role`.
 
 La publicación de Vercel cubre únicamente el panel web. El APK Android se genera mediante GitHub Actions y requiere un proceso separado de firma y distribución.
+
+El procedimiento completo de salida, firma y prueba piloto está en [docs/GO-LIVE.md](docs/GO-LIVE.md).
