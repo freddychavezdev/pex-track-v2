@@ -3,12 +3,13 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
-import { OperationalMapMarker, WorkOrderImportResult, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
+import { OperationalMapMarker, TeamSummary, WorkOrderImportResult, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
 import { ReportsService } from './core/services/reports.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
 import { WorkOrderImportService } from './core/services/work-order-import.service';
 import { WorkOrdersService } from './core/services/work-orders.service';
+import { TeamsService } from './core/services/teams.service';
 import { OperationalMapComponent } from './shared/operational-map/operational-map.component';
 
 @Component({
@@ -25,24 +26,31 @@ export class AppComponent implements OnInit {
   private readonly workOrders = inject(WorkOrdersService);
   private readonly operationalMap = inject(OperationalMapService);
   private readonly reports = inject(ReportsService);
+  private readonly teamsService = inject(TeamsService);
   showLogin = false;
   showImport = false;
+  showAssignment = false;
   submitting = false;
   parsingImport = false;
   savingImport = false;
+  savingAssignment = false;
   generatingReport = false;
   loginError = '';
   importError = '';
+  assignmentError = '';
   reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
   importDate = new Date().toISOString().slice(0, 10);
   activeOrderFilter: 'all' | WorkOrderStatus = 'all';
+  assignmentTeamId = '';
+  selectedOrder: WorkOrderSummary | null = null;
   readonly orders = signal<WorkOrderSummary[]>([]);
   readonly ordersLoading = signal(false);
   readonly ordersError = signal('');
   readonly mapMarkers = signal<OperationalMapMarker[]>([]);
   readonly mapLoading = signal(false);
   readonly mapError = signal('');
+  readonly teams = signal<TeamSummary[]>([]);
   readonly loginForm = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] })
@@ -77,10 +85,11 @@ export class AppComponent implements OnInit {
     this.ordersError.set('');
     this.mapMarkers.set([]);
     this.mapError.set('');
+    this.teams.set([]);
   }
 
   async refreshOperations(): Promise<void> {
-    await Promise.all([this.loadWorkOrders(), this.loadMapSnapshot()]);
+    await Promise.all([this.loadWorkOrders(), this.loadMapSnapshot(), this.loadTeams()]);
   }
 
   async loadWorkOrders(): Promise<void> {
@@ -106,6 +115,44 @@ export class AppComponent implements OnInit {
       this.mapError.set(error instanceof Error ? error.message : 'No se pudo cargar el mapa operativo.');
     } finally {
       this.mapLoading.set(false);
+    }
+  }
+
+  async loadTeams(): Promise<void> {
+    if (!this.supabase.isConfigured || !this.auth.session()) return;
+    try {
+      this.teams.set(await this.teamsService.listActive());
+    } catch {
+      this.teams.set([]);
+    }
+  }
+
+  canManageOperations(): boolean {
+    const role = this.auth.profile()?.role;
+    return role === 'supervisor' || role === 'coordinator';
+  }
+
+  openAssignment(order: WorkOrderSummary): void {
+    if (!this.canManageOperations()) return;
+    this.selectedOrder = order;
+    this.assignmentTeamId = order.assigned_team_id ?? '';
+    this.assignmentError = '';
+    this.showAssignment = true;
+  }
+
+  async saveAssignment(): Promise<void> {
+    if (!this.selectedOrder || !this.assignmentTeamId || this.savingAssignment) return;
+    this.savingAssignment = true;
+    this.assignmentError = '';
+    try {
+      await this.workOrders.assignTeam(this.selectedOrder.id, this.assignmentTeamId);
+      this.showAssignment = false;
+      this.selectedOrder = null;
+      await this.refreshOperations();
+    } catch (error) {
+      this.assignmentError = error instanceof Error ? error.message : 'No se pudo asignar la cuadrilla.';
+    } finally {
+      this.savingAssignment = false;
     }
   }
 

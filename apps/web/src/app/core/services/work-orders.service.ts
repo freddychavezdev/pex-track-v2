@@ -33,4 +33,12 @@ export class WorkOrdersService {
     const { error } = await this.supabase.requireClient().from('work_orders').upsert(payload, { onConflict: 'code' });
     if (error) throw error;
   }
+
+  async assignTeam(workOrderId: string, teamId: string): Promise<void> {
+    const { error } = await this.supabase.requireClient()
+      .from('work_orders')
+      .update({ assigned_team_id: teamId })
+      .eq('id', workOrderId);
+    if (error) throw error;
+  }
 }

@@ -20,6 +20,12 @@ export interface WorkOrderSummary {
   assigned_team_id: string | null;
 }
 
+export interface TeamSummary {
+  id: string;
+  code: string;
+  active: boolean;
+}
+
 export type WorkOrderType = 'technical_assistance' | 'new_installation' | 'service_transfer' | 'network_maintenance';
 
 export interface WorkOrderImportRow {
