@@ -211,7 +211,7 @@ export class AppComponent implements OnInit {
     return 'No hay coordenadas registradas para la fecha operativa.';
   }
 
-  async generateWeeklyReport(format: 'csv' | 'xlsx' = 'csv'): Promise<void> {
+  async generateWeeklyReport(format: 'csv' | 'xlsx' | 'pdf' = 'csv'): Promise<void> {
     if (!this.auth.session() || this.generatingReport) {
       this.reportMessage = 'Inicia sesión con un rol operativo para generar el reporte.';
       return;
@@ -226,6 +226,7 @@ export class AppComponent implements OnInit {
         return;
       }
       if (format === 'xlsx') await this.reports.downloadWeeklyXlsx(rows, startDate, endDate);
+      else if (format === 'pdf') await this.reports.downloadWeeklyPdf(rows, startDate, endDate);
       else this.reports.downloadWeeklyCsv(rows, startDate, endDate);
       this.reportMessage = `Reporte ${format.toUpperCase()} descargado: ${startDate} a ${endDate}.`;
     } catch (error) {

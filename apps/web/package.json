@@ -21,6 +21,7 @@
     "@angular/router": "^19.2.0",
     "@primeuix/themes": "^1.2.5",
     "@supabase/supabase-js": "^2.50.0",
+    "jspdf": "4.2.1",
     "leaflet": "^1.9.4",
     "primeng": "^19.0.0",
     "rxjs": "~7.8.0",
