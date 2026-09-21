@@ -31,6 +31,7 @@
 - El acceso web rechaza y cierra automáticamente sesiones asociadas a perfiles inactivos, además de mantener la protección RLS en las operaciones.
 - Las OTs manuales pueden marcarse explícitamente como emergencias; Supabase conserva el indicador y fuerza prioridad 1 para su despacho.
 - La proyección móvil `my_assigned_work_orders()` incluye el indicador de emergencia y Android lo muestra al técnico junto a la prioridad.
+- El panel contabiliza como alerta las OTs suspendidas y las cuadrillas cuya última señal supera 10 minutos, mostrando la antigüedad de la señal vencida.
 
 ## Pendientes de puesta en producción
 

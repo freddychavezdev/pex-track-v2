@@ -356,7 +356,7 @@ export class AppComponent implements OnDestroy, OnInit {
     const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(observedAt).getTime()) / 1000));
     if (elapsedSeconds < 60) return `Hace ${elapsedSeconds} s`;
     const elapsedMinutes = Math.floor(elapsedSeconds / 60);
-    return `Hace ${elapsedMinutes} min`;
+    return elapsedMinutes > 10 ? `Sin señal reciente · Hace ${elapsedMinutes} min` : `Hace ${elapsedMinutes} min`;
   }
 
   orderCount(status?: WorkOrderStatus): number {
@@ -364,7 +364,16 @@ export class AppComponent implements OnDestroy, OnInit {
   }
 
   alertCount(): number {
-    return this.orders().filter((order) => order.status === 'suspended').length;
+    const suspendedOrders = this.orders().filter((order) => order.status === 'suspended').length;
+    return suspendedOrders + this.activeTeamMarkers().filter((team) => this.isStale(team.observed_at)).length;
+  }
+
+  isStale(observedAt: string): boolean {
+    return !observedAt || Date.now() - new Date(observedAt).getTime() > 10 * 60 * 1000;
+  }
+
+  teamStatusLabel(team: OperationalMapMarker): string {
+    return this.isStale(team.observed_at) ? 'Sin señal reciente' : this.statusLabel(team.status);
   }
 
   statusLabel(status: WorkOrderStatus | string): string {
