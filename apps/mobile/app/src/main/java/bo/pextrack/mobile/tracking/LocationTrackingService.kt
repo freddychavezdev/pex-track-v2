@@ -75,9 +75,11 @@ class LocationTrackingService : Service() {
       .put("recordedAt", location.time)
       .toString()
     ioScope.launch {
-      PexTrackDatabase.get(this@LocationTrackingService).offlineOperationDao()
-        .insert(OfflineOperation(operationType = "team_location", payload = payload))
-      OfflineSyncScheduler.enqueue(this@LocationTrackingService)
+      val dao = PexTrackDatabase.get(this@LocationTrackingService).offlineOperationDao()
+      if (dao.pendingCount() < OfflineOperation.MAX_PENDING_OPERATIONS) {
+        dao.insert(OfflineOperation(operationType = "team_location", payload = payload))
+        OfflineSyncScheduler.enqueue(this@LocationTrackingService)
+      }
     }
   }
 

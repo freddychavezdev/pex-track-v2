@@ -1,6 +1,8 @@
 package bo.pextrack.mobile.operations
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import bo.pextrack.mobile.auth.SupabaseProvider
 import bo.pextrack.mobile.data.OfflineOperation
 import bo.pextrack.mobile.data.PexTrackDatabase
@@ -12,7 +14,6 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.json.JSONObject
-import java.io.IOException
 import java.util.UUID
 
 class MobileOperationsRepository(private val context: Context) {
@@ -34,12 +35,11 @@ class MobileOperationsRepository(private val context: Context) {
     return try {
       submitStatus(operation)
       null
-    } catch (_: IOException) {
-      PexTrackDatabase.get(context).offlineOperationDao().insert(operation)
-      OfflineSyncScheduler.enqueue(context)
-      "Cambio guardado sin conexión; se enviará automáticamente al recuperar red."
     } catch (error: Throwable) {
-      error.message ?: "No se pudo actualizar el estado de la OT."
+      if (shouldQueueOffline(error)) {
+        if (queueOffline(operation)) "Cambio guardado sin conexión; se enviará automáticamente al recuperar red."
+        else "No se pudo guardar el cambio: la cola offline alcanzó el límite de ${OfflineOperation.MAX_PENDING_OPERATIONS} registros."
+      } else error.message ?: "No se pudo actualizar el estado de la OT."
     }
   }
 
@@ -58,12 +58,11 @@ class MobileOperationsRepository(private val context: Context) {
     return try {
       submitNote(operation)
       "Observación guardada"
-    } catch (_: IOException) {
-      PexTrackDatabase.get(context).offlineOperationDao().insert(operation)
-      OfflineSyncScheduler.enqueue(context)
-      "Observación guardada sin conexión; se enviará automáticamente al recuperar red."
     } catch (error: Throwable) {
-      error.message ?: "No se pudo guardar la observación."
+      if (shouldQueueOffline(error)) {
+        if (queueOffline(operation)) "Observación guardada sin conexión; se enviará automáticamente al recuperar red."
+        else "No se pudo guardar la observación: la cola offline alcanzó el límite de ${OfflineOperation.MAX_PENDING_OPERATIONS} registros."
+      } else error.message ?: "No se pudo guardar la observación."
     }
   }
 
@@ -99,5 +98,25 @@ class MobileOperationsRepository(private val context: Context) {
     "La aplicación no tiene configurado Supabase."
   }.also { client ->
     check(client.auth.currentSessionOrNull() != null) { "Inicia sesión antes de gestionar OTs." }
+  }
+
+  private suspend fun queueOffline(operation: OfflineOperation): Boolean {
+    val dao = PexTrackDatabase.get(context).offlineOperationDao()
+    if (dao.pendingCount() >= OfflineOperation.MAX_PENDING_OPERATIONS) return false
+    dao.insert(operation)
+    OfflineSyncScheduler.enqueue(context)
+    return true
+  }
+
+  private fun shouldQueueOffline(error: Throwable): Boolean {
+    if (!isNetworkAvailable()) return true
+    return error is java.io.IOException || error.cause is java.io.IOException
+  }
+
+  private fun isNetworkAvailable(): Boolean {
+    val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = manager.activeNetwork ?: return false
+    val capabilities = manager.getNetworkCapabilities(network) ?: return false
+    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
   }
 }

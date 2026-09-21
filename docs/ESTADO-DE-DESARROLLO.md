@@ -21,6 +21,7 @@
 - CI de GitHub para pruebas/build Angular y generación del APK Android.
 - Consola web ajustada para mostrar el usuario y rol autenticados, reflejar conectividad del navegador y ocultar/mostrar la tabla de OTs según necesidad operativa.
 - Verificación posterior a instalación limpia: build Angular exitoso, 3 pruebas unitarias exitosas y 0 vulnerabilidades en dependencias de producción.
+- Cola móvil offline limitada a 500 operaciones, con detección de conectividad y sincronización automática mediante WorkManager.
 
 ## Pendientes de puesta en producción
 

@@ -11,4 +11,8 @@ data class OfflineOperation(
   val payload: String,
   val createdAt: Long = System.currentTimeMillis(),
   val attempts: Int = 0
-)
+) {
+  companion object {
+    const val MAX_PENDING_OPERATIONS = 500
+  }
+}
