@@ -60,7 +60,8 @@
       <label for="new-customer">Cliente</label><input pInputText id="new-customer" [(ngModel)]="newOrder.customerName" />
       <label for="new-phone">Teléfono</label><input pInputText id="new-phone" [(ngModel)]="newOrder.customerPhone" />
       <label for="new-type">Tipo de tarea</label><select id="new-type" [(ngModel)]="newOrder.taskType"><option value="technical_assistance">Asistencia técnica</option><option value="new_installation">Nueva instalación</option><option value="service_transfer">Traslado de servicio</option><option value="network_maintenance">Mantenimiento de red</option></select>
-      <label for="new-priority">Prioridad (1 es máxima)</label><select id="new-priority" [(ngModel)]="newOrder.priority"><option [ngValue]="1">1 · Urgente</option><option [ngValue]="2">2 · Alta</option><option [ngValue]="3">3 · Normal</option><option [ngValue]="4">4 · Baja</option><option [ngValue]="5">5 · Programada</option></select>
+      <label for="new-priority">Prioridad (1 es máxima)</label><select id="new-priority" [(ngModel)]="newOrder.priority" [disabled]="newOrder.isEmergency"><option [ngValue]="1">1 · Urgente</option><option [ngValue]="2">2 · Alta</option><option [ngValue]="3">3 · Normal</option><option [ngValue]="4">4 · Baja</option><option [ngValue]="5">5 · Programada</option></select>
+      <label class="emergency-check"><input type="checkbox" name="isEmergency" [(ngModel)]="newOrder.isEmergency" /> Marcar como OT de emergencia <small>Se guardará con prioridad 1.</small></label>
       <label for="new-date">Fecha programada</label><input pInputText id="new-date" type="date" [(ngModel)]="newOrder.scheduledFor" />
       @if (importError) { <p class="form-error">{{ importError }}</p> }
       <button pButton class="control-button primary login-submit" type="button" [disabled]="savingImport" (click)="saveNewOrder()">{{ savingImport ? 'Guardando…' : 'Crear OT' }}</button>

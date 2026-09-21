@@ -52,6 +52,7 @@ export interface WorkOrderSummary {
   task_type: WorkOrderType;
   status: WorkOrderStatus;
   priority: number;
+  is_emergency: boolean;
   scheduled_for: string;
   assigned_team_id: string | null;
   zone?: { code: string } | null;
@@ -91,6 +92,7 @@ export interface WorkOrderImportRow {
   address: string;
   taskType: WorkOrderType;
   priority: number;
+  isEmergency?: boolean;
   scheduledFor: string;
   zoneCode: string | null;
   nodeCode: string | null;

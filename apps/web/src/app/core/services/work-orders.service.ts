@@ -9,7 +9,7 @@ export class WorkOrdersService {
   async listForDay(date: string): Promise<WorkOrderSummary[]> {
     const { data, error } = await this.supabase.requireClient()
       .from('work_orders')
-      .select('id, code, customer_name, address, task_type, status, priority, scheduled_for, assigned_team_id, zone:zones(code), node:network_nodes(code), box:distribution_boxes(code)')
+      .select('id, code, customer_name, address, task_type, status, priority, is_emergency, scheduled_for, assigned_team_id, zone:zones(code), node:network_nodes(code), box:distribution_boxes(code)')
       .eq('scheduled_for', date)
       .order('priority', { ascending: true })
       .order('code');
@@ -60,10 +60,10 @@ export class WorkOrdersService {
     return (data ?? []).map((row: any) => ({ ...row, actor: row.actor?.[0] ?? row.actor ?? null })) as WorkOrderHistoryRecord[];
   }
 
-  async createManual(input: { code: string; customerName: string; customerPhone: string; address: string; taskType: WorkOrderImportRow['taskType']; priority: number; scheduledFor: string; latitude: number | null; longitude: number | null }): Promise<void> {
+  async createManual(input: { code: string; customerName: string; customerPhone: string; address: string; taskType: WorkOrderImportRow['taskType']; priority: number; isEmergency?: boolean; scheduledFor: string; latitude: number | null; longitude: number | null }): Promise<void> {
     const { data, error } = await this.supabase.requireClient().from('work_orders').insert({
       code: input.code.trim(), customer_name: input.customerName.trim() || null, customer_phone: input.customerPhone.trim() || null,
-      address: input.address.trim(), task_type: input.taskType, priority: input.priority, scheduled_for: input.scheduledFor
+      address: input.address.trim(), task_type: input.taskType, priority: input.isEmergency ? 1 : input.priority, is_emergency: input.isEmergency ?? false, scheduled_for: input.scheduledFor
     }).select('id').single();
     if (error) throw error;
     if (input.latitude !== null && input.longitude !== null) await this.setLocation(data.id, input.latitude, input.longitude);
