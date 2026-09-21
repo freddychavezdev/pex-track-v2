@@ -12,6 +12,7 @@ import { WorkOrdersService } from './core/services/work-orders.service';
 import { TeamsService } from './core/services/teams.service';
 import { OperationalMapComponent } from './shared/operational-map/operational-map.component';
 import { AdminPanelComponent } from './shared/admin-panel/admin-panel.component';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 @Component({
   selector: 'app-root',
@@ -59,9 +60,11 @@ export class AppComponent implements OnInit {
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] })
   });
+  private realtimeChannel: RealtimeChannel | null = null;
 
   ngOnInit(): void {
     void this.refreshOperations();
+    if (this.auth.session()) this.startRealtime();
   }
 
   async submitLogin(): Promise<void> {
@@ -80,16 +83,29 @@ export class AppComponent implements OnInit {
     }
     this.showLogin = false;
     this.loginForm.reset({ email: '', password: '' });
+    this.startRealtime();
     await this.refreshOperations();
   }
 
   async signOut(): Promise<void> {
     await this.auth.signOut();
+    if (this.realtimeChannel) {
+      void this.supabase.client?.removeChannel(this.realtimeChannel);
+      this.realtimeChannel = null;
+    }
     this.orders.set([]);
     this.ordersError.set('');
     this.mapMarkers.set([]);
     this.mapError.set('');
     this.teams.set([]);
+  }
+
+  private startRealtime(): void {
+    if (!this.supabase.client || this.realtimeChannel || !this.auth.session()) return;
+    this.realtimeChannel = this.supabase.client.channel('pex-track-operational-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'work_orders' }, () => void this.refreshOperations())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_locations' }, () => void this.loadMapSnapshot())
+      .subscribe();
   }
 
   async refreshOperations(): Promise<void> {
@@ -224,6 +240,10 @@ export class AppComponent implements OnInit {
 
   orderCount(status?: WorkOrderStatus): number {
     return status ? this.orders().filter((order) => order.status === status).length : this.orders().length;
+  }
+
+  alertCount(): number {
+    return this.orders().filter((order) => order.status === 'suspended').length;
   }
 
   statusLabel(status: WorkOrderStatus | string): string {
