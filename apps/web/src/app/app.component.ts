@@ -3,13 +3,14 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
-import { OperationalMapMarker, TeamSummary, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
+import { GlobalSearchResult, OperationalMapMarker, TeamSummary, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
 import { ReportsService } from './core/services/reports.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
 import { WorkOrderImportService } from './core/services/work-order-import.service';
 import { WorkOrdersService } from './core/services/work-orders.service';
 import { TeamsService } from './core/services/teams.service';
+import { GlobalSearchService } from './core/services/global-search.service';
 import { OperationalMapComponent } from './shared/operational-map/operational-map.component';
 import { AdminPanelComponent } from './shared/admin-panel/admin-panel.component';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -29,6 +30,7 @@ export class AppComponent implements OnInit {
   private readonly operationalMap = inject(OperationalMapService);
   private readonly reports = inject(ReportsService);
   private readonly teamsService = inject(TeamsService);
+  private readonly globalSearch = inject(GlobalSearchService);
   showLogin = false;
   showImport = false;
   showNewOrder = false;
@@ -61,6 +63,10 @@ export class AppComponent implements OnInit {
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] })
   });
   private realtimeChannel: RealtimeChannel | null = null;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  searchTerm = '';
+  readonly searchResults = signal<GlobalSearchResult[]>([]);
+  readonly searching = signal(false);
 
   ngOnInit(): void {
     void this.refreshOperations();
@@ -98,6 +104,24 @@ export class AppComponent implements OnInit {
     this.mapMarkers.set([]);
     this.mapError.set('');
     this.teams.set([]);
+    this.searchTerm = '';
+    this.searchResults.set([]);
+  }
+
+  scheduleGlobalSearch(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => void this.runGlobalSearch(), 250);
+  }
+
+  async runGlobalSearch(): Promise<void> {
+    if (!this.auth.session() || this.searchTerm.trim().length < 2) {
+      this.searchResults.set([]);
+      return;
+    }
+    this.searching.set(true);
+    try { this.searchResults.set(await this.globalSearch.search(this.searchTerm)); }
+    catch { this.searchResults.set([]); }
+    finally { this.searching.set(false); }
   }
 
   private startRealtime(): void {
@@ -187,7 +211,7 @@ export class AppComponent implements OnInit {
     return 'No hay coordenadas registradas para la fecha operativa.';
   }
 
-  async generateWeeklyReport(): Promise<void> {
+  async generateWeeklyReport(format: 'csv' | 'xlsx' = 'csv'): Promise<void> {
     if (!this.auth.session() || this.generatingReport) {
       this.reportMessage = 'Inicia sesión con un rol operativo para generar el reporte.';
       return;
@@ -201,8 +225,9 @@ export class AppComponent implements OnInit {
         this.reportMessage = 'No hay OTs registradas en la semana seleccionada.';
         return;
       }
-      this.reports.downloadWeeklyCsv(rows, startDate, endDate);
-      this.reportMessage = `Reporte descargado: ${startDate} a ${endDate}.`;
+      if (format === 'xlsx') await this.reports.downloadWeeklyXlsx(rows, startDate, endDate);
+      else this.reports.downloadWeeklyCsv(rows, startDate, endDate);
+      this.reportMessage = `Reporte ${format.toUpperCase()} descargado: ${startDate} a ${endDate}.`;
     } catch (error) {
       this.reportMessage = error instanceof Error ? error.message : 'No se pudo generar el reporte semanal.';
     } finally {

@@ -116,3 +116,10 @@ export interface WeeklyReportRow {
   suspended_orders: number;
   completion_rate: number;
 }
+
+export interface GlobalSearchResult {
+  kind: 'work_order' | 'technician' | 'vehicle' | 'team';
+  id: string;
+  title: string;
+  subtitle: string;
+}

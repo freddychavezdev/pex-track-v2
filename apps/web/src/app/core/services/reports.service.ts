@@ -33,6 +33,22 @@ export class ReportsService {
     URL.revokeObjectURL(url);
   }
 
+  async downloadWeeklyXlsx(rows: WeeklyReportRow[], startDate: string, endDate: string): Promise<void> {
+    const XLSX = await import('xlsx');
+    const worksheet = XLSX.utils.json_to_sheet(rows.map((row) => ({
+      Cuadrilla: row.team_code,
+      'Total OTs': row.total_orders,
+      Completadas: row.completed_orders,
+      'En ejecución': row.active_orders,
+      Pendientes: row.pending_orders,
+      Suspendidas: row.suspended_orders,
+      'Cumplimiento (%)': row.completion_rate
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte semanal');
+    XLSX.writeFile(workbook, `pex-track-reporte-semanal-${startDate}-${endDate}.xlsx`);
+  }
+
   private escapeCsv(value: string | number): string {
     return `"${String(value).replace(/"/g, '""')}"`;
   }
