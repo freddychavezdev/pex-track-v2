@@ -288,7 +288,8 @@ export class AppComponent implements OnInit {
       service_transfer: 'Traslado',
       network_maintenance: 'Mantenimiento'
     }[order.task_type];
-    return `${taskType} · ${order.address}${order.customer_name ? ` · ${order.customer_name}` : ''}`;
+    const references = [order.zone?.code, order.node?.code, order.box?.code].filter(Boolean).join(' · ');
+    return `${taskType} · ${order.address}${order.customer_name ? ` · ${order.customer_name}` : ''}${references ? ` · ${references}` : ''}`;
   }
 
   async readImportFile(event: Event): Promise<void> {

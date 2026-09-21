@@ -54,6 +54,9 @@ export interface WorkOrderSummary {
   priority: number;
   scheduled_for: string;
   assigned_team_id: string | null;
+  zone?: { code: string } | null;
+  node?: { code: string } | null;
+  box?: { code: string } | null;
 }
 
 export interface TeamSummary {

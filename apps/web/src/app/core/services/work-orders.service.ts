@@ -9,13 +9,13 @@ export class WorkOrdersService {
   async listForDay(date: string): Promise<WorkOrderSummary[]> {
     const { data, error } = await this.supabase.requireClient()
       .from('work_orders')
-      .select('id, code, customer_name, address, task_type, status, priority, scheduled_for, assigned_team_id')
+      .select('id, code, customer_name, address, task_type, status, priority, scheduled_for, assigned_team_id, zone:zones(code), node:network_nodes(code), box:distribution_boxes(code)')
       .eq('scheduled_for', date)
       .order('priority', { ascending: true })
       .order('code');
 
     if (error) throw error;
-    return (data ?? []) as WorkOrderSummary[];
+    return (data ?? []).map((row: any) => ({ ...row, zone: row.zone?.[0] ?? null, node: row.node?.[0] ?? null, box: row.box?.[0] ?? null })) as WorkOrderSummary[];
   }
 
   async importRows(rows: WorkOrderImportRow[]): Promise<void> {
