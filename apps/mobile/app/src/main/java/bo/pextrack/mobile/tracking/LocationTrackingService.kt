@@ -12,6 +12,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import bo.pextrack.mobile.R
+import bo.pextrack.mobile.auth.SupabaseProvider
+import bo.pextrack.mobile.auth.TeamSessionStore
 import bo.pextrack.mobile.data.OfflineOperation
 import bo.pextrack.mobile.data.PexTrackDatabase
 import bo.pextrack.mobile.sync.OfflineSyncScheduler
@@ -21,6 +23,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -76,8 +79,10 @@ class LocationTrackingService : Service() {
       .toString()
     ioScope.launch {
       val dao = PexTrackDatabase.get(this@LocationTrackingService).offlineOperationDao()
-      if (dao.pendingCount() < OfflineOperation.MAX_PENDING_OPERATIONS) {
-        dao.insert(OfflineOperation(operationType = "team_location", payload = payload))
+      val ownerUserId = SupabaseProvider.client?.auth?.currentUserOrNull()?.id ?: return@launch
+      val teamId = TeamSessionStore(this@LocationTrackingService).currentTeamId() ?: return@launch
+      if (dao.pendingCount(ownerUserId, teamId) < OfflineOperation.MAX_PENDING_OPERATIONS) {
+        dao.insert(OfflineOperation(operationType = "team_location", payload = payload, ownerUserId = ownerUserId, teamId = teamId))
         OfflineSyncScheduler.enqueue(this@LocationTrackingService)
       }
     }

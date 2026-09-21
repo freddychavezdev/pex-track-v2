@@ -17,18 +17,17 @@ import java.time.Instant
 class OfflineSyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
     val database = PexTrackDatabase.get(applicationContext)
-    val pending = database.offlineOperationDao().nextBatch(50)
-    if (pending.isEmpty()) return Result.success()
-
     val client = SupabaseProvider.client ?: return Result.failure()
-    if (client.auth.currentSessionOrNull() == null) return Result.failure()
+    val ownerUserId = client.auth.currentUserOrNull()?.id ?: return Result.failure()
     val teamId = TeamSessionStore(applicationContext).currentTeamId()
+      ?: return Result.failure()
+    val pending = database.offlineOperationDao().nextBatch(ownerUserId, teamId, 50)
+    if (pending.isEmpty()) return Result.success()
 
     return runCatching {
       pending.forEach { operation ->
         when (operation.operationType) {
           "team_location" -> {
-            if (teamId == null) return Result.failure()
             val payload = JSONObject(operation.payload)
             client.postgrest.rpc(
               "submit_team_location",

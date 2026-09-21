@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import bo.pextrack.mobile.auth.SupabaseProvider
+import bo.pextrack.mobile.auth.TeamSessionStore
 import bo.pextrack.mobile.data.OfflineOperation
 import bo.pextrack.mobile.data.PexTrackDatabase
 import bo.pextrack.mobile.sync.OfflineSyncScheduler
@@ -26,6 +27,8 @@ class MobileOperationsRepository(private val context: Context) {
     val operation = OfflineOperation(
       id = UUID.randomUUID().toString(),
       operationType = "work_order_status",
+      ownerUserId = requireUserId(),
+      teamId = requireTeamId(),
       payload = JSONObject()
         .put("workOrderId", workOrderId)
         .put("newStatus", newStatus)
@@ -50,6 +53,8 @@ class MobileOperationsRepository(private val context: Context) {
     val operation = OfflineOperation(
       id = UUID.randomUUID().toString(),
       operationType = "work_order_note",
+      ownerUserId = requireUserId(),
+      teamId = requireTeamId(),
       payload = JSONObject()
         .put("workOrderId", workOrderId)
         .put("transcript", normalizedTranscript)
@@ -100,9 +105,17 @@ class MobileOperationsRepository(private val context: Context) {
     check(client.auth.currentSessionOrNull() != null) { "Inicia sesión antes de gestionar OTs." }
   }
 
+  private fun requireUserId(): String = requireNotNull(SupabaseProvider.client?.auth?.currentUserOrNull()?.id) {
+    "Inicia sesión antes de guardar operaciones sin conexión."
+  }
+
+  private fun requireTeamId(): String = requireNotNull(TeamSessionStore(context).currentTeamId()) {
+    "No se encontró la cuadrilla activa."
+  }
+
   private suspend fun queueOffline(operation: OfflineOperation): Boolean {
     val dao = PexTrackDatabase.get(context).offlineOperationDao()
-    if (dao.pendingCount() >= OfflineOperation.MAX_PENDING_OPERATIONS) return false
+    if (dao.pendingCount(operation.ownerUserId, operation.teamId) >= OfflineOperation.MAX_PENDING_OPERATIONS) return false
     dao.insert(operation)
     OfflineSyncScheduler.enqueue(context)
     return true

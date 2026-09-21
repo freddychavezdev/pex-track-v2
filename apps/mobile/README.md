@@ -10,6 +10,8 @@ Aplicación Android nativa en Kotlin para técnicos de campo.
 - Room/SQLite para operaciones offline.
 - WorkManager para sincronización de eventos.
 - Identificadores idempotentes por evento para evitar duplicados.
+- La cola offline queda aislada por usuario y cuadrilla para impedir que una
+  sesión distinta sincronice operaciones pendientes de otro técnico.
 
 La implementación móvil se conecta con el mismo contrato de Supabase y no utiliza
 una PWA para el seguimiento de ubicación en segundo plano. El APK se genera con

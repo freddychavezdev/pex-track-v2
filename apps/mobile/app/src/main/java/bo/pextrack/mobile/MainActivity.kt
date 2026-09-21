@@ -21,12 +21,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import bo.pextrack.mobile.auth.MobileAuthRepository
+import bo.pextrack.mobile.auth.SupabaseProvider
+import bo.pextrack.mobile.auth.TeamSessionStore
 import bo.pextrack.mobile.operations.MobileOperationsRepository
 import bo.pextrack.mobile.operations.MobileWorkOrder
 import bo.pextrack.mobile.tracking.LocationTrackingService
 import bo.pextrack.mobile.data.PexTrackDatabase
 import bo.pextrack.mobile.sync.OfflineSyncScheduler
 import kotlinx.coroutines.launch
+import io.github.jan.supabase.auth.auth
 
 class MainActivity : AppCompatActivity() {
   private lateinit var statusText: TextView
@@ -186,7 +189,11 @@ class MainActivity : AppCompatActivity() {
 
   private fun refreshPendingOperations() {
     lifecycleScope.launch {
-      val count = PexTrackDatabase.get(this@MainActivity).offlineOperationDao().pendingCount()
+      val userId = SupabaseProvider.client?.auth?.currentUserOrNull()?.id
+      val teamId = TeamSessionStore(this@MainActivity).currentTeamId()
+      val count = if (userId != null && teamId != null) {
+        PexTrackDatabase.get(this@MainActivity).offlineOperationDao().pendingCount(userId, teamId)
+      } else 0
       pendingOperationsText.text = if (count == 0) "Sin registros pendientes" else "$count registro(s) pendiente(s) de sincronización"
     }
   }

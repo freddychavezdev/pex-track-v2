@@ -9,6 +9,8 @@ data class OfflineOperation(
   @PrimaryKey val id: String = UUID.randomUUID().toString(),
   val operationType: String,
   val payload: String,
+  val ownerUserId: String,
+  val teamId: String,
   val createdAt: Long = System.currentTimeMillis(),
   val attempts: Int = 0
 ) {
