@@ -10,8 +10,9 @@ class OfflineSyncWorker(context: Context, params: WorkerParameters) : CoroutineW
     val pending = PexTrackDatabase.get(applicationContext).offlineOperationDao().nextBatch(50)
     if (pending.isEmpty()) return Result.success()
 
-    // The Supabase authenticated client is injected here after login is implemented.
-    // Keep the events until the server acknowledges their client event IDs.
+    // The Supabase authenticated client is injected after login is implemented.
+    // Keep each event until the server acknowledges its client event ID; this makes
+    // retries safe when the network fails after the request reaches the server.
     return Result.retry()
   }
 }

@@ -14,6 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 import bo.pextrack.mobile.R
 import bo.pextrack.mobile.data.OfflineOperation
 import bo.pextrack.mobile.data.PexTrackDatabase
+import bo.pextrack.mobile.sync.OfflineSyncScheduler
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -76,6 +77,7 @@ class LocationTrackingService : Service() {
     ioScope.launch {
       PexTrackDatabase.get(this@LocationTrackingService).offlineOperationDao()
         .insert(OfflineOperation(operationType = "team_location", payload = payload))
+      OfflineSyncScheduler.enqueue(this@LocationTrackingService)
     }
   }
 
