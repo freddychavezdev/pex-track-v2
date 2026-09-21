@@ -16,7 +16,9 @@ export class WorkOrderImportService {
     scheduledFor: ['fecha', 'fecha programada', 'programado para', 'fecha ot'],
     zoneCode: ['zona', 'codigo zona', 'código zona'],
     nodeCode: ['nodo', 'codigo nodo', 'código nodo'],
-    boxCode: ['caja', 'codigo caja', 'código caja']
+    boxCode: ['caja', 'codigo caja', 'código caja'],
+    latitude: ['latitud', 'lat', 'latitude'],
+    longitude: ['longitud', 'lon', 'lng', 'longitude']
   };
 
   async parse(file: File, defaultDate: string): Promise<WorkOrderImportResult> {
@@ -47,6 +49,9 @@ export class WorkOrderImportService {
       const priority = this.toPriority(this.valueFor(rawRow, 'priority'), errors);
       const scheduledFor = this.toIsoDate(this.rawValueFor(rawRow, 'scheduledFor'), XLSX) ?? defaultDate;
       if (!scheduledFor) errors.push('Falta la fecha programada.');
+      const latitude = this.toCoordinate(this.valueFor(rawRow, 'latitude'), 'latitud', errors, -90, 90);
+      const longitude = this.toCoordinate(this.valueFor(rawRow, 'longitude'), 'longitud', errors, -180, 180);
+      if ((latitude === null) !== (longitude === null)) errors.push('La latitud y la longitud deben enviarse juntas.');
 
       if (errors.length) {
         invalid.push({ sourceRow, code: code || null, errors });
@@ -65,7 +70,9 @@ export class WorkOrderImportService {
         scheduledFor,
         zoneCode: this.valueFor(rawRow, 'zoneCode') || null,
         nodeCode: this.valueFor(rawRow, 'nodeCode') || null,
-        boxCode: this.valueFor(rawRow, 'boxCode') || null
+        boxCode: this.valueFor(rawRow, 'boxCode') || null,
+        latitude,
+        longitude
       });
     });
 
@@ -115,6 +122,16 @@ export class WorkOrderImportService {
     if (!Number.isInteger(parsed) || parsed < 1 || parsed > 5) {
       errors.push('La prioridad debe ser un entero entre 1 y 5.');
       return 3;
+    }
+    return parsed;
+  }
+
+  private toCoordinate(value: string, label: string, errors: string[], minimum: number, maximum: number): number | null {
+    if (!value) return null;
+    const parsed = Number(value.replace(',', '.'));
+    if (!Number.isFinite(parsed) || parsed < minimum || parsed > maximum) {
+      errors.push(`La ${label} debe estar entre ${minimum} y ${maximum}.`);
+      return null;
     }
     return parsed;
   }

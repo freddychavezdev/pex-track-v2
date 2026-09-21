@@ -54,6 +54,7 @@
       <p class="dialog-description">Registra una OT individual para asignarla y monitorearla durante la jornada.</p>
       <label for="new-code">Código</label><input pInputText id="new-code" [(ngModel)]="newOrder.code" placeholder="OT-2026-0001" />
       <label for="new-address">Dirección</label><input pInputText id="new-address" [(ngModel)]="newOrder.address" placeholder="Av. principal #123" />
+      <div class="coordinate-fields"><label for="new-latitude">Latitud<input pInputText id="new-latitude" type="number" step="any" [(ngModel)]="newOrder.latitude" placeholder="-16.5000" /></label><label for="new-longitude">Longitud<input pInputText id="new-longitude" type="number" step="any" [(ngModel)]="newOrder.longitude" placeholder="-68.1500" /></label></div>
       <label for="new-customer">Cliente</label><input pInputText id="new-customer" [(ngModel)]="newOrder.customerName" />
       <label for="new-phone">Teléfono</label><input pInputText id="new-phone" [(ngModel)]="newOrder.customerPhone" />
       <label for="new-type">Tipo de tarea</label><select id="new-type" [(ngModel)]="newOrder.taskType"><option value="technical_assistance">Asistencia técnica</option><option value="new_installation">Nueva instalación</option><option value="service_transfer">Traslado de servicio</option><option value="network_maintenance">Mantenimiento de red</option></select>

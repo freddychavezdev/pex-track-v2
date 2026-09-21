@@ -77,6 +77,8 @@ export interface WorkOrderImportRow {
   zoneCode: string | null;
   nodeCode: string | null;
   boxCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface ImportRowError {

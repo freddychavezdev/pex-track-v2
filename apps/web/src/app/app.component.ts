@@ -45,7 +45,7 @@ export class AppComponent implements OnInit {
   reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
   importDate = new Date().toISOString().slice(0, 10);
-  newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance' as WorkOrderImportRow['taskType'], priority: 3, scheduledFor: new Date().toISOString().slice(0, 10) };
+  newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance' as WorkOrderImportRow['taskType'], priority: 3, scheduledFor: new Date().toISOString().slice(0, 10), latitude: null as number | null, longitude: null as number | null };
   activeOrderFilter: 'all' | WorkOrderStatus = 'all';
   assignmentTeamId = '';
   selectedOrder: WorkOrderSummary | null = null;
@@ -305,11 +305,15 @@ export class AppComponent implements OnInit {
       this.importError = 'Código, dirección y fecha programada son obligatorios.';
       return;
     }
+    if ((this.newOrder.latitude === null) !== (this.newOrder.longitude === null)) {
+      this.importError = 'La latitud y la longitud deben enviarse juntas.';
+      return;
+    }
     this.savingImport = true;
     try {
       await this.workOrders.createManual(this.newOrder);
       this.showNewOrder = false;
-      this.newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance', priority: 3, scheduledFor: this.importDate };
+      this.newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance', priority: 3, scheduledFor: this.importDate, latitude: null, longitude: null };
       await this.refreshOperations();
     } catch (error) {
       this.importError = error instanceof Error ? error.message : 'No se pudo crear la OT.';
