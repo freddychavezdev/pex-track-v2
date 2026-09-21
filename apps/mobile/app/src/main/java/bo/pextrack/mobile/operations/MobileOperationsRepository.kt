@@ -12,6 +12,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.json.JSONObject
+import java.io.IOException
 import java.util.UUID
 
 class MobileOperationsRepository(private val context: Context) {
@@ -30,13 +31,15 @@ class MobileOperationsRepository(private val context: Context) {
         .put("reason", reason ?: "")
         .toString()
     )
-    return runCatching {
+    return try {
       submitStatus(operation)
       null
-    }.getOrElse {
+    } catch (_: IOException) {
       PexTrackDatabase.get(context).offlineOperationDao().insert(operation)
       OfflineSyncScheduler.enqueue(context)
       "Cambio guardado sin conexión; se enviará automáticamente al recuperar red."
+    } catch (error: Throwable) {
+      error.message ?: "No se pudo actualizar el estado de la OT."
     }
   }
 
