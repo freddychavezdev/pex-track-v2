@@ -28,6 +28,7 @@
 - Propuesta de ruta disponible por cuadrilla, ordenando sus OTs georreferenciadas desde la última posición conocida mediante vecino más cercano y mostrando distancia aproximada sin tráfico.
 - CI de GitHub configurado para conservar el APK release sin firmar como artefacto de cada ejecución exitosa; la firma sigue separada y requiere la keystore oficial.
 - Secuencia de permisos Android corregida para Android 13+: ubicación y notificaciones se solicitan de forma independiente y el foreground service se inicia solo después de validar el permiso efectivo.
+- El acceso web rechaza y cierra automáticamente sesiones asociadas a perfiles inactivos, además de mantener la protección RLS en las operaciones.
 
 ## Pendientes de puesta en producción
 

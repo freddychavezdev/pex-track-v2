@@ -20,6 +20,7 @@ export class AuthService {
     const { data } = await this.supabase.client.auth.getSession();
     this.session.set(data.session);
     await this.loadProfile();
+    await this.rejectInactiveSession();
     this.supabase.client.auth.onAuthStateChange((_event: AuthChangeEvent, session) => {
       this.session.set(session);
       void this.loadProfile();
@@ -28,8 +29,18 @@ export class AuthService {
   }
 
   async signIn(email: string, password: string): Promise<string | null> {
-    const { error } = await this.supabase.requireClient().auth.signInWithPassword({ email, password });
-    return error?.message ?? null;
+    const client = this.supabase.requireClient();
+    const { error } = await client.auth.signInWithPassword({ email, password });
+    if (error) return error.message;
+    this.session.set((await client.auth.getSession()).data.session);
+    await this.loadProfile();
+    if (this.profile()?.active === false) {
+      await client.auth.signOut();
+      this.session.set(null);
+      this.profile.set(null);
+      return 'La cuenta está inactiva. Solicita al supervisor que la habilite.';
+    }
+    return null;
   }
 
   async signOut(): Promise<void> {
@@ -47,5 +58,12 @@ export class AuthService {
     }
     const { data } = await client.from('profiles').select('id, full_name, role, active').eq('id', userId).maybeSingle();
     this.profile.set(data as UserProfile | null);
+  }
+
+  private async rejectInactiveSession(): Promise<void> {
+    if (!this.session() || this.profile()?.active !== false || !this.supabase.client) return;
+    await this.supabase.client.auth.signOut();
+    this.session.set(null);
+    this.profile.set(null);
   }
 }
