@@ -4,8 +4,10 @@
     <nav class="nav-list" aria-label="Navegación principal">
       <a class="nav-item active" href="#monitoring"><span class="nav-icon">⌖</span> Monitoreo</a>
       <a class="nav-item" href="#orders"><span class="nav-icon">▤</span> Órdenes de trabajo</a>
+      @if (canManageOperations()) { <button class="nav-item nav-button" type="button" (click)="showNewOrder = true"><span class="nav-icon">＋</span> Nueva OT</button> }
       <a class="nav-item" href="#teams"><span class="nav-icon">♙</span> Cuadrillas</a>
       <a class="nav-item" href="#reports"><span class="nav-icon">▥</span> Reportes</a>
+      @if (canManageCatalogs()) { <button class="nav-item nav-button" type="button" (click)="showAdmin = true"><span class="nav-icon">⚙</span> Administración</button> }
     </nav>
     <div class="sidebar-footer"><div class="connection"><span class="status-dot online"></span><span>Servicios operativos</span></div><div class="user-card"><div class="avatar">SC</div><div><strong>Supervisor</strong><span>PEX La Paz</span></div><span class="more">•••</span></div></div>
   </aside>
@@ -42,6 +44,23 @@
           <button pButton class="control-button primary login-submit" type="submit" [disabled]="submitting">{{ submitting ? 'Verificando…' : 'Ingresar' }}</button>
         </form>
       }
+    </section>
+  }
+  @if (showNewOrder) {
+    <div class="login-backdrop" role="presentation" (click)="showNewOrder = false"></div>
+    <section class="import-dialog" role="dialog" aria-modal="true" aria-labelledby="new-order-title">
+      <button class="dialog-close" type="button" aria-label="Cerrar" (click)="showNewOrder = false">×</button>
+      <p class="eyebrow">DESPACHO OPERATIVO</p><h2 id="new-order-title">Nueva orden de trabajo</h2>
+      <p class="dialog-description">Registra una OT individual para asignarla y monitorearla durante la jornada.</p>
+      <label for="new-code">Código</label><input pInputText id="new-code" [(ngModel)]="newOrder.code" placeholder="OT-2026-0001" />
+      <label for="new-address">Dirección</label><input pInputText id="new-address" [(ngModel)]="newOrder.address" placeholder="Av. principal #123" />
+      <label for="new-customer">Cliente</label><input pInputText id="new-customer" [(ngModel)]="newOrder.customerName" />
+      <label for="new-phone">Teléfono</label><input pInputText id="new-phone" [(ngModel)]="newOrder.customerPhone" />
+      <label for="new-type">Tipo de tarea</label><select id="new-type" [(ngModel)]="newOrder.taskType"><option value="technical_assistance">Asistencia técnica</option><option value="new_installation">Nueva instalación</option><option value="service_transfer">Traslado de servicio</option><option value="network_maintenance">Mantenimiento de red</option></select>
+      <label for="new-priority">Prioridad (1 es máxima)</label><select id="new-priority" [(ngModel)]="newOrder.priority"><option [ngValue]="1">1 · Urgente</option><option [ngValue]="2">2 · Alta</option><option [ngValue]="3">3 · Normal</option><option [ngValue]="4">4 · Baja</option><option [ngValue]="5">5 · Programada</option></select>
+      <label for="new-date">Fecha programada</label><input pInputText id="new-date" type="date" [(ngModel)]="newOrder.scheduledFor" />
+      @if (importError) { <p class="form-error">{{ importError }}</p> }
+      <button pButton class="control-button primary login-submit" type="button" [disabled]="savingImport" (click)="saveNewOrder()">{{ savingImport ? 'Guardando…' : 'Crear OT' }}</button>
     </section>
   }
   @if (showImport) {
@@ -81,4 +100,5 @@
       <button pButton class="control-button primary login-submit" type="button" [disabled]="!assignmentTeamId || savingAssignment" (click)="saveAssignment()">{{ savingAssignment ? 'Guardando…' : 'Confirmar asignación' }}</button>
     </section>
   }
+  @if (showAdmin && canManageCatalogs()) { <app-admin-panel (closed)="showAdmin = false"></app-admin-panel> }
 </div>

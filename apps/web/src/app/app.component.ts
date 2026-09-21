@@ -3,7 +3,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
-import { OperationalMapMarker, TeamSummary, WorkOrderImportResult, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
+import { OperationalMapMarker, TeamSummary, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
 import { ReportsService } from './core/services/reports.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
@@ -11,10 +11,11 @@ import { WorkOrderImportService } from './core/services/work-order-import.servic
 import { WorkOrdersService } from './core/services/work-orders.service';
 import { TeamsService } from './core/services/teams.service';
 import { OperationalMapComponent } from './shared/operational-map/operational-map.component';
+import { AdminPanelComponent } from './shared/admin-panel/admin-panel.component';
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent],
+  imports: [FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent, AdminPanelComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -29,7 +30,9 @@ export class AppComponent implements OnInit {
   private readonly teamsService = inject(TeamsService);
   showLogin = false;
   showImport = false;
+  showNewOrder = false;
   showAssignment = false;
+  showAdmin = false;
   submitting = false;
   parsingImport = false;
   savingImport = false;
@@ -41,6 +44,7 @@ export class AppComponent implements OnInit {
   reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
   importDate = new Date().toISOString().slice(0, 10);
+  newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance' as WorkOrderImportRow['taskType'], priority: 3, scheduledFor: new Date().toISOString().slice(0, 10) };
   activeOrderFilter: 'all' | WorkOrderStatus = 'all';
   assignmentTeamId = '';
   selectedOrder: WorkOrderSummary | null = null;
@@ -130,6 +134,10 @@ export class AppComponent implements OnInit {
   canManageOperations(): boolean {
     const role = this.auth.profile()?.role;
     return role === 'supervisor' || role === 'coordinator';
+  }
+
+  canManageCatalogs(): boolean {
+    return this.auth.profile()?.role === 'supervisor';
   }
 
   openAssignment(order: WorkOrderSummary): void {
@@ -266,6 +274,25 @@ export class AppComponent implements OnInit {
       await this.refreshOperations();
     } catch (error) {
       this.importError = error instanceof Error ? error.message : 'No se pudieron guardar las OTs.';
+    } finally {
+      this.savingImport = false;
+    }
+  }
+
+  async saveNewOrder(): Promise<void> {
+    this.importError = '';
+    if (!this.newOrder.code.trim() || !this.newOrder.address.trim() || !this.newOrder.scheduledFor) {
+      this.importError = 'Código, dirección y fecha programada son obligatorios.';
+      return;
+    }
+    this.savingImport = true;
+    try {
+      await this.workOrders.createManual(this.newOrder);
+      this.showNewOrder = false;
+      this.newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance', priority: 3, scheduledFor: this.importDate };
+      await this.refreshOperations();
+    } catch (error) {
+      this.importError = error instanceof Error ? error.message : 'No se pudo crear la OT.';
     } finally {
       this.savingImport = false;
     }

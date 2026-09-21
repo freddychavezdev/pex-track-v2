@@ -6,6 +6,42 @@ export interface UserProfile {
   full_name: string;
   role: AppRole;
   active: boolean;
+  email?: string;
+  phone?: string | null;
+  created_at?: string;
+}
+
+export type AvailabilityStatus = 'available' | 'unavailable' | 'on_service';
+
+export interface TechnicianRecord {
+  id: string;
+  profile_id: string | null;
+  document_number: string | null;
+  phone: string | null;
+  availability: AvailabilityStatus;
+  active: boolean;
+  profile?: Pick<UserProfile, 'full_name' | 'email'> | null;
+}
+
+export interface VehicleRecord {
+  id: string;
+  plate: string;
+  model: string | null;
+  vehicle_type: string | null;
+  status: AvailabilityStatus;
+  active: boolean;
+}
+
+export interface TeamRecord {
+  id: string;
+  code: string;
+  technician_one_id: string;
+  technician_two_id: string;
+  vehicle_id: string;
+  active: boolean;
+  technician_one?: { profile?: Pick<UserProfile, 'full_name'> | null } | null;
+  technician_two?: { profile?: Pick<UserProfile, 'full_name'> | null } | null;
+  vehicle?: Pick<VehicleRecord, 'plate' | 'model'> | null;
 }
 
 export interface WorkOrderSummary {

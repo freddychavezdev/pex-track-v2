@@ -41,4 +41,12 @@ export class WorkOrdersService {
       .eq('id', workOrderId);
     if (error) throw error;
   }
+
+  async createManual(input: { code: string; customerName: string; customerPhone: string; address: string; taskType: WorkOrderImportRow['taskType']; priority: number; scheduledFor: string }): Promise<void> {
+    const { error } = await this.supabase.requireClient().from('work_orders').insert({
+      code: input.code.trim(), customer_name: input.customerName.trim() || null, customer_phone: input.customerPhone.trim() || null,
+      address: input.address.trim(), task_type: input.taskType, priority: input.priority, scheduled_for: input.scheduledFor
+    });
+    if (error) throw error;
+  }
 }
