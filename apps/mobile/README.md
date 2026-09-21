@@ -40,3 +40,16 @@ $buildTools = Get-ChildItem "$sdk\build-tools" -Directory | Sort-Object Name -De
 Para una distribución real, la keystore, sus contraseñas y la configuración de
 Supabase deben inyectarse mediante secretos del pipeline; nunca deben guardarse
 en `local.properties`, el APK o GitHub.
+
+## Release firmado en GitHub Actions
+
+El workflow `.github/workflows/android-release.yml` se ejecuta manualmente o
+cuando se publica un tag con formato `v1.0.0`. Antes de ejecutarlo, configura en
+el repositorio estos secretos:
+
+- `ANDROID_KEYSTORE_BASE64`: contenido de la keystore convertido a Base64.
+- `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` y `ANDROID_KEY_PASSWORD`.
+- `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`.
+
+El workflow decodifica la keystore solo durante el job, compila el APK, lo firma,
+verifica la firma y publica el APK junto con su hash SHA-256 como artefacto.
