@@ -126,3 +126,15 @@ export interface GlobalSearchResult {
   title: string;
   subtitle: string;
 }
+
+export interface AuditLogRecord {
+  id: number;
+  actor_id: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  details: Record<string, unknown>;
+  ip_address: string | null;
+  occurred_at: string;
+  actor?: { full_name: string } | null;
+}

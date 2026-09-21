@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AppRole, TeamRecord, TechnicianRecord, UserProfile, VehicleRecord } from '../models/operations.models';
+import { AppRole, AuditLogRecord, TeamRecord, TechnicianRecord, UserProfile, VehicleRecord } from '../models/operations.models';
 import { SupabaseClientService } from './supabase-client.service';
 
 export interface CreateUserRequest { email: string; password: string; fullName: string; role: AppRole; }
@@ -22,6 +22,14 @@ export class AdminService {
   async setUserActive(userId: string, active: boolean): Promise<void> {
     const { error } = await this.supabase.requireClient().functions.invoke('admin-users', { body: { action: 'set-active', userId, active } });
     if (error) throw error;
+  }
+
+  async listAuditLogs(): Promise<AuditLogRecord[]> {
+    const { data, error } = await this.supabase.requireClient().from('audit_logs')
+      .select('id, actor_id, action, entity_type, entity_id, details, ip_address, occurred_at, actor:profiles(full_name)')
+      .order('occurred_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    return (data ?? []).map((row: any) => ({ ...row, actor: row.actor?.[0] ?? null })) as AuditLogRecord[];
   }
 
   async listTechnicians(): Promise<TechnicianRecord[]> {

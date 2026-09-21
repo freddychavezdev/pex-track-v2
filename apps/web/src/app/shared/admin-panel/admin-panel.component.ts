@@ -1,9 +1,9 @@
 import { Component, EventEmitter, inject, OnInit, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AppRole, AvailabilityStatus, TeamRecord, TechnicianRecord, UserProfile, VehicleRecord } from '../../core/models/operations.models';
+import { AppRole, AuditLogRecord, AvailabilityStatus, TeamRecord, TechnicianRecord, UserProfile, VehicleRecord } from '../../core/models/operations.models';
 import { AdminService } from '../../core/services/admin.service';
 
-type AdminTab = 'users' | 'technicians' | 'vehicles' | 'teams';
+type AdminTab = 'users' | 'technicians' | 'vehicles' | 'teams' | 'audit';
 
 @Component({
   selector: 'app-admin-panel',
@@ -19,6 +19,7 @@ export class AdminPanelComponent implements OnInit {
   readonly technicians = signal<TechnicianRecord[]>([]);
   readonly vehicles = signal<VehicleRecord[]>([]);
   readonly teams = signal<TeamRecord[]>([]);
+  readonly auditLogs = signal<AuditLogRecord[]>([]);
   readonly loading = signal(false);
   activeTab: AdminTab = 'users';
   message = '';
@@ -33,10 +34,10 @@ export class AdminPanelComponent implements OnInit {
   async reload(): Promise<void> {
     this.loading.set(true); this.error = '';
     try {
-      const [users, technicians, vehicles, teams] = await Promise.all([
-        this.service.listUsers(), this.service.listTechnicians(), this.service.listVehicles(), this.service.listTeams()
+      const [users, technicians, vehicles, teams, auditLogs] = await Promise.all([
+        this.service.listUsers(), this.service.listTechnicians(), this.service.listVehicles(), this.service.listTeams(), this.service.listAuditLogs()
       ]);
-      this.users.set(users); this.technicians.set(technicians); this.vehicles.set(vehicles); this.teams.set(teams);
+      this.users.set(users); this.technicians.set(technicians); this.vehicles.set(vehicles); this.teams.set(teams); this.auditLogs.set(auditLogs);
     } catch (e) { this.error = this.messageOf(e); }
     finally { this.loading.set(false); }
   }
@@ -78,5 +79,7 @@ export class AdminPanelComponent implements OnInit {
   vehicleLabel(id: string): string { const value = this.vehicles().find((item) => item.id === id); return value ? `${value.plate}${value.model ? ` · ${value.model}` : ''}` : 'Seleccionar vehículo'; }
   roleLabel(role: AppRole): string { return { supervisor: 'Supervisor', coordinator: 'Coordinador', technician: 'Técnico' }[role]; }
   availabilityLabel(value: AvailabilityStatus): string { return { available: 'Disponible', unavailable: 'No disponible', on_service: 'En servicio' }[value]; }
+  auditDetails(log: AuditLogRecord): string { return Object.entries(log.details ?? {}).filter(([key]) => key !== 'operation').map(([key, value]) => `${key}: ${String(value)}`).join(' · '); }
+  auditDate(value: string): string { return new Date(value).toLocaleString('es-BO'); }
   private messageOf(error: unknown): string { return error instanceof Error ? error.message : 'No se pudo completar la operación.'; }
 }
