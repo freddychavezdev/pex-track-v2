@@ -3,14 +3,16 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
-import { WorkOrderImportResult, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
+import { OperationalMapMarker, WorkOrderImportResult, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
+import { OperationalMapService } from './core/services/operational-map.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
 import { WorkOrderImportService } from './core/services/work-order-import.service';
 import { WorkOrdersService } from './core/services/work-orders.service';
+import { OperationalMapComponent } from './shared/operational-map/operational-map.component';
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule, ReactiveFormsModule, ButtonDirective, InputText],
+  imports: [FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -20,6 +22,7 @@ export class AppComponent implements OnInit {
   readonly supabase = inject(SupabaseClientService);
   private readonly importService = inject(WorkOrderImportService);
   private readonly workOrders = inject(WorkOrdersService);
+  private readonly operationalMap = inject(OperationalMapService);
   showLogin = false;
   showImport = false;
   submitting = false;
@@ -33,13 +36,16 @@ export class AppComponent implements OnInit {
   readonly orders = signal<WorkOrderSummary[]>([]);
   readonly ordersLoading = signal(false);
   readonly ordersError = signal('');
+  readonly mapMarkers = signal<OperationalMapMarker[]>([]);
+  readonly mapLoading = signal(false);
+  readonly mapError = signal('');
   readonly loginForm = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] })
   });
 
   ngOnInit(): void {
-    void this.loadWorkOrders();
+    void this.refreshOperations();
   }
 
   async submitLogin(): Promise<void> {
@@ -58,13 +64,19 @@ export class AppComponent implements OnInit {
     }
     this.showLogin = false;
     this.loginForm.reset({ email: '', password: '' });
-    await this.loadWorkOrders();
+    await this.refreshOperations();
   }
 
   async signOut(): Promise<void> {
     await this.auth.signOut();
     this.orders.set([]);
     this.ordersError.set('');
+    this.mapMarkers.set([]);
+    this.mapError.set('');
+  }
+
+  async refreshOperations(): Promise<void> {
+    await Promise.all([this.loadWorkOrders(), this.loadMapSnapshot()]);
   }
 
   async loadWorkOrders(): Promise<void> {
@@ -78,6 +90,26 @@ export class AppComponent implements OnInit {
     } finally {
       this.ordersLoading.set(false);
     }
+  }
+
+  async loadMapSnapshot(): Promise<void> {
+    if (!this.supabase.isConfigured || !this.auth.session() || this.mapLoading()) return;
+    this.mapLoading.set(true);
+    this.mapError.set('');
+    try {
+      this.mapMarkers.set(await this.operationalMap.snapshotForDay(this.importDate));
+    } catch (error) {
+      this.mapError.set(error instanceof Error ? error.message : 'No se pudo cargar el mapa operativo.');
+    } finally {
+      this.mapLoading.set(false);
+    }
+  }
+
+  mapEmptyMessage(): string {
+    if (!this.auth.session()) return 'Inicia sesión para consultar el mapa operativo.';
+    if (this.mapLoading()) return 'Actualizando ubicaciones y OTs…';
+    if (this.mapError()) return this.mapError();
+    return 'No hay coordenadas registradas para la fecha operativa.';
   }
 
   visibleOrders(): WorkOrderSummary[] {
@@ -136,7 +168,7 @@ export class AppComponent implements OnInit {
       await this.workOrders.importRows(this.importResult.valid);
       this.showImport = false;
       this.importResult = null;
-      await this.loadWorkOrders();
+      await this.refreshOperations();
     } catch (error) {
       this.importError = error instanceof Error ? error.message : 'No se pudieron guardar las OTs.';
     } finally {

@@ -48,3 +48,16 @@ export interface WorkOrderImportResult {
   invalid: ImportRowError[];
   headers: string[];
 }
+
+export type OperationalMapMarkerType = 'team' | 'work_order';
+
+export interface OperationalMapMarker {
+  marker_type: OperationalMapMarkerType;
+  marker_id: string;
+  code: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+  status: string;
+  observed_at: string;
+}

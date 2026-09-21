@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(13);
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.work_orders'::regclass),
@@ -44,6 +44,14 @@ select ok(
 select ok(
   not has_function_privilege('anon', 'public.current_team_id()', 'execute'),
   'anonymous users cannot resolve team membership'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.operational_map_snapshot(date)', 'execute'),
+  'authenticated operations users can request the controlled map snapshot'
+);
+select ok(
+  not has_function_privilege('anon', 'public.operational_map_snapshot(date)', 'execute'),
+  'anonymous users cannot request operational map markers'
 );
 
 select * from finish();
