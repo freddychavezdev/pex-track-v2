@@ -43,6 +43,30 @@ class MobileOperationsRepository(private val context: Context) {
     }
   }
 
+  suspend fun addNote(workOrderId: String, transcript: String): String {
+    val normalizedTranscript = transcript.trim()
+    if (normalizedTranscript.isBlank()) return "Escribe o dicta una observación antes de guardarla."
+
+    val operation = OfflineOperation(
+      id = UUID.randomUUID().toString(),
+      operationType = "work_order_note",
+      payload = JSONObject()
+        .put("workOrderId", workOrderId)
+        .put("transcript", normalizedTranscript)
+        .toString()
+    )
+    return try {
+      submitNote(operation)
+      "Observación guardada"
+    } catch (_: IOException) {
+      PexTrackDatabase.get(context).offlineOperationDao().insert(operation)
+      OfflineSyncScheduler.enqueue(context)
+      "Observación guardada sin conexión; se enviará automáticamente al recuperar red."
+    } catch (error: Throwable) {
+      error.message ?: "No se pudo guardar la observación."
+    }
+  }
+
   suspend fun submitStatus(operation: OfflineOperation) {
     val client = requireAuthenticatedClient()
     val payload = JSONObject(operation.payload)
@@ -53,6 +77,19 @@ class MobileOperationsRepository(private val context: Context) {
         put("p_work_order_id", payload.getString("workOrderId"))
         put("p_new_status", payload.getString("newStatus"))
         if (reason == null) put("p_reason", JsonNull) else put("p_reason", reason)
+        put("p_client_event_id", operation.id)
+      }
+    )
+  }
+
+  suspend fun submitNote(operation: OfflineOperation) {
+    val client = requireAuthenticatedClient()
+    val payload = JSONObject(operation.payload)
+    client.postgrest.rpc(
+      "add_my_work_order_note",
+      buildJsonObject {
+        put("p_work_order_id", payload.getString("workOrderId"))
+        put("p_transcript", payload.getString("transcript"))
         put("p_client_event_id", operation.id)
       }
     )

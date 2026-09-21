@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(21);
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.work_orders'::regclass),
@@ -68,6 +68,22 @@ select ok(
 select ok(
   not has_function_privilege('anon', 'public.my_assigned_work_orders()', 'execute'),
   'anonymous users cannot request assigned work orders'
+);
+select ok(
+  (select relrowsecurity from pg_class where oid = 'public.work_order_notes'::regclass),
+  'work_order_notes has row level security enabled'
+);
+select ok(
+  not has_table_privilege('anon', 'public.work_order_notes', 'select, insert'),
+  'anonymous users cannot access work order notes'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.add_my_work_order_note(uuid, text, uuid)', 'execute'),
+  'authenticated technicians can add controlled work order notes'
+);
+select ok(
+  not has_function_privilege('anon', 'public.add_my_work_order_note(uuid, text, uuid)', 'execute'),
+  'anonymous users cannot add work order notes'
 );
 
 select * from finish();

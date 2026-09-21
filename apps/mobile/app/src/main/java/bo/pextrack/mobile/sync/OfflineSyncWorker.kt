@@ -45,6 +45,7 @@ class OfflineSyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             )
           }
           "work_order_status" -> MobileOperationsRepository(applicationContext).submitStatus(operation)
+          "work_order_note" -> MobileOperationsRepository(applicationContext).submitNote(operation)
           else -> return Result.failure()
         }
         database.offlineOperationDao().deleteByIds(listOf(operation.id))

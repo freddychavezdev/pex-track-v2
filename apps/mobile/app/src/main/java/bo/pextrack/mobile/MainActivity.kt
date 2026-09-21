@@ -6,6 +6,9 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -27,6 +30,8 @@ class MainActivity : AppCompatActivity() {
   private lateinit var passwordInput: EditText
   private lateinit var suspensionReasonInput: EditText
   private lateinit var workOrdersContainer: LinearLayout
+  private var speechRecognizer: SpeechRecognizer? = null
+  private var activeTranscriptInput: EditText? = null
   private val authRepository by lazy { MobileAuthRepository(this) }
   private val operationsRepository by lazy { MobileOperationsRepository(this) }
 
@@ -35,6 +40,12 @@ class MainActivity : AppCompatActivity() {
   ) { permissions ->
     val preciseGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
     if (preciseGranted) startTracking() else showStatus("Se requiere ubicación precisa para iniciar el seguimiento")
+  }
+
+  private val microphonePermissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { granted ->
+    if (granted) startDictation() else showStatus("Se necesita permiso de micrófono para transcribir la observación")
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +65,11 @@ class MainActivity : AppCompatActivity() {
       stopService(Intent(this, LocationTrackingService::class.java))
       showStatus("Seguimiento detenido")
     }
+    speechRecognizer = if (SpeechRecognizer.isRecognitionAvailable(this)) {
+      SpeechRecognizer.createSpeechRecognizer(this).also { recognizer ->
+        recognizer.setRecognitionListener(createRecognitionListener())
+      }
+    } else null
     refreshSessionStatus()
   }
 
@@ -154,6 +170,23 @@ class MainActivity : AppCompatActivity() {
         textSize = 14f
         setTextColor(Color.parseColor("#5F7086"))
       })
+      val transcriptInput = EditText(this).apply {
+        hint = "Observación de atención o diagnóstico"
+        inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        setText(order.latest_note.orEmpty())
+        setSelection(text.length)
+      }
+      row.addView(transcriptInput)
+      val transcriptActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+      transcriptActions.addView(Button(this).apply {
+        text = "Dictar"
+        setOnClickListener { requestDictation(transcriptInput) }
+      })
+      transcriptActions.addView(Button(this).apply {
+        text = "Guardar observación"
+        setOnClickListener { saveNote(order, transcriptInput) }
+      })
+      row.addView(transcriptActions)
       val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
       allowedTransitions(order.status).forEach { nextStatus ->
         actions.addView(Button(this).apply {
@@ -163,6 +196,78 @@ class MainActivity : AppCompatActivity() {
       }
       row.addView(actions)
       workOrdersContainer.addView(row)
+    }
+  }
+
+  private fun requestDictation(input: EditText) {
+    if (speechRecognizer == null) {
+      showStatus("Este dispositivo no tiene un servicio de reconocimiento de voz disponible")
+      return
+    }
+    activeTranscriptInput = input
+    if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+      startDictation()
+    } else {
+      microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+    }
+  }
+
+  private fun startDictation() {
+    val recognizer = speechRecognizer ?: return
+    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+      putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+      putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-BO")
+      putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "es-BO")
+      putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+      putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+    }
+    showStatus("Escuchando la observación…")
+    recognizer.startListening(intent)
+  }
+
+  private fun createRecognitionListener() = object : RecognitionListener {
+    override fun onReadyForSpeech(params: Bundle?) = Unit
+    override fun onBeginningOfSpeech() = Unit
+    override fun onRmsChanged(rmsdB: Float) = Unit
+    override fun onBufferReceived(buffer: ByteArray?) = Unit
+    override fun onEndOfSpeech() = Unit
+    override fun onPartialResults(partialResults: Bundle?) {
+      val text = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+      if (!text.isNullOrBlank()) activeTranscriptInput?.setText(text)
+    }
+    override fun onEvent(eventType: Int, params: Bundle?) = Unit
+    override fun onResults(results: Bundle?) {
+      val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+      if (!text.isNullOrBlank()) {
+        activeTranscriptInput?.setText(text)
+        activeTranscriptInput?.setSelection(text.length)
+        showStatus("Transcripción lista; revísala y guárdala en la OT")
+      } else {
+        showStatus("No se pudo obtener una transcripción")
+      }
+    }
+    override fun onError(error: Int) {
+      val message = when (error) {
+        SpeechRecognizer.ERROR_AUDIO -> "No se pudo acceder al micrófono"
+        SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "No hay conexión para transcribir la voz"
+        SpeechRecognizer.ERROR_NO_MATCH -> "No se reconoció una frase; inténtalo nuevamente"
+        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "El reconocimiento de voz está ocupado"
+        else -> "No se pudo transcribir la observación"
+      }
+      showStatus(message)
+    }
+  }
+
+  private fun saveNote(order: MobileWorkOrder, input: EditText) {
+    val transcript = input.text.toString().trim()
+    if (transcript.isBlank()) {
+      showStatus("Escribe o dicta una observación antes de guardarla")
+      return
+    }
+    lifecycleScope.launch {
+      showStatus("Guardando observación de ${order.code}…")
+      showStatus(operationsRepository.addNote(order.id, transcript))
+      loadWorkOrders()
     }
   }
 
@@ -211,5 +316,12 @@ class MainActivity : AppCompatActivity() {
     "service_transfer" -> "Traslado"
     "network_maintenance" -> "Mantenimiento"
     else -> taskType
+  }
+
+  override fun onDestroy() {
+    speechRecognizer?.cancel()
+    speechRecognizer?.destroy()
+    speechRecognizer = null
+    super.onDestroy()
   }
 }
