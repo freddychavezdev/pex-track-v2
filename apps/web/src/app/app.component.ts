@@ -385,7 +385,7 @@ export class AppComponent implements OnDestroy, OnInit {
       network_maintenance: 'Mantenimiento'
     }[order.task_type];
     const references = [order.zone?.code, order.node?.code, order.box?.code].filter(Boolean).join(' · ');
-    return `${taskType} · ${order.address}${order.customer_name ? ` · ${order.customer_name}` : ''}${references ? ` · ${references}` : ''}`;
+    return `${order.is_emergency ? 'EMERGENCIA · ' : ''}${taskType} · ${order.address}${order.customer_name ? ` · ${order.customer_name}` : ''}${references ? ` · ${references}` : ''}`;
   }
 
   async readImportFile(event: Event): Promise<void> {
