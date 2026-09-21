@@ -14,18 +14,24 @@ class MobileAuthRepository(private val context: Context) {
 
   fun hasSession(): Boolean = SupabaseProvider.client?.auth?.currentSessionOrNull() != null
 
-  suspend fun signIn(email: String, password: String): String? = runCatching {
+  suspend fun signIn(email: String, password: String): String? {
     val client = requireNotNull(SupabaseProvider.client) { "La aplicación no tiene configurado Supabase." }
-    client.auth.signInWith(Email) {
-      this.email = email.trim()
-      this.password = password
+    return try {
+      client.auth.signInWith(Email) {
+        this.email = email.trim()
+        this.password = password
+      }
+      val teamId = Json.decodeFromString<String?>(client.postgrest.rpc("current_team_id").data)
+        ?: error("Este usuario no pertenece a una cuadrilla activa.")
+      sessionStore.saveTeamId(teamId)
+      OfflineSyncScheduler.enqueue(context)
+      null
+    } catch (error: Throwable) {
+      sessionStore.clear()
+      runCatching { client.auth.signOut() }
+      error.message ?: "No se pudo iniciar sesión."
     }
-    val teamId = Json.decodeFromString<String?>(client.postgrest.rpc("current_team_id").data)
-      ?: error("Este usuario no pertenece a una cuadrilla activa.")
-    sessionStore.saveTeamId(teamId)
-    OfflineSyncScheduler.enqueue(context)
-    null
-  }.getOrElse { error -> error.message ?: "No se pudo iniciar sesión." }
+  }
 
   suspend fun signOut() {
     SupabaseProvider.client?.auth?.signOut()

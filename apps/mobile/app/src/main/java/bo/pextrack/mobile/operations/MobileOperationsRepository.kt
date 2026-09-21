@@ -24,17 +24,21 @@ class MobileOperationsRepository(private val context: Context) {
   }
 
   suspend fun changeStatus(workOrderId: String, newStatus: String, reason: String?): String? {
-    val operation = OfflineOperation(
-      id = UUID.randomUUID().toString(),
-      operationType = "work_order_status",
-      ownerUserId = requireUserId(),
-      teamId = requireTeamId(),
-      payload = JSONObject()
-        .put("workOrderId", workOrderId)
-        .put("newStatus", newStatus)
-        .put("reason", reason ?: "")
-        .toString()
-    )
+    val operation = try {
+      OfflineOperation(
+        id = UUID.randomUUID().toString(),
+        operationType = "work_order_status",
+        ownerUserId = requireUserId(),
+        teamId = requireTeamId(),
+        payload = JSONObject()
+          .put("workOrderId", workOrderId)
+          .put("newStatus", newStatus)
+          .put("reason", reason ?: "")
+          .toString()
+      )
+    } catch (error: Throwable) {
+      return error.message ?: "La sesión móvil ya no está disponible. Inicia sesión nuevamente."
+    }
     return try {
       submitStatus(operation)
       null
@@ -50,16 +54,20 @@ class MobileOperationsRepository(private val context: Context) {
     val normalizedTranscript = transcript.trim()
     if (normalizedTranscript.isBlank()) return "Escribe o dicta una observación antes de guardarla."
 
-    val operation = OfflineOperation(
-      id = UUID.randomUUID().toString(),
-      operationType = "work_order_note",
-      ownerUserId = requireUserId(),
-      teamId = requireTeamId(),
-      payload = JSONObject()
-        .put("workOrderId", workOrderId)
-        .put("transcript", normalizedTranscript)
-        .toString()
-    )
+    val operation = try {
+      OfflineOperation(
+        id = UUID.randomUUID().toString(),
+        operationType = "work_order_note",
+        ownerUserId = requireUserId(),
+        teamId = requireTeamId(),
+        payload = JSONObject()
+          .put("workOrderId", workOrderId)
+          .put("transcript", normalizedTranscript)
+          .toString()
+      )
+    } catch (error: Throwable) {
+      return error.message ?: "La sesión móvil ya no está disponible. Inicia sesión nuevamente."
+    }
     return try {
       submitNote(operation)
       "Observación guardada"

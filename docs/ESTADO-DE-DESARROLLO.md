@@ -35,6 +35,7 @@
 - Las pruebas automatizadas cubren explícitamente el umbral de señal vencida y la identificación visual de OTs de emergencia.
 - El contrato remoto de seguridad fue verificado directamente: RLS está activo en las tablas operativas, los RPC de ubicación/reporte/OT asignadas solo son ejecutables por `authenticated` y `anon` no conserva privilegios de acceso.
 - La cola offline Android quedó aislada por usuario y cuadrilla, con migración Room, para evitar que un cambio de sesión envíe operaciones pendientes bajo otra identidad.
+- La aplicación móvil controla la expiración de sesión al cambiar estados o guardar observaciones y limpia sesiones que no logran resolver una cuadrilla activa.
 
 ## Pendientes de puesta en producción
 
