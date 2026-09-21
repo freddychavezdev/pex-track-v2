@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
@@ -21,7 +21,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnDestroy, OnInit {
   title = 'PEX Track';
   readonly auth = inject(AuthService);
   readonly supabase = inject(SupabaseClientService);
@@ -36,6 +36,8 @@ export class AppComponent implements OnInit {
   showNewOrder = false;
   showAssignment = false;
   showAdmin = false;
+  showOrderTable = true;
+  readonly browserOnline = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
   submitting = false;
   parsingImport = false;
   savingImport = false;
@@ -64,13 +66,33 @@ export class AppComponent implements OnInit {
   });
   private realtimeChannel: RealtimeChannel | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly onlineHandler = () => this.browserOnline.set(true);
+  private readonly offlineHandler = () => this.browserOnline.set(false);
   searchTerm = '';
   readonly searchResults = signal<GlobalSearchResult[]>([]);
   readonly searching = signal(false);
 
   ngOnInit(): void {
+    window.addEventListener('online', this.onlineHandler);
+    window.addEventListener('offline', this.offlineHandler);
     void this.refreshOperations();
     if (this.auth.session()) this.startRealtime();
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('online', this.onlineHandler);
+    window.removeEventListener('offline', this.offlineHandler);
+    if (this.realtimeChannel) void this.supabase.client?.removeChannel(this.realtimeChannel);
+  }
+
+  userInitials(): string {
+    const name = this.auth.profile()?.full_name?.trim() || this.auth.session()?.user.email || 'Usuario';
+    return name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
+  }
+
+  roleLabel(): string {
+    const role = this.auth.profile()?.role;
+    return role ? { supervisor: 'Supervisor', coordinator: 'Coordinador', technician: 'Técnico' }[role] : 'Sin sesión';
   }
 
   async submitLogin(): Promise<void> {
