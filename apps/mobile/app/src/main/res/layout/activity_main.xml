@@ -57,6 +57,14 @@
     android:text="Seguimiento detenido"
     android:textColor="#5F7086"
     android:textSize="16sp" />
+  <TextView
+    android:id="@+id/pendingOperationsText"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="6dp"
+    android:text="Sin registros pendientes"
+    android:textColor="#5F7086"
+    android:textSize="14sp" />
   <Button
     android:id="@+id/startTrackingButton"
     android:layout_width="match_parent"

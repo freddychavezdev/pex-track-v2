@@ -2,6 +2,9 @@ package bo.pextrack.mobile
 
 import android.Manifest
 import android.content.Intent
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -21,10 +24,13 @@ import bo.pextrack.mobile.auth.MobileAuthRepository
 import bo.pextrack.mobile.operations.MobileOperationsRepository
 import bo.pextrack.mobile.operations.MobileWorkOrder
 import bo.pextrack.mobile.tracking.LocationTrackingService
+import bo.pextrack.mobile.data.PexTrackDatabase
+import bo.pextrack.mobile.sync.OfflineSyncScheduler
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
   private lateinit var statusText: TextView
+  private lateinit var pendingOperationsText: TextView
   private lateinit var loginButton: Button
   private lateinit var emailInput: EditText
   private lateinit var passwordInput: EditText
@@ -32,6 +38,18 @@ class MainActivity : AppCompatActivity() {
   private lateinit var workOrdersContainer: LinearLayout
   private var speechRecognizer: SpeechRecognizer? = null
   private var activeTranscriptInput: EditText? = null
+  private lateinit var connectivityManager: ConnectivityManager
+  private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+    override fun onAvailable(network: Network) {
+      OfflineSyncScheduler.enqueue(this@MainActivity)
+      runOnUiThread { showStatus("Conexión recuperada; sincronizando registros pendientes…") }
+      refreshPendingOperations()
+    }
+
+    override fun onLost(network: Network) {
+      runOnUiThread { showStatus("Sin conexión: los cambios se guardarán localmente") }
+    }
+  }
   private val authRepository by lazy { MobileAuthRepository(this) }
   private val operationsRepository by lazy { MobileOperationsRepository(this) }
 
@@ -65,11 +83,14 @@ class MainActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
     statusText = findViewById(R.id.statusText)
+    pendingOperationsText = findViewById(R.id.pendingOperationsText)
     loginButton = findViewById(R.id.loginButton)
     emailInput = findViewById(R.id.emailInput)
     passwordInput = findViewById(R.id.passwordInput)
     suspensionReasonInput = findViewById(R.id.suspensionReasonInput)
     workOrdersContainer = findViewById(R.id.workOrdersContainer)
+    connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    connectivityManager.registerDefaultNetworkCallback(networkCallback)
     loginButton.setOnClickListener { signIn() }
     findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
     findViewById<Button>(R.id.refreshWorkOrdersButton).setOnClickListener { loadWorkOrders() }
@@ -84,6 +105,7 @@ class MainActivity : AppCompatActivity() {
       }
     } else null
     refreshSessionStatus()
+    refreshPendingOperations()
   }
 
   private fun signIn() {
@@ -161,6 +183,13 @@ class MainActivity : AppCompatActivity() {
     statusText.text = message
   }
 
+  private fun refreshPendingOperations() {
+    lifecycleScope.launch {
+      val count = PexTrackDatabase.get(this@MainActivity).offlineOperationDao().pendingCount()
+      pendingOperationsText.text = if (count == 0) "Sin registros pendientes" else "$count registro(s) pendiente(s) de sincronización"
+    }
+  }
+
   private fun loadWorkOrders() {
     if (!authRepository.hasSession()) {
       showStatus("Inicia sesión para consultar tus OTs asignadas")
@@ -174,6 +203,7 @@ class MainActivity : AppCompatActivity() {
           showStatus(if (orders.isEmpty()) "No tienes OTs activas asignadas" else "${orders.size} OT(s) activa(s) asignada(s)")
         }
         .onFailure { error -> showStatus(error.message ?: "No se pudieron cargar las OTs") }
+      refreshPendingOperations()
     }
   }
 
@@ -343,6 +373,7 @@ class MainActivity : AppCompatActivity() {
   }
 
   override fun onDestroy() {
+    runCatching { connectivityManager.unregisterNetworkCallback(networkCallback) }
     speechRecognizer?.cancel()
     speechRecognizer?.destroy()
     speechRecognizer = null
