@@ -48,6 +48,19 @@ class MainActivity : AppCompatActivity() {
     if (granted) startDictation() else showStatus("Se necesita permiso de micrófono para transcribir la observación")
   }
 
+  private val backgroundLocationPermissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) { granted ->
+    if (granted) {
+      startTracking()
+    } else {
+      // A foreground service can still start with foreground location access,
+      // but Android may limit delivery after the app leaves the foreground.
+      startTracking()
+      showStatus("Seguimiento iniciado. Para máxima continuidad, habilita ‘Permitir siempre’ en permisos de ubicación.")
+    }
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
@@ -117,7 +130,7 @@ class MainActivity : AppCompatActivity() {
       return
     }
     if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-      startTracking()
+      requestBackgroundLocationIfNeeded()
       return
     }
     val permissions = buildList {
@@ -126,6 +139,17 @@ class MainActivity : AppCompatActivity() {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
     }
     locationPermissionLauncher.launch(permissions.toTypedArray())
+  }
+
+  private fun requestBackgroundLocationIfNeeded() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+      ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
+    ) {
+      showStatus("Autoriza ‘Permitir siempre’ para mantener la ubicación con la pantalla bloqueada")
+      backgroundLocationPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    } else {
+      startTracking()
+    }
   }
 
   private fun startTracking() {
