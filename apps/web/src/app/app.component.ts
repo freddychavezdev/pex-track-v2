@@ -1,9 +1,10 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
-import { GlobalSearchResult, OperationalMapMarker, TeamSummary, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
+import { GlobalSearchResult, OperationalMapMarker, TeamSummary, WorkOrderHistoryRecord, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
 import { ReportsService } from './core/services/reports.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
@@ -17,7 +18,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent, AdminPanelComponent],
+  imports: [DatePipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent, AdminPanelComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -37,6 +38,11 @@ export class AppComponent implements OnDestroy, OnInit {
   showAssignment = false;
   showAdmin = false;
   showOrderTable = true;
+  showHistory = false;
+  historyLoading = false;
+  historyError = '';
+  selectedHistoryOrder: WorkOrderSummary | null = null;
+  readonly orderHistory = signal<WorkOrderHistoryRecord[]>([]);
   readonly browserOnline = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
   submitting = false;
   parsingImport = false;
@@ -208,6 +214,28 @@ export class AppComponent implements OnDestroy, OnInit {
     this.assignmentTeamId = order.assigned_team_id ?? '';
     this.assignmentError = '';
     this.showAssignment = true;
+  }
+
+  async openHistory(order: WorkOrderSummary): Promise<void> {
+    if (!this.auth.session()) return;
+    this.selectedHistoryOrder = order;
+    this.showHistory = true;
+    this.historyLoading = true;
+    this.historyError = '';
+    this.orderHistory.set([]);
+    try {
+      this.orderHistory.set(await this.workOrders.historyForOrder(order.id));
+    } catch (error) {
+      this.historyError = error instanceof Error ? error.message : 'No se pudo cargar el historial de la OT.';
+    } finally {
+      this.historyLoading = false;
+    }
+  }
+
+  closeHistory(): void {
+    this.showHistory = false;
+    this.selectedHistoryOrder = null;
+    this.orderHistory.set([]);
   }
 
   async saveAssignment(): Promise<void> {

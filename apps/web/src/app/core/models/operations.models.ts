@@ -59,6 +59,16 @@ export interface WorkOrderSummary {
   box?: { code: string } | null;
 }
 
+export interface WorkOrderHistoryRecord {
+  id: number;
+  previous_status: WorkOrderStatus | null;
+  new_status: WorkOrderStatus;
+  reason: string | null;
+  changed_at: string;
+  changed_by: string | null;
+  actor?: { full_name: string } | null;
+}
+
 export interface TeamSummary {
   id: string;
   code: string;

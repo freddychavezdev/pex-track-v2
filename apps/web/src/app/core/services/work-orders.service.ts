@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { WorkOrderImportRow, WorkOrderSummary } from '../models/operations.models';
+import { WorkOrderHistoryRecord, WorkOrderImportRow, WorkOrderSummary } from '../models/operations.models';
 import { SupabaseClientService } from './supabase-client.service';
 
 @Injectable({ providedIn: 'root' })
@@ -48,6 +48,16 @@ export class WorkOrdersService {
       .update({ assigned_team_id: teamId })
       .eq('id', workOrderId);
     if (error) throw error;
+  }
+
+  async historyForOrder(workOrderId: string): Promise<WorkOrderHistoryRecord[]> {
+    const { data, error } = await this.supabase.requireClient()
+      .from('work_order_status_history')
+      .select('id, previous_status, new_status, reason, changed_at, changed_by, actor:profiles!work_order_status_history_changed_by_fkey(full_name)')
+      .eq('work_order_id', workOrderId)
+      .order('changed_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((row: any) => ({ ...row, actor: row.actor?.[0] ?? row.actor ?? null })) as WorkOrderHistoryRecord[];
   }
 
   async createManual(input: { code: string; customerName: string; customerPhone: string; address: string; taskType: WorkOrderImportRow['taskType']; priority: number; scheduledFor: string; latitude: number | null; longitude: number | null }): Promise<void> {
