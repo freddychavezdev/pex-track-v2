@@ -10,6 +10,7 @@ data class MobileWorkOrder(
   val task_type: String,
   val status: String,
   val priority: Int,
+  val is_emergency: Boolean = false,
   val scheduled_for: String,
   val suspension_reason: String? = null,
   val latest_note: String? = null,

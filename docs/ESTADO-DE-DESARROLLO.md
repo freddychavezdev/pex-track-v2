@@ -30,6 +30,7 @@
 - Secuencia de permisos Android corregida para Android 13+: ubicación y notificaciones se solicitan de forma independiente y el foreground service se inicia solo después de validar el permiso efectivo.
 - El acceso web rechaza y cierra automáticamente sesiones asociadas a perfiles inactivos, además de mantener la protección RLS en las operaciones.
 - Las OTs manuales pueden marcarse explícitamente como emergencias; Supabase conserva el indicador y fuerza prioridad 1 para su despacho.
+- La proyección móvil `my_assigned_work_orders()` incluye el indicador de emergencia y Android lo muestra al técnico junto a la prioridad.
 
 ## Pendientes de puesta en producción
 
