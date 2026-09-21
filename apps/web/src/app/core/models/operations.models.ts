@@ -69,6 +69,11 @@ export interface WorkOrderHistoryRecord {
   actor?: { full_name: string } | null;
 }
 
+export interface SuggestedRouteStop {
+  order: WorkOrderSummary;
+  distanceFromPreviousKm: number | null;
+}
+
 export interface TeamSummary {
   id: string;
   code: string;

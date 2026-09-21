@@ -1,10 +1,10 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
-import { GlobalSearchResult, OperationalMapMarker, TeamSummary, WorkOrderHistoryRecord, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
+import { GlobalSearchResult, OperationalMapMarker, SuggestedRouteStop, TeamSummary, WorkOrderHistoryRecord, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
 import { ReportsService } from './core/services/reports.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
@@ -18,7 +18,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 
 @Component({
   selector: 'app-root',
-  imports: [DatePipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent, AdminPanelComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent, AdminPanelComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -39,10 +39,13 @@ export class AppComponent implements OnDestroy, OnInit {
   showAdmin = false;
   showOrderTable = true;
   showHistory = false;
+  showRouteSuggestion = false;
   historyLoading = false;
   historyError = '';
   selectedHistoryOrder: WorkOrderSummary | null = null;
+  selectedRouteTeam: OperationalMapMarker | null = null;
   readonly orderHistory = signal<WorkOrderHistoryRecord[]>([]);
+  readonly suggestedRoute = signal<SuggestedRouteStop[]>([]);
   readonly browserOnline = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
   submitting = false;
   parsingImport = false;
@@ -236,6 +239,48 @@ export class AppComponent implements OnDestroy, OnInit {
     this.showHistory = false;
     this.selectedHistoryOrder = null;
     this.orderHistory.set([]);
+  }
+
+  openSuggestedRoute(team: OperationalMapMarker): void {
+    this.selectedRouteTeam = team;
+    this.showRouteSuggestion = true;
+    const coordinates = new Map(this.mapMarkers().filter((marker) => marker.marker_type === 'work_order').map((marker) => [marker.marker_id, marker]));
+    const remaining = this.orders().filter((order) => order.assigned_team_id === team.marker_id);
+    const route: SuggestedRouteStop[] = [];
+    let current = team;
+    while (remaining.length) {
+      let nearestIndex = -1;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+      remaining.forEach((order, index) => {
+        const marker = coordinates.get(order.id);
+        if (!marker) return;
+        const distance = this.distanceKm(current.latitude, current.longitude, marker.latitude, marker.longitude);
+        if (distance < nearestDistance) { nearestDistance = distance; nearestIndex = index; }
+      });
+      if (nearestIndex < 0) {
+        remaining.forEach((order) => route.push({ order, distanceFromPreviousKm: null }));
+        break;
+      }
+      const [order] = remaining.splice(nearestIndex, 1);
+      const marker = coordinates.get(order.id)!;
+      route.push({ order, distanceFromPreviousKm: nearestDistance });
+      current = marker;
+    }
+    this.suggestedRoute.set(route);
+  }
+
+  closeSuggestedRoute(): void {
+    this.showRouteSuggestion = false;
+    this.selectedRouteTeam = null;
+    this.suggestedRoute.set([]);
+  }
+
+  private distanceKm(latitudeA: number, longitudeA: number, latitudeB: number, longitudeB: number): number {
+    const radians = (value: number) => value * Math.PI / 180;
+    const deltaLatitude = radians(latitudeB - latitudeA);
+    const deltaLongitude = radians(longitudeB - longitudeA);
+    const a = Math.sin(deltaLatitude / 2) ** 2 + Math.cos(radians(latitudeA)) * Math.cos(radians(latitudeB)) * Math.sin(deltaLongitude / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
   async saveAssignment(): Promise<void> {

@@ -25,6 +25,7 @@
 - La importación de OTs ahora persiste y valida las referencias de zona, nodo y caja de distribución, evitando perder la relación con la infraestructura de red.
 - La consola permite consultar el historial de cambios de estado de cada OT con fecha, responsable y motivo de suspensión cuando corresponde.
 - Política remota de perfiles verificada en Supabase para que supervisor/coordinador puedan resolver nombres de responsables sin exponer el directorio a usuarios no autorizados.
+- Propuesta de ruta disponible por cuadrilla, ordenando sus OTs georreferenciadas desde la última posición conocida mediante vecino más cercano y mostrando distancia aproximada sin tráfico.
 
 ## Pendientes de puesta en producción
 
