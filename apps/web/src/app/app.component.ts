@@ -202,18 +202,30 @@ export class AppComponent implements OnInit {
       : orders.filter((order) => order.status === this.activeOrderFilter);
   }
 
+  activeTeamMarkers(): OperationalMapMarker[] {
+    return this.mapMarkers().filter((marker) => marker.marker_type === 'team');
+  }
+
+  signalLabel(observedAt: string): string {
+    if (!observedAt) return 'Sin señal';
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(observedAt).getTime()) / 1000));
+    if (elapsedSeconds < 60) return `Hace ${elapsedSeconds} s`;
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+    return `Hace ${elapsedMinutes} min`;
+  }
+
   orderCount(status?: WorkOrderStatus): number {
     return status ? this.orders().filter((order) => order.status === status).length : this.orders().length;
   }
 
-  statusLabel(status: WorkOrderStatus): string {
+  statusLabel(status: WorkOrderStatus | string): string {
     return {
       pending: 'Pendiente',
       en_route: 'En camino',
       in_progress: 'En progreso',
       completed: 'Completada',
       suspended: 'Suspendida'
-    }[status];
+    }[status as WorkOrderStatus] ?? status;
   }
 
   taskLabel(order: WorkOrderSummary): string {
