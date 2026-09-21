@@ -18,3 +18,9 @@ El proyecto no utiliza claves secretas en los clientes. Las operaciones privileg
 La integración continua compila el panel web y la aplicación Android en cada cambio. Vercel publica únicamente `apps/web`; la aplicación Android se distribuye mediante un flujo separado de compilación y firma.
 
 La autenticación, asignación de cuadrilla y sincronización idempotente con Supabase están descritas en [docs/CONFIGURACION-SUPABASE-ANDROID.md](docs/CONFIGURACION-SUPABASE-ANDROID.md).
+
+## Publicación web en Vercel
+
+Importe el repositorio `freddychavezdev/pex-track-v2` en Vercel usando la raíz del repositorio. El archivo `vercel.json` ya configura la instalación y compilación desde `apps/web`. La aplicación usa la URL y la clave publicable configuradas en `apps/web/src/environments/environment.ts`; si se decide externalizarlas durante el pipeline, use únicamente `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`, nunca una clave `service_role`.
+
+La publicación de Vercel cubre únicamente el panel web. El APK Android se genera mediante GitHub Actions y requiere un proceso separado de firma y distribución.
