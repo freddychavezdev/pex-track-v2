@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ButtonDirective } from 'primeng/button';
+import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
 
 @Component({
   selector: 'app-root',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ButtonDirective, InputText],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
