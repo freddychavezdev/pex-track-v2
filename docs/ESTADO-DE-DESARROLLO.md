@@ -28,6 +28,7 @@
 - Propuesta de ruta disponible por cuadrilla, ordenando sus OTs georreferenciadas desde la última posición conocida mediante vecino más cercano y mostrando distancia aproximada sin tráfico.
 - CI de GitHub configurado para conservar el APK release sin firmar como artefacto de cada ejecución exitosa; la firma sigue separada y requiere la keystore oficial.
 - CI de GitHub ampliado con una base Supabase efímera y la suite pgTAP del contrato de seguridad; el reset local ya cuenta con `supabase/seed.sql` explícito sin datos de demostración.
+- La Edge Function remota `admin-users` está activa en Supabase con `verify_jwt=true`; además conserva la validación interna de sesión, rol supervisor y perfil activo.
 - Secuencia de permisos Android corregida para Android 13+: ubicación y notificaciones se solicitan de forma independiente y el foreground service se inicia solo después de validar el permiso efectivo.
 - El acceso web rechaza y cierra automáticamente sesiones asociadas a perfiles inactivos, además de mantener la protección RLS en las operaciones.
 - Las OTs manuales pueden marcarse explícitamente como emergencias; Supabase conserva el indicador y fuerza prioridad 1 para su despacho.
