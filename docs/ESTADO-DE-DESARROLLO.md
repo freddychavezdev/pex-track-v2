@@ -10,6 +10,7 @@
 - RLS inicial para perfiles, operaciones, órdenes, posiciones e historial.
 - Cliente Supabase, sesión persistente y formulario de acceso web.
 - RPCs protegidos para ubicación móvil y cambio de estado de OT.
+- Importación y prevalidación de OTs desde CSV, XLS y XLSX.
 - Documentación de arquitectura y plan de implementación.
 
 ## Siguiente vertical funcional
