@@ -1,0 +1,2 @@
+-- PEX Track does not require demo data in the database reset.
+-- Test and production users must be created through Supabase Auth/admin flows.
