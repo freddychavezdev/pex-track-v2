@@ -1,10 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import Aura from '@primeuix/themes/aura';
+import { providePrimeNG } from 'primeng/config';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
+      providers: [provideNoopAnimations(), providePrimeNG({ theme: { preset: Aura } })]
     }).compileComponents();
   });
 
@@ -14,16 +18,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'pex-track-web' title`, () => {
+  it(`should have the 'PEX Track' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('pex-track-web');
+    expect(app.title).toEqual('PEX Track');
   });
 
-  it('should render title', () => {
+  it('should render the monitoring center', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, pex-track-web');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Centro de monitoreo');
   });
 });
