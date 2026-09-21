@@ -1,0 +1,33 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:padding="24dp">
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="PEX Track"
+    android:textColor="#182230"
+    android:textSize="28sp"
+    android:textStyle="bold" />
+  <TextView
+    android:id="@+id/statusText"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:text="Seguimiento detenido"
+    android:textColor="#5F7086"
+    android:textSize="16sp" />
+  <Button
+    android:id="@+id/startTrackingButton"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="32dp"
+    android:text="Iniciar seguimiento" />
+  <Button
+    android:id="@+id/stopTrackingButton"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:text="Detener seguimiento" />
+</LinearLayout>

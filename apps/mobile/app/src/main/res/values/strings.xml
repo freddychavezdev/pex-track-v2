@@ -1,0 +1,6 @@
+<resources>
+  <string name="app_name">PEX Track</string>
+  <string name="tracking_channel_name">Seguimiento de cuadrilla</string>
+  <string name="tracking_notification_title">PEX Track está registrando la ubicación</string>
+  <string name="tracking_notification_text">El seguimiento permanece activo durante la jornada.</string>
+</resources>

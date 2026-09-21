@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .angular/
+**/.gradle/
+**/build/
 .env
 .env.*
 !.env.example
@@ -8,5 +10,6 @@ dist/
 *.jks
 *.apk
 *.aab
+local.properties
 supabase/.temp/
 tmp/

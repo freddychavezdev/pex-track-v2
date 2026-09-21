@@ -11,6 +11,6 @@ Sistema de monitoreo y gestión operativa para la Subárea de Planta Externa.
 
 ## Desarrollo local
 
-El panel web se ejecuta desde `apps/web` con `npm start`. La conexión a Supabase se configura mediante variables `NG_APP_SUPABASE_URL` y `NG_APP_SUPABASE_PUBLISHABLE_KEY`.
+El panel web se ejecuta desde `apps/web` con `npm start`. Para conectar Supabase en desarrollo, copia los valores de `apps/web/src/environments/environment.example.ts` a `environment.ts`; solo debe incluirse la URL del proyecto y la clave publicable.
 
 El proyecto no utiliza claves secretas en los clientes. Las operaciones privilegiadas deben ejecutarse mediante RLS, funciones SQL seguras o Edge Functions.
