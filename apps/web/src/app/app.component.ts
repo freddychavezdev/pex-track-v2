@@ -5,6 +5,7 @@ import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
 import { OperationalMapMarker, WorkOrderImportResult, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
+import { ReportsService } from './core/services/reports.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
 import { WorkOrderImportService } from './core/services/work-order-import.service';
 import { WorkOrdersService } from './core/services/work-orders.service';
@@ -23,13 +24,16 @@ export class AppComponent implements OnInit {
   private readonly importService = inject(WorkOrderImportService);
   private readonly workOrders = inject(WorkOrdersService);
   private readonly operationalMap = inject(OperationalMapService);
+  private readonly reports = inject(ReportsService);
   showLogin = false;
   showImport = false;
   submitting = false;
   parsingImport = false;
   savingImport = false;
+  generatingReport = false;
   loginError = '';
   importError = '';
+  reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
   importDate = new Date().toISOString().slice(0, 10);
   activeOrderFilter: 'all' | WorkOrderStatus = 'all';
@@ -110,6 +114,38 @@ export class AppComponent implements OnInit {
     if (this.mapLoading()) return 'Actualizando ubicaciones y OTs…';
     if (this.mapError()) return this.mapError();
     return 'No hay coordenadas registradas para la fecha operativa.';
+  }
+
+  async generateWeeklyReport(): Promise<void> {
+    if (!this.auth.session() || this.generatingReport) {
+      this.reportMessage = 'Inicia sesión con un rol operativo para generar el reporte.';
+      return;
+    }
+    this.generatingReport = true;
+    this.reportMessage = '';
+    const { startDate, endDate } = this.currentWeekRange();
+    try {
+      const rows = await this.reports.weeklySummary(startDate, endDate);
+      if (!rows.length) {
+        this.reportMessage = 'No hay OTs registradas en la semana seleccionada.';
+        return;
+      }
+      this.reports.downloadWeeklyCsv(rows, startDate, endDate);
+      this.reportMessage = `Reporte descargado: ${startDate} a ${endDate}.`;
+    } catch (error) {
+      this.reportMessage = error instanceof Error ? error.message : 'No se pudo generar el reporte semanal.';
+    } finally {
+      this.generatingReport = false;
+    }
+  }
+
+  private currentWeekRange(): { startDate: string; endDate: string } {
+    const reference = new Date(`${this.importDate}T12:00:00`);
+    const day = reference.getDay();
+    reference.setDate(reference.getDate() + (day === 0 ? -6 : 1 - day));
+    const startDate = reference.toISOString().slice(0, 10);
+    reference.setDate(reference.getDate() + 6);
+    return { startDate, endDate: reference.toISOString().slice(0, 10) };
   }
 
   visibleOrders(): WorkOrderSummary[] {

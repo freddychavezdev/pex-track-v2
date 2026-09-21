@@ -1,5 +1,5 @@
 begin;
-select plan(13);
+select plan(15);
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.work_orders'::regclass),
@@ -52,6 +52,14 @@ select ok(
 select ok(
   not has_function_privilege('anon', 'public.operational_map_snapshot(date)', 'execute'),
   'anonymous users cannot request operational map markers'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.weekly_report_summary(date, date)', 'execute'),
+  'authenticated operations users can request the weekly aggregate report'
+);
+select ok(
+  not has_function_privilege('anon', 'public.weekly_report_summary(date, date)', 'execute'),
+  'anonymous users cannot generate the weekly report'
 );
 
 select * from finish();

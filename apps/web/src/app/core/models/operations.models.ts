@@ -61,3 +61,14 @@ export interface OperationalMapMarker {
   status: string;
   observed_at: string;
 }
+
+export interface WeeklyReportRow {
+  team_code: string;
+  team_id: string | null;
+  total_orders: number;
+  completed_orders: number;
+  active_orders: number;
+  pending_orders: number;
+  suspended_orders: number;
+  completion_rate: number;
+}
