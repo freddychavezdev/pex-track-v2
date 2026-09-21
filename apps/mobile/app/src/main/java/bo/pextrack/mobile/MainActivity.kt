@@ -56,8 +56,8 @@ class MainActivity : AppCompatActivity() {
   private val locationPermissionLauncher = registerForActivityResult(
     ActivityResultContracts.RequestMultiplePermissions()
   ) { permissions ->
-    val preciseGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
-    if (preciseGranted) startTracking() else showStatus("Se requiere ubicación precisa para iniciar el seguimiento")
+    val preciseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    if (preciseGranted) requestBackgroundLocationIfNeeded() else showStatus("Se requiere ubicación precisa para iniciar el seguimiento")
   }
 
   private val microphonePermissionLauncher = registerForActivityResult(
@@ -151,16 +151,17 @@ class MainActivity : AppCompatActivity() {
       showStatus("Inicia sesión antes de activar el seguimiento")
       return
     }
-    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-      requestBackgroundLocationIfNeeded()
-      return
-    }
     val permissions = buildList {
-      add(Manifest.permission.ACCESS_FINE_LOCATION)
-      add(Manifest.permission.ACCESS_COARSE_LOCATION)
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
+      if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        add(Manifest.permission.ACCESS_COARSE_LOCATION)
+      }
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+      ) add(Manifest.permission.POST_NOTIFICATIONS)
     }
-    locationPermissionLauncher.launch(permissions.toTypedArray())
+    if (permissions.isEmpty()) requestBackgroundLocationIfNeeded()
+    else locationPermissionLauncher.launch(permissions.toTypedArray())
   }
 
   private fun requestBackgroundLocationIfNeeded() {

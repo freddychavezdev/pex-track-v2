@@ -27,6 +27,7 @@
 - Política remota de perfiles verificada en Supabase para que supervisor/coordinador puedan resolver nombres de responsables sin exponer el directorio a usuarios no autorizados.
 - Propuesta de ruta disponible por cuadrilla, ordenando sus OTs georreferenciadas desde la última posición conocida mediante vecino más cercano y mostrando distancia aproximada sin tráfico.
 - CI de GitHub configurado para conservar el APK release sin firmar como artefacto de cada ejecución exitosa; la firma sigue separada y requiere la keystore oficial.
+- Secuencia de permisos Android corregida para Android 13+: ubicación y notificaciones se solicitan de forma independiente y el foreground service se inicia solo después de validar el permiso efectivo.
 
 ## Pendientes de puesta en producción
 
