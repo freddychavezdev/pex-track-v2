@@ -96,7 +96,7 @@ export interface WorkOrderImportResult {
   headers: string[];
 }
 
-export type OperationalMapMarkerType = 'team' | 'work_order';
+export type OperationalMapMarkerType = 'team' | 'work_order' | 'network_node' | 'distribution_box';
 
 export interface OperationalMapMarker {
   marker_type: OperationalMapMarkerType;
