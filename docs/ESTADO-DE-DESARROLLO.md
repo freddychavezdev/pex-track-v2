@@ -20,7 +20,7 @@
 - Migraciones aplicadas y verificadas en el proyecto Supabase de producción.
 - CI de GitHub para pruebas/build Angular y generación del APK Android.
 - Consola web ajustada para mostrar el usuario y rol autenticados, reflejar conectividad del navegador y ocultar/mostrar la tabla de OTs según necesidad operativa.
-- Verificación posterior a instalación limpia: build Angular exitoso, 3 pruebas unitarias exitosas y 0 vulnerabilidades en dependencias de producción.
+- Verificación posterior a instalación limpia: build Angular exitoso, 5 pruebas unitarias exitosas y 0 vulnerabilidades en dependencias de producción.
 - Cola móvil offline limitada a 500 operaciones, con detección de conectividad y sincronización automática mediante WorkManager.
 - La importación de OTs ahora persiste y valida las referencias de zona, nodo y caja de distribución, evitando perder la relación con la infraestructura de red.
 - La consola permite consultar el historial de cambios de estado de cada OT con fecha, responsable y motivo de suspensión cuando corresponde.
@@ -32,6 +32,7 @@
 - Las OTs manuales pueden marcarse explícitamente como emergencias; Supabase conserva el indicador y fuerza prioridad 1 para su despacho.
 - La proyección móvil `my_assigned_work_orders()` incluye el indicador de emergencia y Android lo muestra al técnico junto a la prioridad.
 - El panel contabiliza como alerta las OTs suspendidas y las cuadrillas cuya última señal supera 10 minutos, mostrando la antigüedad de la señal vencida.
+- Las pruebas automatizadas cubren explícitamente el umbral de señal vencida y la identificación visual de OTs de emergencia.
 
 ## Pendientes de puesta en producción
 
