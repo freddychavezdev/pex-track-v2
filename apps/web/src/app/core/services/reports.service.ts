@@ -34,7 +34,7 @@ export class ReportsService {
   }
 
   async downloadWeeklyXlsx(rows: WeeklyReportRow[], startDate: string, endDate: string): Promise<void> {
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@e965/xlsx');
     const worksheet = XLSX.utils.json_to_sheet(rows.map((row) => ({
       Cuadrilla: row.team_code,
       'Total OTs': row.total_orders,

@@ -23,7 +23,7 @@ export class WorkOrderImportService {
 
   async parse(file: File, defaultDate: string): Promise<WorkOrderImportResult> {
     this.assertSupportedFile(file);
-    const XLSX = await import('xlsx');
+    const XLSX = await import('@e965/xlsx');
     const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
     const firstSheet = workbook.SheetNames[0];
     if (!firstSheet) throw new Error('El archivo no contiene hojas con datos.');
@@ -136,7 +136,7 @@ export class WorkOrderImportService {
     return parsed;
   }
 
-  private toIsoDate(value: unknown, xlsx: typeof import('xlsx')): string | null {
+  private toIsoDate(value: unknown, xlsx: typeof import('@e965/xlsx')): string | null {
     if (!value) return null;
     if (value instanceof Date && !Number.isNaN(value.valueOf())) return value.toISOString().slice(0, 10);
     if (typeof value === 'number') {
