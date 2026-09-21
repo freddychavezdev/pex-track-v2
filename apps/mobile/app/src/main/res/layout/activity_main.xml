@@ -11,10 +11,46 @@
     android:textSize="28sp"
     android:textStyle="bold" />
   <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="20dp"
+    android:text="Acceso de técnico"
+    android:textColor="#182230"
+    android:textSize="18sp"
+    android:textStyle="bold" />
+  <EditText
+    android:id="@+id/emailInput"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:autofillHints="emailAddress"
+    android:hint="Correo institucional"
+    android:inputType="textEmailAddress" />
+  <EditText
+    android:id="@+id/passwordInput"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:autofillHints="password"
+    android:hint="Contraseña"
+    android:inputType="textPassword" />
+  <Button
+    android:id="@+id/loginButton"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:text="Iniciar sesión" />
+  <Button
+    android:id="@+id/signOutButton"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="4dp"
+    android:text="Cerrar sesión" />
+  <TextView
     android:id="@+id/statusText"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
+    android:layout_marginTop="16dp"
     android:text="Seguimiento detenido"
     android:textColor="#5F7086"
     android:textSize="16sp" />

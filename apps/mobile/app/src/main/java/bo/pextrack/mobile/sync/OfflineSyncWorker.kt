@@ -3,16 +3,46 @@ package bo.pextrack.mobile.sync
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import bo.pextrack.mobile.auth.SupabaseProvider
+import bo.pextrack.mobile.auth.TeamSessionStore
 import bo.pextrack.mobile.data.PexTrackDatabase
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import org.json.JSONObject
+import java.time.Instant
 
 class OfflineSyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
   override suspend fun doWork(): Result {
-    val pending = PexTrackDatabase.get(applicationContext).offlineOperationDao().nextBatch(50)
+    val database = PexTrackDatabase.get(applicationContext)
+    val pending = database.offlineOperationDao().nextBatch(50)
     if (pending.isEmpty()) return Result.success()
 
-    // The Supabase authenticated client is injected after login is implemented.
-    // Keep each event until the server acknowledges its client event ID; this makes
-    // retries safe when the network fails after the request reaches the server.
-    return Result.retry()
+    val client = SupabaseProvider.client ?: return Result.failure()
+    if (client.auth.currentSessionOrNull() == null) return Result.failure()
+    val teamId = TeamSessionStore(applicationContext).currentTeamId() ?: return Result.failure()
+
+    return runCatching {
+      pending.forEach { operation ->
+        if (operation.operationType != "team_location") return Result.failure()
+        val payload = JSONObject(operation.payload)
+        client.postgrest.rpc(
+          "submit_team_location",
+          buildJsonObject {
+            put("p_team_id", teamId)
+            put("p_latitude", payload.getDouble("latitude"))
+            put("p_longitude", payload.getDouble("longitude"))
+            put("p_accuracy_meters", payload.getDouble("accuracyMeters"))
+            put("p_heading_degrees", payload.getDouble("headingDegrees"))
+            put("p_speed_mps", payload.getDouble("speedMps"))
+            put("p_recorded_at", Instant.ofEpochMilli(payload.getLong("recordedAt")).toString())
+            put("p_client_event_id", operation.id)
+          }
+        )
+        database.offlineOperationDao().deleteByIds(listOf(operation.id))
+      }
+      Result.success()
+    }.getOrElse { Result.retry() }
   }
 }

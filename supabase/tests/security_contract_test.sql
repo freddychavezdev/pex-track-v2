@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(11);
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.work_orders'::regclass),
@@ -36,6 +36,14 @@ select ok(
 select ok(
   not has_function_privilege('anon', 'public.update_my_work_order_status(uuid, public.work_order_status, text, uuid)', 'execute'),
   'anonymous users cannot update work order state'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.current_team_id()', 'execute'),
+  'authenticated technicians can resolve only their current team through the controlled helper'
+);
+select ok(
+  not has_function_privilege('anon', 'public.current_team_id()', 'execute'),
+  'anonymous users cannot resolve team membership'
 );
 
 select * from finish();
