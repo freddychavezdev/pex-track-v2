@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { WeeklyReportRow } from '../models/operations.models';
+import { WeeklyDictationRow, WeeklyReportRow } from '../models/operations.models';
 import { SupabaseClientService } from './supabase-client.service';
 
 @Injectable({ providedIn: 'root' })
@@ -13,7 +13,25 @@ export class ReportsService {
     return (data ?? []) as WeeklyReportRow[];
   }
 
-  downloadWeeklyCsv(rows: WeeklyReportRow[], startDate: string, endDate: string): void {
+  /** Transcriptions saved by technicians. Audio itself is never retained. */
+  async weeklyDictations(startDate: string, endDate: string): Promise<WeeklyDictationRow[]> {
+    const { data, error } = await this.supabase.requireClient()
+      .from('work_orders')
+      .select('code, team:teams(code), notes:work_order_notes(transcript, created_at)')
+      .gte('scheduled_for', startDate)
+      .lte('scheduled_for', endDate)
+      .order('scheduled_for', { ascending: true })
+      .order('created_at', { foreignTable: 'work_order_notes', ascending: true });
+    if (error) throw error;
+    return (data ?? []).flatMap((order: any) => (order.notes ?? []).map((note: any) => ({
+      workOrderCode: order.code,
+      teamCode: order.team?.code ?? 'SIN_ASIGNAR',
+      createdAt: note.created_at,
+      transcript: note.transcript
+    } satisfies WeeklyDictationRow)));
+  }
+
+  downloadWeeklyCsv(rows: WeeklyReportRow[], dictations: WeeklyDictationRow[], startDate: string, endDate: string): void {
     const headings = ['Cuadrilla', 'Total OTs', 'Completadas', 'En ejecución', 'Pendientes', 'Suspendidas', 'Cumplimiento (%)'];
     const values = rows.map((row) => [
       row.team_code,
@@ -24,7 +42,10 @@ export class ReportsService {
       row.suspended_orders,
       row.completion_rate
     ]);
-    const csv = [headings, ...values].map((line) => line.map((value) => this.escapeCsv(value)).join(';')).join('\r\n');
+    const dictationHeadings = ['OT', 'Cuadrilla', 'Fecha y hora', 'Dictado / observación transcrita'];
+    const dictationValues = dictations.map((item) => [item.workOrderCode, item.teamCode, this.formatDate(item.createdAt), item.transcript]);
+    const csv = [headings, ...values, [], ['DICTADOS Y OBSERVACIONES GUARDADOS'], dictationHeadings, ...dictationValues]
+      .map((line) => line.map((value) => this.escapeCsv(value)).join(';')).join('\r\n');
     const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -33,7 +54,7 @@ export class ReportsService {
     URL.revokeObjectURL(url);
   }
 
-  async downloadWeeklyXlsx(rows: WeeklyReportRow[], startDate: string, endDate: string): Promise<void> {
+  async downloadWeeklyXlsx(rows: WeeklyReportRow[], dictations: WeeklyDictationRow[], startDate: string, endDate: string): Promise<void> {
     const XLSX = await import('@e965/xlsx');
     const worksheet = XLSX.utils.json_to_sheet(rows.map((row) => ({
       Cuadrilla: row.team_code,
@@ -46,10 +67,17 @@ export class ReportsService {
     })));
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte semanal');
+    const dictationSheet = XLSX.utils.json_to_sheet(dictations.map((item) => ({
+      OT: item.workOrderCode,
+      Cuadrilla: item.teamCode,
+      'Fecha y hora': this.formatDate(item.createdAt),
+      'Dictado / observación transcrita': item.transcript
+    })));
+    XLSX.utils.book_append_sheet(workbook, dictationSheet, 'Dictados guardados');
     XLSX.writeFile(workbook, `pex-track-reporte-semanal-${startDate}-${endDate}.xlsx`);
   }
 
-  async downloadWeeklyPdf(rows: WeeklyReportRow[], startDate: string, endDate: string): Promise<void> {
+  async downloadWeeklyPdf(rows: WeeklyReportRow[], dictations: WeeklyDictationRow[], startDate: string, endDate: string): Promise<void> {
     const { jsPDF } = await import('jspdf');
     const document = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const columns = ['Cuadrilla', 'Total', 'Completadas', 'En ejecución', 'Pendientes', 'Suspendidas', 'Cumplimiento'];
@@ -79,7 +107,35 @@ export class ReportsService {
       document.line(left, y + 3, left + widths.reduce((sum, width) => sum + width, 0), y + 3);
       y += 8;
     });
+    document.addPage();
+    y = 18;
+    document.setFontSize(16);
+    document.text('PEX Track - Dictados y observaciones', left, y);
+    document.setFontSize(9);
+    document.text(`Periodo: ${startDate} a ${endDate}`, left, y + 7);
+    y += 18;
+    if (!dictations.length) {
+      document.setFontSize(11);
+      document.text('No hay dictados u observaciones guardados en este periodo.', left, y);
+    }
+    dictations.forEach((item) => {
+      if (y > 185) { document.addPage(); y = 18; }
+      document.setFontSize(10);
+      document.setTextColor(29, 93, 186);
+      document.text(`${item.workOrderCode} · ${item.teamCode} · ${this.formatDate(item.createdAt)}`, left, y);
+      document.setTextColor(23, 37, 58);
+      document.setFontSize(9);
+      const lines = document.splitTextToSize(item.transcript, 255);
+      document.text(lines, left, y + 6);
+      y += 10 + lines.length * 4;
+      document.setDrawColor(225, 231, 239);
+      document.line(left, y - 3, 282, y - 3);
+    });
     document.save(`pex-track-reporte-semanal-${startDate}-${endDate}.pdf`);
+  }
+
+  private formatDate(value: string): string {
+    return new Intl.DateTimeFormat('es-BO', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
   }
 
   private escapeCsv(value: string | number): string {

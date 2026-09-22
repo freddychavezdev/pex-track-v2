@@ -9,6 +9,8 @@ import android.net.Network
 import android.net.Uri
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -331,9 +333,11 @@ class MainActivity : AppCompatActivity() {
     cancelActiveDictation()
     workOrdersContainer.removeAllViews()
     orders.forEach { order ->
+      val statusColor = orderStatusColor(order.status)
+      val routeLabel = order.route_sequence?.let { "Ruta #$it · " }.orEmpty()
       val row = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setBackgroundResource(R.drawable.bg_card)
+        background = workOrderCardBackground(statusColor)
         setPadding(dp(18), dp(18), dp(18), dp(18))
       }
       row.layoutParams = LinearLayout.LayoutParams(
@@ -341,17 +345,26 @@ class MainActivity : AppCompatActivity() {
         LinearLayout.LayoutParams.WRAP_CONTENT
       ).apply { bottomMargin = dp(14) }
       row.addView(TextView(this).apply {
-        val routeLabel = order.route_sequence?.let { "Ruta #$it · " }.orEmpty()
-        text = "$routeLabel${order.code} · ${if (order.is_emergency) "EMERGENCIA · " else ""}Prioridad ${order.priority}"
-        textSize = 17f
-        setTypeface(typeface, android.graphics.Typeface.BOLD)
+        text = "${if (order.is_emergency) "⚡ " else ""}${order.code}"
+        textSize = 21f
+        letterSpacing = 0.015f
+        setTypeface(typeface, Typeface.BOLD)
         setTextColor(Color.parseColor("#182230"))
       })
       row.addView(TextView(this).apply {
-        text = "${taskLabel(order.task_type)} · ${order.address}\nEstado: ${statusLabel(order.status)}"
+        text = "$routeLabel${if (order.is_emergency) "Atención prioritaria · " else ""}Prioridad ${order.priority}"
+        textSize = 13f
+        setTextColor(statusColor)
+        setTypeface(typeface, Typeface.BOLD)
+      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(3) })
+      row.addView(TextView(this).apply {
+        text = "${taskLabel(order.task_type)}\n${order.address}"
         textSize = 15f
         setTextColor(Color.parseColor("#5F7086"))
-      })
+      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(6) })
+      row.addView(statusBadge(statusLabel(order.status), statusColor), LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+      ).apply { topMargin = dp(10) })
       val transcriptInput = EditText(this).apply {
         hint = "Observación de atención o diagnóstico"
         inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
@@ -394,8 +407,14 @@ class MainActivity : AppCompatActivity() {
       ).apply { topMargin = dp(8) })
       val transcriptActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
       val startDictationButton = MaterialButton(this).apply {
-        text = "Iniciar dictado"
+        text = "🎙  Dictar nota"
         setTextSize(14f)
+        setAllCaps(false)
+        backgroundTintList = ColorStateList.valueOf(Color.parseColor("#EAF2FF"))
+        setTextColor(Color.parseColor("#1D5DBA"))
+        strokeColor = ColorStateList.valueOf(Color.parseColor("#AFCBFF"))
+        strokeWidth = dp(1)
+        cornerRadius = dp(14)
         setOnClickListener {
           requestDictation(transcriptInput, dictationStatus, dictationPreview, this)
         }
@@ -404,6 +423,12 @@ class MainActivity : AppCompatActivity() {
       val stopDictationButton = MaterialButton(this).apply {
         text = "Finalizar"
         setTextSize(14f)
+        setAllCaps(false)
+        backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FFF1F0"))
+        setTextColor(Color.parseColor("#B84D4A"))
+        strokeColor = ColorStateList.valueOf(Color.parseColor("#F1B4AE"))
+        strokeWidth = dp(1)
+        cornerRadius = dp(14)
         visibility = View.GONE
         setOnClickListener { finishDictationManually() }
       }
@@ -412,18 +437,34 @@ class MainActivity : AppCompatActivity() {
         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
       ).apply { topMargin = dp(10) })
       row.addView(MaterialButton(this).apply {
-        text = "Guardar observación"
+        text = "Guardar dictado / observación"
         setTextSize(14f)
+        setAllCaps(false)
+        backgroundTintList = ColorStateList.valueOf(Color.parseColor("#2D74DF"))
+        setTextColor(Color.WHITE)
+        cornerRadius = dp(14)
         setOnClickListener { saveNote(order, transcriptInput, noteSyncStatus) }
       }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(8) })
       val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
       allowedTransitions(order.status).forEach { nextStatus ->
-        actions.addView(Button(this).apply {
+        actions.addView(MaterialButton(this).apply {
           text = statusActionLabel(nextStatus)
+          setTextSize(14f)
+          setAllCaps(false)
+          cornerRadius = dp(14)
+          val actionColor = orderActionColor(nextStatus)
+          backgroundTintList = ColorStateList.valueOf(actionColor)
+          setTextColor(Color.WHITE)
+          icon = null
+          contentDescription = "${statusActionLabel(nextStatus)} orden ${order.code}"
           setOnClickListener { changeWorkOrderStatus(order, nextStatus) }
-        })
+        }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { if (nextStatus != allowedTransitions(order.status).last()) rightMargin = dp(8) })
       }
-      row.addView(actions)
+      if (actions.childCount > 0) {
+        row.addView(actions, LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = dp(12) })
+      }
       workOrdersContainer.addView(row)
     }
   }
@@ -462,7 +503,7 @@ class MainActivity : AppCompatActivity() {
       putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
     }
     isDictating = true
-    activeStartDictationButton?.apply { text = "Escuchando…"; isEnabled = false }
+    activeStartDictationButton?.apply { text = "● Escuchando…"; isEnabled = false }
     activeStopDictationButton?.visibility = View.VISIBLE
     activeDictationStatus?.text = "Preparando micrófono… espera la indicación y empieza a hablar."
     activeDictationPreview?.visibility = View.GONE
@@ -480,7 +521,7 @@ class MainActivity : AppCompatActivity() {
   private fun cancelActiveDictation() {
     if (isDictating) speechRecognizer?.cancel()
     isDictating = false
-    activeStartDictationButton?.apply { text = "Iniciar dictado"; isEnabled = true }
+    activeStartDictationButton?.apply { text = "🎙  Dictar nota"; isEnabled = true }
     activeStopDictationButton?.apply { visibility = View.GONE; isEnabled = true }
     activeTranscriptInput = null
     activeDictationStatus = null
@@ -525,7 +566,7 @@ class MainActivity : AppCompatActivity() {
         showStatus("No se pudo obtener una transcripción")
       }
       isDictating = false
-      activeStartDictationButton?.apply { this.text = "Dictar nuevamente"; isEnabled = true }
+      activeStartDictationButton?.apply { this.text = "🎙  Dictar nuevamente"; isEnabled = true }
       activeStopDictationButton?.apply { visibility = View.GONE; isEnabled = true }
     }
     override fun onError(error: Int) {
@@ -538,7 +579,7 @@ class MainActivity : AppCompatActivity() {
       }
       activeDictationStatus?.text = "$message Pulsa Iniciar dictado para reintentar."
       isDictating = false
-      activeStartDictationButton?.apply { text = "Iniciar dictado"; isEnabled = true }
+      activeStartDictationButton?.apply { text = "🎙  Dictar nota"; isEnabled = true }
       activeStopDictationButton?.apply { visibility = View.GONE; isEnabled = true }
       showStatus(message)
     }
@@ -593,10 +634,10 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun statusActionLabel(status: String): String = when (status) {
-    "en_route" -> "En camino"
-    "in_progress" -> "Iniciar"
-    "completed" -> "Completar"
-    "suspended" -> "Suspender"
+    "en_route" -> "↗ En camino"
+    "in_progress" -> "▶ Iniciar atención"
+    "completed" -> "✓ Completar"
+    "suspended" -> "⚠ Suspender"
     else -> status
   }
 
@@ -615,6 +656,41 @@ class MainActivity : AppCompatActivity() {
     "service_transfer" -> "Traslado"
     "network_maintenance" -> "Mantenimiento"
     else -> taskType
+  }
+
+  private fun orderStatusColor(status: String): Int = Color.parseColor(when (status) {
+    "pending" -> "#B7791F"
+    "en_route" -> "#2D74DF"
+    "in_progress" -> "#7C4DCC"
+    "completed" -> "#16855D"
+    "suspended" -> "#C63C3C"
+    else -> "#64748B"
+  })
+
+  private fun orderActionColor(status: String): Int = Color.parseColor(when (status) {
+    "completed" -> "#16855D"
+    "suspended" -> "#C63C3C"
+    "in_progress" -> "#7C4DCC"
+    else -> "#2D74DF"
+  })
+
+  private fun workOrderCardBackground(statusColor: Int): GradientDrawable = GradientDrawable().apply {
+    setColor(Color.WHITE)
+    cornerRadius = dp(20).toFloat()
+    setStroke(dp(2), statusColor)
+  }
+
+  private fun statusBadge(label: String, statusColor: Int): TextView = TextView(this).apply {
+    text = "  $label  "
+    textSize = 12f
+    setTypeface(typeface, Typeface.BOLD)
+    setTextColor(statusColor)
+    background = GradientDrawable().apply {
+      setColor(Color.argb(25, Color.red(statusColor), Color.green(statusColor), Color.blue(statusColor)))
+      cornerRadius = dp(12).toFloat()
+      setStroke(dp(1), statusColor)
+    }
+    setPadding(dp(6), dp(4), dp(6), dp(4))
   }
 
   override fun onDestroy() {

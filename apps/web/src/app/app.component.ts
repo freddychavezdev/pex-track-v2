@@ -505,15 +505,18 @@ export class AppComponent implements OnDestroy, OnInit {
     this.reportMessage = '';
     const { startDate, endDate } = this.currentWeekRange();
     try {
-      const rows = await this.reports.weeklySummary(startDate, endDate);
+      const [rows, dictations] = await Promise.all([
+        this.reports.weeklySummary(startDate, endDate),
+        this.reports.weeklyDictations(startDate, endDate)
+      ]);
       if (!rows.length) {
         this.reportMessage = 'No hay OTs registradas en la semana seleccionada.';
         return;
       }
-      if (format === 'xlsx') await this.reports.downloadWeeklyXlsx(rows, startDate, endDate);
-      else if (format === 'pdf') await this.reports.downloadWeeklyPdf(rows, startDate, endDate);
-      else this.reports.downloadWeeklyCsv(rows, startDate, endDate);
-      this.reportMessage = `Reporte ${format.toUpperCase()} descargado: ${startDate} a ${endDate}.`;
+      if (format === 'xlsx') await this.reports.downloadWeeklyXlsx(rows, dictations, startDate, endDate);
+      else if (format === 'pdf') await this.reports.downloadWeeklyPdf(rows, dictations, startDate, endDate);
+      else this.reports.downloadWeeklyCsv(rows, dictations, startDate, endDate);
+      this.reportMessage = `Reporte ${format.toUpperCase()} descargado: ${startDate} a ${endDate}. Incluye ${dictations.length} dictado(s) u observación(es) guardado(s).`;
     } catch (error) {
       this.reportMessage = error instanceof Error ? error.message : 'No se pudo generar el reporte semanal.';
     } finally {

@@ -62,7 +62,9 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
     );
     const teamMarkers = validMarkers.filter((marker) => marker.marker_type === 'team');
     validMarkers.forEach((marker) => {
-      const symbol = marker.marker_type === 'team' ? '⚒' : marker.marker_type === 'network_node' ? 'N' : marker.marker_type === 'distribution_box' ? 'B' : 'OT';
+      // A team is operationally represented by its assigned vehicle.  A van is
+      // easier to distinguish at a glance than a generic team/tool symbol.
+      const symbol = marker.marker_type === 'team' ? '🚐' : marker.marker_type === 'network_node' ? 'N' : marker.marker_type === 'distribution_box' ? 'B' : 'OT';
       const eta = marker.marker_type === 'work_order' ? this.nearestEta(marker, teamMarkers) : null;
       const deviationKm = marker.marker_type === 'team' ? this.deviationKm(marker) : null;
       const markerSize = marker.marker_type === 'team' ? 50 : marker.marker_type === 'network_node' ? 38 : marker.marker_type === 'distribution_box' ? 34 : 30;

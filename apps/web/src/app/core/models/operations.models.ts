@@ -138,6 +138,13 @@ export interface WeeklyReportRow {
   completion_rate: number;
 }
 
+export interface WeeklyDictationRow {
+  workOrderCode: string;
+  teamCode: string;
+  createdAt: string;
+  transcript: string;
+}
+
 export interface GlobalSearchResult {
   kind: 'work_order' | 'technician' | 'vehicle' | 'team';
   id: string;
