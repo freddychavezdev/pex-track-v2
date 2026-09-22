@@ -18,6 +18,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -37,10 +38,15 @@ class MainActivity : AppCompatActivity() {
   private lateinit var statusText: TextView
   private lateinit var pendingOperationsText: TextView
   private lateinit var loginButton: Button
+  private lateinit var signOutButton: Button
+  private lateinit var startTrackingButton: Button
+  private lateinit var stopTrackingButton: Button
+  private lateinit var refreshWorkOrdersButton: Button
   private lateinit var emailInput: EditText
   private lateinit var passwordInput: EditText
   private lateinit var suspensionReasonInput: EditText
   private lateinit var workOrdersContainer: LinearLayout
+  private lateinit var ordersTitle: TextView
   private var speechRecognizer: SpeechRecognizer? = null
   private var activeTranscriptInput: EditText? = null
   private var awaitingBackgroundLocationSettings = false
@@ -97,17 +103,22 @@ class MainActivity : AppCompatActivity() {
     statusText = findViewById(R.id.statusText)
     pendingOperationsText = findViewById(R.id.pendingOperationsText)
     loginButton = findViewById(R.id.loginButton)
+    signOutButton = findViewById(R.id.signOutButton)
+    startTrackingButton = findViewById(R.id.startTrackingButton)
+    stopTrackingButton = findViewById(R.id.stopTrackingButton)
+    refreshWorkOrdersButton = findViewById(R.id.refreshWorkOrdersButton)
     emailInput = findViewById(R.id.emailInput)
     passwordInput = findViewById(R.id.passwordInput)
     suspensionReasonInput = findViewById(R.id.suspensionReasonInput)
     workOrdersContainer = findViewById(R.id.workOrdersContainer)
+    ordersTitle = findViewById(R.id.ordersTitle)
     connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     connectivityManager.registerDefaultNetworkCallback(networkCallback)
     loginButton.setOnClickListener { signIn() }
-    findViewById<Button>(R.id.signOutButton).setOnClickListener { signOut() }
-    findViewById<Button>(R.id.refreshWorkOrdersButton).setOnClickListener { loadWorkOrders() }
-    findViewById<Button>(R.id.startTrackingButton).setOnClickListener { requestPermissionsAndStart() }
-    findViewById<Button>(R.id.stopTrackingButton).setOnClickListener {
+    signOutButton.setOnClickListener { signOut() }
+    refreshWorkOrdersButton.setOnClickListener { loadWorkOrders() }
+    startTrackingButton.setOnClickListener { requestPermissionsAndStart() }
+    stopTrackingButton.setOnClickListener {
       stopService(Intent(this, LocationTrackingService::class.java))
       showStatus("Seguimiento detenido")
     }
@@ -146,6 +157,7 @@ class MainActivity : AppCompatActivity() {
       loginButton.isEnabled = true
       if (error != null) showStatus(error) else {
         passwordInput.setText("")
+        updateSessionUi()
         showStatus("Sesión iniciada. Ya puedes activar el seguimiento de la cuadrilla.")
         loadWorkOrders()
       }
@@ -157,6 +169,7 @@ class MainActivity : AppCompatActivity() {
       stopService(Intent(this@MainActivity, LocationTrackingService::class.java))
       authRepository.signOut()
       workOrdersContainer.removeAllViews()
+      updateSessionUi()
       showStatus("Sesión cerrada y seguimiento detenido")
     }
   }
@@ -167,7 +180,23 @@ class MainActivity : AppCompatActivity() {
       authRepository.hasSession() -> showStatus("Sesión recuperada. Inicia el seguimiento al comenzar la jornada.")
       else -> showStatus("Inicia sesión antes de activar el seguimiento")
     }
+    updateSessionUi()
     if (authRepository.hasSession()) loadWorkOrders()
+  }
+
+  private fun updateSessionUi() {
+    val authenticated = authRepository.hasSession()
+    val operationsVisibility = if (authenticated) View.VISIBLE else View.GONE
+    emailInput.visibility = if (authenticated) View.GONE else View.VISIBLE
+    passwordInput.visibility = if (authenticated) View.GONE else View.VISIBLE
+    loginButton.visibility = if (authenticated) View.GONE else View.VISIBLE
+    signOutButton.visibility = operationsVisibility
+    startTrackingButton.visibility = operationsVisibility
+    stopTrackingButton.visibility = operationsVisibility
+    ordersTitle.visibility = operationsVisibility
+    refreshWorkOrdersButton.visibility = operationsVisibility
+    suspensionReasonInput.visibility = operationsVisibility
+    workOrdersContainer.visibility = operationsVisibility
   }
 
   private fun requestPermissionsAndStart() {

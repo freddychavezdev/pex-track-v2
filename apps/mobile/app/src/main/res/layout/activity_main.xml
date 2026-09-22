@@ -48,6 +48,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="4dp"
+    android:visibility="gone"
     android:text="Cerrar sesión" />
   <TextView
     android:id="@+id/statusText"
@@ -70,26 +71,31 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="32dp"
+    android:visibility="gone"
     android:text="Iniciar seguimiento" />
   <Button
     android:id="@+id/stopTrackingButton"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="12dp"
+    android:visibility="gone"
     android:text="Detener seguimiento" />
   <TextView
+    android:id="@+id/ordersTitle"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_marginTop="28dp"
     android:text="Órdenes asignadas"
     android:textColor="#182230"
     android:textSize="18sp"
+    android:visibility="gone"
     android:textStyle="bold" />
   <Button
     android:id="@+id/refreshWorkOrdersButton"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
+    android:visibility="gone"
     android:text="Actualizar OTs" />
   <EditText
     android:id="@+id/suspensionReasonInput"
@@ -97,11 +103,13 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
     android:hint="Motivo de suspensión (obligatorio al suspender)"
-    android:inputType="textCapSentences|textMultiLine" />
+    android:inputType="textCapSentences|textMultiLine"
+    android:visibility="gone" />
   <LinearLayout
     android:id="@+id/workOrdersContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical" />
+    android:orientation="vertical"
+    android:visibility="gone" />
   </LinearLayout>
 </ScrollView>
