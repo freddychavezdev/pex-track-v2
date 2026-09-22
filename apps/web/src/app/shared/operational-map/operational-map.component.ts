@@ -18,6 +18,8 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
   private leaflet?: typeof Leaflet;
   private map?: Leaflet.Map;
   private markerLayer?: Leaflet.LayerGroup;
+  private baseTileLayer?: Leaflet.TileLayer;
+  private usingFallbackTiles = false;
   showNetworkAssets = false;
 
   async ngAfterViewInit(): Promise<void> {
@@ -26,12 +28,14 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
     const L = await import('leaflet');
     this.leaflet = L;
     this.map = L.map(element, { zoomControl: true }).setView([-16.5, -68.15], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(this.map);
+    this.addBaseTiles();
     this.markerLayer = L.layerGroup().addTo(this.map);
-    this.renderMarkers();
+    this.map.whenReady(() => {
+      requestAnimationFrame(() => {
+        this.map?.invalidateSize(true);
+        this.renderMarkers();
+      });
+    });
   }
 
   ngOnChanges(): void {
@@ -99,6 +103,26 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
     const deltaLongitude = radians(longitudeB - longitudeA);
     const a = Math.sin(deltaLatitude / 2) ** 2 + Math.cos(radians(latitudeA)) * Math.cos(radians(latitudeB)) * Math.sin(deltaLongitude / 2) ** 2;
     return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  private addBaseTiles(): void {
+    const L = this.leaflet;
+    if (!L || !this.map) return;
+    const addOpenStreetMapFallback = () => {
+      if (this.usingFallbackTiles || !this.map) return;
+      this.usingFallbackTiles = true;
+      this.baseTileLayer?.remove();
+      this.baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
+      }).addTo(this.map);
+    };
+    this.baseTileLayer = L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd', maxZoom: 20
+      }
+    ).on('tileerror', addOpenStreetMapFallback).addTo(this.map);
   }
 
   private escapeHtml(value: string): string {
