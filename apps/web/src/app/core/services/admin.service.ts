@@ -16,7 +16,16 @@ export class AdminService {
 
   async createUser(request: CreateUserRequest): Promise<void> {
     const { error } = await this.supabase.requireClient().functions.invoke('admin-users', { body: { action: 'create', ...request } });
-    if (error) throw error;
+    if (error) throw await this.functionError(error);
+  }
+
+  private async functionError(error: any): Promise<Error> {
+    try {
+      const body = error?.context && typeof error.context.json === 'function' ? await error.context.json() : null;
+      const detail = body?.error ?? body?.message;
+      if (detail) return new Error(detail);
+    } catch { /* conserva el mensaje genérico si la respuesta no es JSON */ }
+    return new Error(error?.message || 'No se pudo completar la operación en Supabase.');
   }
 
   async setUserActive(userId: string, active: boolean): Promise<void> {

@@ -45,6 +45,14 @@ export class AdminPanelComponent implements OnInit {
 
   async createUser(): Promise<void> {
     this.message = ''; this.error = '';
+    if (!this.userForm.fullName.trim() || !this.userForm.email.trim()) {
+      this.error = 'Completa el nombre y el correo antes de crear el usuario.';
+      return;
+    }
+    if (this.userForm.password.length < 8) {
+      this.error = 'La contraseña temporal debe tener al menos 8 caracteres. No uses un PIN de 4 dígitos.';
+      return;
+    }
     try {
       await this.service.createUser(this.userForm);
       this.message = 'Usuario creado y habilitado para iniciar sesión.';
