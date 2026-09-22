@@ -7,4 +7,6 @@
   <color name="pex_muted">#64748B</color>
   <color name="pex_info">#EAF2FF</color>
   <color name="pex_border">#DCE5F0</color>
+  <color name="pex_tracking_start">#16855D</color>
+  <color name="pex_tracking_stop">#C63C3C</color>
 </resources>

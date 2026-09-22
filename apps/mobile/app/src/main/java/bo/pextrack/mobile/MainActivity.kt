@@ -3,6 +3,7 @@ package bo.pextrack.mobile
 import android.Manifest
 import android.content.Intent
 import android.content.Context
+import android.content.res.ColorStateList
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.Uri
@@ -42,8 +43,8 @@ class MainActivity : AppCompatActivity() {
   private lateinit var loginCard: LinearLayout
   private lateinit var authenticatedOperations: LinearLayout
   private lateinit var signOutButton: Button
-  private lateinit var startTrackingButton: Button
-  private lateinit var stopTrackingButton: Button
+  private lateinit var trackingToggleButton: MaterialButton
+  private lateinit var trackingActionHint: TextView
   private lateinit var refreshWorkOrdersButton: Button
   private lateinit var emailInput: EditText
   private lateinit var passwordInput: EditText
@@ -59,6 +60,7 @@ class MainActivity : AppCompatActivity() {
   private var dictationPrefix = ""
   private var isDictating = false
   private var awaitingBackgroundLocationSettings = false
+  private var trackingActive = false
   private lateinit var connectivityManager: ConnectivityManager
   private val networkCallback = object : ConnectivityManager.NetworkCallback() {
     override fun onAvailable(network: Network) {
@@ -131,8 +133,8 @@ class MainActivity : AppCompatActivity() {
     loginCard = findViewById(R.id.loginCard)
     authenticatedOperations = findViewById(R.id.authenticatedOperations)
     signOutButton = findViewById(R.id.signOutButton)
-    startTrackingButton = findViewById(R.id.startTrackingButton)
-    stopTrackingButton = findViewById(R.id.stopTrackingButton)
+    trackingToggleButton = findViewById(R.id.trackingToggleButton)
+    trackingActionHint = findViewById(R.id.trackingActionHint)
     refreshWorkOrdersButton = findViewById(R.id.refreshWorkOrdersButton)
     emailInput = findViewById(R.id.emailInput)
     passwordInput = findViewById(R.id.passwordInput)
@@ -144,10 +146,10 @@ class MainActivity : AppCompatActivity() {
     loginButton.setOnClickListener { signIn() }
     signOutButton.setOnClickListener { signOut() }
     refreshWorkOrdersButton.setOnClickListener { loadWorkOrders() }
-    startTrackingButton.setOnClickListener { requestPermissionsAndStart() }
-    stopTrackingButton.setOnClickListener {
-      stopService(Intent(this, LocationTrackingService::class.java))
-      showStatus("Seguimiento detenido")
+    trackingActive = getSharedPreferences("pex_track_ui", MODE_PRIVATE).getBoolean("tracking_active", false)
+    updateTrackingButton()
+    trackingToggleButton.setOnClickListener {
+      if (trackingActive) stopTracking() else requestPermissionsAndStart()
     }
     speechRecognizer = if (SpeechRecognizer.isRecognitionAvailable(this)) {
       SpeechRecognizer.createSpeechRecognizer(this).also { recognizer ->
@@ -193,7 +195,7 @@ class MainActivity : AppCompatActivity() {
 
   private fun signOut() {
     lifecycleScope.launch {
-      stopService(Intent(this@MainActivity, LocationTrackingService::class.java))
+      stopTracking(showMessage = false)
       authRepository.signOut()
       workOrdersContainer.removeAllViews()
       updateSessionUi()
@@ -216,6 +218,7 @@ class MainActivity : AppCompatActivity() {
     loginCard.visibility = if (authenticated) View.GONE else View.VISIBLE
     authenticatedOperations.visibility = if (authenticated) View.VISIBLE else View.GONE
     pendingOperationsText.visibility = if (authenticated) View.VISIBLE else View.GONE
+    if (!authenticated && trackingActive) setTrackingActive(false)
   }
 
   private fun requestPermissionsAndStart() {
@@ -262,7 +265,34 @@ class MainActivity : AppCompatActivity() {
 
   private fun startTracking() {
     ContextCompat.startForegroundService(this, Intent(this, LocationTrackingService::class.java))
+    setTrackingActive(true)
     showStatus("Seguimiento activo: la notificación debe permanecer visible")
+  }
+
+  private fun stopTracking(showMessage: Boolean = true) {
+    stopService(Intent(this, LocationTrackingService::class.java))
+    setTrackingActive(false)
+    if (showMessage) showStatus("Seguimiento detenido. Ya no se enviará tu ubicación.")
+  }
+
+  private fun setTrackingActive(active: Boolean) {
+    trackingActive = active
+    getSharedPreferences("pex_track_ui", MODE_PRIVATE).edit().putBoolean("tracking_active", active).apply()
+    updateTrackingButton()
+  }
+
+  private fun updateTrackingButton() {
+    if (!::trackingToggleButton.isInitialized) return
+    val color = if (trackingActive) R.color.pex_tracking_stop else R.color.pex_tracking_start
+    trackingToggleButton.text = if (trackingActive) "Detener seguimiento" else "Iniciar seguimiento"
+    trackingToggleButton.contentDescription = if (trackingActive) "Detener seguimiento de ubicación" else "Iniciar seguimiento de ubicación"
+    trackingToggleButton.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, color))
+    trackingActionHint.text = if (trackingActive) {
+      "Seguimiento activo. Pulsa para detener el envío de ubicación."
+    } else {
+      "Inicia al comenzar la jornada para compartir la ubicación."
+    }
+    trackingActionHint.setTextColor(ContextCompat.getColor(this, if (trackingActive) R.color.pex_tracking_stop else R.color.pex_muted))
   }
 
   private fun showStatus(message: String) {
