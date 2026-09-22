@@ -50,6 +50,7 @@ export class AppComponent implements OnDestroy, OnInit {
   showHistory = false;
   showRouteSuggestion = false;
   mapExpanded = false;
+  mobileMenuOpen = false;
   adminInitialTab: 'users' | 'technicians' | 'vehicles' | 'teams' | 'audit' = 'users';
   savingRoute = false;
   routeError = '';

@@ -47,6 +47,35 @@
 .map-expand { color:#1d5fae; background:#eaf2ff; border-color:#bcd7fb; font-weight:700; }
 .team-actions { align-items:center; display:flex; gap:13px; }.manage-teams-button { font-weight:700; }
 
+.mobile-topbar { display:flex; align-items:center; gap:12px; }
+.mobile-menu-toggle,.menu-close,.mobile-menu-backdrop { display:none; }
+.nav-section-label { color:#7185a0; font-size:10px; font-weight:700; letter-spacing:1.2px; padding:2px 13px 5px; }
+.nav-item > span:last-child { display:grid; gap:2px; }
+.nav-item > span:last-child small { color:#8191a6; font-size:11px; font-weight:400; }
+.nav-item:hover > span:last-child small,.nav-item.active > span:last-child small { color:#b9d0ef; }
+.nav-item { transition:background .18s ease, color .18s ease; }
+
+@media (max-width:650px) {
+  .mobile-topbar,.mobile-topbar > div { min-width:0; }
+  .mobile-topbar h1 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mobile-menu-toggle { align-items:center; background:#eaf2ff; border:1px solid #cfe0f7; border-radius:10px; cursor:pointer; display:flex; flex:0 0 44px; flex-direction:column; gap:4px; height:44px; justify-content:center; width:44px; }
+  .mobile-menu-toggle span { background:#2d74df; border-radius:2px; display:block; height:2px; width:20px; }
+  .sidebar { background:linear-gradient(165deg,#101f31,#162b43); box-shadow:12px 0 35px rgba(8,23,40,.26); display:flex; flex:0 0 min(86vw,320px); height:100dvh; left:0; padding:24px 15px 18px; position:fixed; top:0; transform:translateX(-105%); transition:transform .22s ease; width:min(86vw,320px); z-index:2600; }
+  .sidebar.mobile-open { transform:translateX(0); }
+  .menu-close { align-items:center; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:8px; color:#d8e5f5; cursor:pointer; display:flex; font-size:22px; height:36px; justify-content:center; margin-left:auto; width:36px; }
+  .brand { padding-bottom:30px; }
+  .nav-section-label { font-size:11px; padding-left:13px; }
+  .nav-item { border:1px solid transparent; font-size:15px; padding:13px 12px; }
+  .nav-item > span:last-child small { font-size:12px; }
+  .nav-item.active { background:linear-gradient(90deg,#2d74df,#245cae); box-shadow:0 6px 16px rgba(20,76,150,.22); }
+  .mobile-menu-backdrop { background:rgba(7,18,31,.48); border:0; display:block; inset:0; position:fixed; z-index:2500; }
+  .top-actions { min-width:0; }
+  .top-actions .icon-button { display:none; }
+  .session-button { min-height:44px; padding-right:7px; }
+  .session-button > span:nth-child(2) { display:none; }
+  .session-button i { margin-left:0; }
+}
+
 /* Acción de sesión: estado, rol y acción quedan claros de un vistazo. */
 .session-button { align-items:center; background:#fff; border:1px solid #d9e4f0; border-radius:10px; color:#2d4561; cursor:pointer; display:flex; gap:9px; min-height:50px; padding:6px 10px 6px 7px; text-align:left; box-shadow:0 2px 8px rgba(29,56,87,.07); }
 .session-button:hover { border-color:#86b5ee; box-shadow:0 4px 12px rgba(45,116,223,.14); }.session-button > span:nth-child(2) { display:grid; gap:1px; }.session-button b { font-size:12px; }.session-button small { color:#72849a; font-size:10px; }.session-button i { color:#2d74df; font-size:17px; font-style:normal; margin-left:3px; }.session-avatar,.session-lock { align-items:center; background:#e9f2ff; border-radius:8px; color:#2d74df; display:flex; font-size:12px; font-weight:800; height:34px; justify-content:center; width:34px; }.session-button.signed-in .session-avatar { background:#dff7ec; color:#16855d; }

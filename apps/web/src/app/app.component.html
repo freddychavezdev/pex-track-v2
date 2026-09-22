@@ -1,18 +1,20 @@
 <div class="app-shell" [class.map-focus-mode]="mapExpanded">
-  <aside class="sidebar">
-    <div class="brand"><div class="brand-mark">PX</div><div><strong>PEX Track</strong><span>Control operativo</span></div></div>
+  <aside class="sidebar" [class.mobile-open]="mobileMenuOpen">
+    <div class="brand"><div class="brand-mark">PX</div><div><strong>PEX Track</strong><span>Control operativo</span></div><button class="menu-close" type="button" aria-label="Cerrar menú" (click)="mobileMenuOpen = false">×</button></div>
     <nav class="nav-list" aria-label="Navegación principal">
-      <a class="nav-item active" href="#monitoring"><span class="nav-icon">⌖</span> Monitoreo</a>
-      <a class="nav-item" href="#orders"><span class="nav-icon">▤</span> Órdenes de trabajo</a>
-      @if (canManageOperations()) { <button class="nav-item nav-button" type="button" (click)="showNewOrder = true"><span class="nav-icon">＋</span> Nueva OT</button> }
-      <a class="nav-item" href="#teams"><span class="nav-icon">♙</span> Cuadrillas</a>
-      <a class="nav-item" href="#reports"><span class="nav-icon">▥</span> Reportes</a>
-      @if (canManageCatalogs()) { <button class="nav-item nav-button" type="button" (click)="showAdmin = true"><span class="nav-icon">⚙</span> Administración</button> }
+      <span class="nav-section-label">OPERACIÓN</span>
+      <a class="nav-item active" href="#monitoring" (click)="mobileMenuOpen = false"><span class="nav-icon">⌖</span><span>Monitoreo<small>Vista general</small></span></a>
+      <a class="nav-item" href="#orders" (click)="mobileMenuOpen = false"><span class="nav-icon">▤</span><span>Órdenes de trabajo<small>Agenda y asignaciones</small></span></a>
+      @if (canManageOperations()) { <button class="nav-item nav-button" type="button" (click)="showNewOrder = true; mobileMenuOpen = false"><span class="nav-icon">＋</span><span>Nueva OT<small>Registrar despacho</small></span></button> }
+      <a class="nav-item" href="#teams" (click)="mobileMenuOpen = false"><span class="nav-icon">♙</span><span>Cuadrillas<small>Personal y vehículos</small></span></a>
+      <a class="nav-item" href="#reports" (click)="mobileMenuOpen = false"><span class="nav-icon">▥</span><span>Reportes<small>Resultados semanales</small></span></a>
+      @if (canManageCatalogs()) { <button class="nav-item nav-button" type="button" (click)="showAdmin = true; mobileMenuOpen = false"><span class="nav-icon">⚙</span><span>Administración<small>Catálogos y usuarios</small></span></button> }
     </nav>
     <div class="sidebar-footer"><div class="connection"><span class="status-dot" [class.online]="browserOnline()" [class.warning-dot]="!browserOnline()"></span><span>{{ browserOnline() ? 'Servicios operativos' : 'Sin conexión' }}</span></div><div class="user-card"><div class="avatar">{{ userInitials() }}</div><div><strong>{{ auth.profile()?.full_name || 'Visitante' }}</strong><span>{{ roleLabel() }}</span></div><span class="more">•••</span></div></div>
   </aside>
+  @if (mobileMenuOpen) { <button class="mobile-menu-backdrop" type="button" aria-label="Cerrar menú" (click)="mobileMenuOpen = false"></button> }
   <main class="content">
-    <header class="topbar"><div><p class="eyebrow">OPERACIÓN DIARIA · {{ importDate }}</p><h1>Centro de monitoreo</h1></div><div class="top-actions"><button class="icon-button" type="button" aria-label="Notificaciones">♢<span class="notification-dot"></span></button>@if (auth.session()) { <button class="session-button signed-in" type="button" (click)="signOut()"><span class="session-avatar">{{ userInitials() }}</span><span><b>{{ roleLabel() }}</b><small>Cerrar sesión</small></span><i>↗</i></button> } @else { <button class="session-button" type="button" (click)="showLogin = true"><span class="session-lock">⌁</span><span><b>Acceso seguro</b><small>Iniciar sesión</small></span><i>→</i></button> }</div></header>
+    <header class="topbar"><div class="mobile-topbar"><button class="mobile-menu-toggle" type="button" aria-label="Abrir menú" [attr.aria-expanded]="mobileMenuOpen" (click)="mobileMenuOpen = true"><span></span><span></span><span></span></button><div><p class="eyebrow">OPERACIÓN DIARIA · {{ importDate }}</p><h1>Centro de monitoreo</h1></div></div><div class="top-actions"><button class="icon-button" type="button" aria-label="Notificaciones">♢<span class="notification-dot"></span></button>@if (auth.session()) { <button class="session-button signed-in" type="button" (click)="signOut()"><span class="session-avatar">{{ userInitials() }}</span><span><b>{{ roleLabel() }}</b><small>Cerrar sesión</small></span><i>↗</i></button> } @else { <button class="session-button" type="button" (click)="showLogin = true"><span class="session-lock">⌁</span><span><b>Acceso seguro</b><small>Iniciar sesión</small></span><i>→</i></button> }</div></header>
     <section class="global-search" aria-label="Búsqueda global"><div class="search-input-wrap"><span>⌕</span><input pInputText [(ngModel)]="searchTerm" (input)="scheduleGlobalSearch()" placeholder="Buscar OT, cliente, técnico, placa o cuadrilla…" /><small>{{ searching() ? 'Buscando…' : 'Búsqueda multicriterio' }}</small></div>@if (searchResults().length) { <div class="search-results">@for (result of searchResults(); track result.kind + result.id) { <button type="button" (click)="searchResults.set([])"><strong>{{ result.title }}</strong><span>{{ result.subtitle }}</span><em>{{ result.kind === 'work_order' ? 'OT' : result.kind === 'technician' ? 'Técnico' : result.kind === 'vehicle' ? 'Vehículo' : 'Cuadrilla' }}</em></button> }</div> }</section>
     @if (canManageCatalogs() && auth.session() && !teams().length) {
       <section class="setup-banner" aria-label="Configuración operativa inicial">
