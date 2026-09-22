@@ -11,6 +11,7 @@ data class MobileWorkOrder(
   val status: String,
   val priority: Int,
   val is_emergency: Boolean = false,
+  val route_sequence: Int? = null,
   val scheduled_for: String,
   val suspension_reason: String? = null,
   val latest_note: String? = null,

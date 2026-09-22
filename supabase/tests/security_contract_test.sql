@@ -1,5 +1,5 @@
 begin;
-select plan(21);
+select plan(24);
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.work_orders'::regclass),
@@ -84,6 +84,18 @@ select ok(
 select ok(
   not has_function_privilege('anon', 'public.add_my_work_order_note(uuid, text, uuid)', 'execute'),
   'anonymous users cannot add work order notes'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.assign_work_order_team(uuid, uuid)', 'execute'),
+  'authenticated operations users can assign work orders through the controlled RPC'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.save_team_route(uuid, date, uuid[])', 'execute'),
+  'authenticated operations users can approve a complete route through the controlled RPC'
+);
+select ok(
+  not has_function_privilege('anon', 'public.save_team_route(uuid, date, uuid[])', 'execute'),
+  'anonymous users cannot approve team routes'
 );
 
 select * from finish();

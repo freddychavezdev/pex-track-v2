@@ -50,6 +50,7 @@ describe('AppComponent', () => {
       status: 'pending',
       priority: 1,
       is_emergency: true,
+      route_sequence: null,
       scheduled_for: '2026-09-21',
       assigned_team_id: null
     };
@@ -62,7 +63,7 @@ describe('AppComponent', () => {
     const order: WorkOrderSummary = {
       id: 'order-1', code: 'OT-001', customer_name: null, address: 'Av. Principal 123',
       task_type: 'technical_assistance', status: 'in_progress', priority: 2,
-      is_emergency: false, scheduled_for: '2026-09-22', assigned_team_id: 'team-1'
+      is_emergency: false, route_sequence: 1, scheduled_for: '2026-09-22', assigned_team_id: 'team-1'
     };
     const team = {
       marker_type: 'team' as const, marker_id: 'team-1', code: 'CUADRILLA-01',
@@ -84,5 +85,28 @@ describe('AppComponent', () => {
 
     expect(app.teamRows()[0].observed_at).toBe('');
     expect(app.alertCount()).toBe(1);
+  });
+
+  it('should let operations reorder a suggested route before approval', () => {
+    const app = TestBed.createComponent(AppComponent).componentInstance;
+    const team = {
+      marker_type: 'team' as const, marker_id: 'team-1', code: 'CUADRILLA-01',
+      label: 'Cuadrilla 01', latitude: -16.5, longitude: -68.15,
+      status: 'available', observed_at: '2026-09-22T00:00:00Z'
+    };
+    app.orders.set([
+      { id: 'order-1', code: 'OT-001', customer_name: null, address: 'Punto 1', task_type: 'technical_assistance', status: 'pending', priority: 3, is_emergency: false, route_sequence: null, scheduled_for: '2026-09-22', assigned_team_id: 'team-1' },
+      { id: 'order-2', code: 'OT-002', customer_name: null, address: 'Punto 2', task_type: 'technical_assistance', status: 'pending', priority: 3, is_emergency: false, route_sequence: null, scheduled_for: '2026-09-22', assigned_team_id: 'team-1' }
+    ]);
+    app.mapMarkers.set([
+      team,
+      { marker_type: 'work_order', marker_id: 'order-1', code: 'OT-001', label: 'Punto 1', latitude: -16.501, longitude: -68.15, status: 'pending', observed_at: '2026-09-22T00:00:00Z' },
+      { marker_type: 'work_order', marker_id: 'order-2', code: 'OT-002', label: 'Punto 2', latitude: -16.51, longitude: -68.15, status: 'pending', observed_at: '2026-09-22T00:00:00Z' }
+    ]);
+
+    app.openSuggestedRoute(team);
+    expect(app.suggestedRoute().map((stop) => stop.order.id)).toEqual(['order-1', 'order-2']);
+    app.moveSuggestedRoute(1, -1);
+    expect(app.suggestedRoute().map((stop) => stop.order.id)).toEqual(['order-2', 'order-1']);
   });
 });

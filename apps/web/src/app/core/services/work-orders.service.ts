@@ -9,8 +9,9 @@ export class WorkOrdersService {
   async listForDay(date: string): Promise<WorkOrderSummary[]> {
     const { data, error } = await this.supabase.requireClient()
       .from('work_orders')
-      .select('id, code, customer_name, address, task_type, status, priority, is_emergency, scheduled_for, assigned_team_id, zone:zones(code), node:network_nodes(code), box:distribution_boxes(code)')
+      .select('id, code, customer_name, address, task_type, status, priority, is_emergency, route_sequence, scheduled_for, assigned_team_id, zone:zones(code), node:network_nodes(code), box:distribution_boxes(code)')
       .eq('scheduled_for', date)
+      .order('route_sequence', { ascending: true, nullsFirst: false })
       .order('priority', { ascending: true })
       .order('code');
 
@@ -43,10 +44,19 @@ export class WorkOrdersService {
   }
 
   async assignTeam(workOrderId: string, teamId: string): Promise<void> {
-    const { error } = await this.supabase.requireClient()
-      .from('work_orders')
-      .update({ assigned_team_id: teamId })
-      .eq('id', workOrderId);
+    const { error } = await this.supabase.requireClient().rpc('assign_work_order_team', {
+      p_work_order_id: workOrderId,
+      p_team_id: teamId
+    });
+    if (error) throw error;
+  }
+
+  async saveTeamRoute(teamId: string, scheduledFor: string, workOrderIds: string[]): Promise<void> {
+    const { error } = await this.supabase.requireClient().rpc('save_team_route', {
+      p_team_id: teamId,
+      p_scheduled_for: scheduledFor,
+      p_work_order_ids: workOrderIds
+    });
     if (error) throw error;
   }
 

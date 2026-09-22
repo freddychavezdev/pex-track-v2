@@ -26,6 +26,7 @@
 - La consola permite consultar el historial de cambios de estado de cada OT con fecha, responsable y motivo de suspensión cuando corresponde.
 - Política remota de perfiles verificada en Supabase para que supervisor/coordinador puedan resolver nombres de responsables sin exponer el directorio a usuarios no autorizados.
 - Propuesta de ruta disponible por cuadrilla, ordenando sus OTs georreferenciadas desde la última posición conocida mediante vecino más cercano y mostrando distancia aproximada sin tráfico.
+- La ruta sugerida puede reordenarse manualmente, aprobarse de forma atómica y queda persistida como secuencia operativa; Android respeta ese orden para presentar las visitas a la cuadrilla.
 - CI de GitHub configurado para conservar el APK release sin firmar como artefacto de cada ejecución exitosa; la firma sigue separada y requiere la keystore oficial.
 - CI de GitHub ampliado con una base Supabase efímera y la suite pgTAP del contrato de seguridad; el reset local ya cuenta con `supabase/seed.sql` explícito sin datos de demostración.
 - La Edge Function remota `admin-users` está activa en Supabase con `verify_jwt=true`; además conserva la validación interna de sesión, rol supervisor y perfil activo.

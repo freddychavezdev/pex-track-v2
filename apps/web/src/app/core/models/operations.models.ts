@@ -53,6 +53,7 @@ export interface WorkOrderSummary {
   status: WorkOrderStatus;
   priority: number;
   is_emergency: boolean;
+  route_sequence: number | null;
   scheduled_for: string;
   assigned_team_id: string | null;
   zone?: { code: string } | null;

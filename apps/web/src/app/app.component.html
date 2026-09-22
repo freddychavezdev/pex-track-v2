@@ -158,7 +158,10 @@
       <p class="eyebrow">DESPACHO OPERATIVO</p><h2 id="route-title">Ruta sugerida · {{ selectedRouteTeam.code }}</h2>
       <p class="dialog-description">Orden aproximado desde la última posición conocida. No considera tráfico.</p>
       @if (!suggestedRoute().length) { <p class="orders-notice">No hay OTs asignadas con coordenadas suficientes para sugerir una ruta.</p> }
-      @else { <div class="history-list">@for (stop of suggestedRoute(); track stop.order.id; let index = $index) { <div class="history-row"><strong>{{ index + 1 }}. {{ stop.order.code }}</strong><span>{{ stop.order.address }} · {{ statusLabel(stop.order.status) }}</span><small>{{ stop.distanceFromPreviousKm === null ? 'Sin coordenadas de tramo' : (stop.distanceFromPreviousKm | number:'1.1-1') + ' km desde el punto anterior' }}</small></div> }</div> }
+      @else { <div class="history-list">@for (stop of suggestedRoute(); track stop.order.id; let index = $index) { <div class="history-row route-stop"><div><strong>{{ index + 1 }}. {{ stop.order.code }}</strong><span>{{ stop.order.address }} · {{ statusLabel(stop.order.status) }}</span><small>{{ stop.distanceFromPreviousKm === null ? 'Sin coordenadas de tramo' : (stop.distanceFromPreviousKm | number:'1.1-1') + ' km desde el punto anterior' }}</small></div><div class="route-order-actions"><button class="control-button" type="button" aria-label="Subir OT" [disabled]="index === 0 || savingRoute" (click)="moveSuggestedRoute(index, -1)">↑</button><button class="control-button" type="button" aria-label="Bajar OT" [disabled]="index === suggestedRoute().length - 1 || savingRoute" (click)="moveSuggestedRoute(index, 1)">↓</button></div></div> }</div> }
+      @if (routeError) { <p class="form-error">{{ routeError }}</p> }
+      @if (routeMessage) { <p class="success-notice">{{ routeMessage }}</p> }
+      <button pButton class="control-button primary login-submit" type="button" [disabled]="!suggestedRoute().length || savingRoute" (click)="approveSuggestedRoute()">{{ savingRoute ? 'Guardando ruta…' : 'Aprobar y enviar ruta' }}</button>
     </section>
   }
   @if (showAdmin && canManageCatalogs()) { <app-admin-panel (closed)="showAdmin = false"></app-admin-panel> }

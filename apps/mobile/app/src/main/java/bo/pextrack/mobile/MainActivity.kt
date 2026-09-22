@@ -257,7 +257,8 @@ class MainActivity : AppCompatActivity() {
         setPadding(0, 16, 0, 16)
       }
       row.addView(TextView(this).apply {
-        text = "${order.code} · ${if (order.is_emergency) "EMERGENCIA · " else ""}Prioridad ${order.priority}"
+        val routeLabel = order.route_sequence?.let { "Ruta #$it · " }.orEmpty()
+        text = "$routeLabel${order.code} · ${if (order.is_emergency) "EMERGENCIA · " else ""}Prioridad ${order.priority}"
         textSize = 16f
         setTextColor(Color.parseColor("#182230"))
       })

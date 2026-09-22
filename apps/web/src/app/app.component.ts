@@ -41,6 +41,9 @@ export class AppComponent implements OnDestroy, OnInit {
   showOrderTable = true;
   showHistory = false;
   showRouteSuggestion = false;
+  savingRoute = false;
+  routeError = '';
+  routeMessage = '';
   historyLoading = false;
   historyError = '';
   selectedHistoryOrder: WorkOrderSummary | null = null;
@@ -303,8 +306,12 @@ export class AppComponent implements OnDestroy, OnInit {
   openSuggestedRoute(team: OperationalMapMarker): void {
     this.selectedRouteTeam = team;
     this.showRouteSuggestion = true;
+    this.routeError = '';
+    this.routeMessage = '';
     const coordinates = new Map(this.mapMarkers().filter((marker) => marker.marker_type === 'work_order').map((marker) => [marker.marker_id, marker]));
-    const remaining = this.orders().filter((order) => order.assigned_team_id === team.marker_id);
+    const remaining = this.orders().filter((order) =>
+      order.assigned_team_id === team.marker_id && !['completed', 'suspended'].includes(order.status)
+    );
     const route: SuggestedRouteStop[] = [];
     let current = team;
     while (remaining.length) {
@@ -332,6 +339,51 @@ export class AppComponent implements OnDestroy, OnInit {
     this.showRouteSuggestion = false;
     this.selectedRouteTeam = null;
     this.suggestedRoute.set([]);
+    this.routeError = '';
+    this.routeMessage = '';
+  }
+
+  moveSuggestedRoute(index: number, direction: -1 | 1): void {
+    const target = index + direction;
+    const currentRoute = this.suggestedRoute();
+    const team = this.selectedRouteTeam;
+    if (!team || target < 0 || target >= currentRoute.length) return;
+
+    const reordered = currentRoute.map((stop) => stop.order);
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    this.suggestedRoute.set(this.routeWithDistances(reordered, team));
+    this.routeMessage = '';
+  }
+
+  async approveSuggestedRoute(): Promise<void> {
+    const team = this.selectedRouteTeam;
+    const route = this.suggestedRoute();
+    if (!team || !route.length || this.savingRoute) return;
+
+    this.savingRoute = true;
+    this.routeError = '';
+    this.routeMessage = '';
+    try {
+      await this.workOrders.saveTeamRoute(team.marker_id, this.importDate, route.map((stop) => stop.order.id));
+      this.routeMessage = 'Ruta aprobada y enviada a la aplicación móvil de la cuadrilla.';
+      await this.refreshOperations();
+    } catch (error) {
+      this.routeError = error instanceof Error ? error.message : 'No se pudo aprobar la ruta.';
+    } finally {
+      this.savingRoute = false;
+    }
+  }
+
+  private routeWithDistances(orders: WorkOrderSummary[], team: OperationalMapMarker): SuggestedRouteStop[] {
+    const coordinates = new Map(this.mapMarkers().filter((marker) => marker.marker_type === 'work_order').map((marker) => [marker.marker_id, marker]));
+    let current: OperationalMapMarker = team;
+    return orders.map((order) => {
+      const marker = coordinates.get(order.id);
+      if (!marker) return { order, distanceFromPreviousKm: null };
+      const distanceFromPreviousKm = this.distanceKm(current.latitude, current.longitude, marker.latitude, marker.longitude);
+      current = marker;
+      return { order, distanceFromPreviousKm };
+    });
   }
 
   private distanceKm(latitudeA: number, longitudeA: number, latitudeB: number, longitudeB: number): number {
