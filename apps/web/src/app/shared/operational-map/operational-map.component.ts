@@ -25,7 +25,12 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
   async ngAfterViewInit(): Promise<void> {
     const element = this.mapElement?.nativeElement;
     if (!element) return;
-    const L = await import('leaflet');
+    const leafletModule = await import('leaflet');
+    // Leaflet is bundled as CommonJS by the current Angular build. In the
+    // production chunk its API is exposed through `default`; development can
+    // expose it directly. Supporting both shapes keeps the map working in
+    // local builds and on Vercel.
+    const L = ('default' in leafletModule ? leafletModule.default : leafletModule) as typeof Leaflet;
     this.leaflet = L;
     this.map = L.map(element, { zoomControl: false }).setView([-16.5, -68.15], 11);
     this.addBaseTiles();
