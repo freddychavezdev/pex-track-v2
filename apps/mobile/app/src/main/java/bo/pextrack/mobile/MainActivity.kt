@@ -332,6 +332,19 @@ class MainActivity : AppCompatActivity() {
         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
       ).apply { topMargin = dp(12) })
 
+      val noteSyncStatus = TextView(this).apply {
+        text = if (order.latest_note.isNullOrBlank()) {
+          "Sin observación guardada todavía. El dictado se mantiene como borrador hasta pulsar Guardar observación."
+        } else {
+          "✓ Última observación sincronizada. Puedes editarla o dictar una nueva."
+        }
+        textSize = 13f
+        setTextColor(Color.parseColor(if (order.latest_note.isNullOrBlank()) "#697B91" else "#16855D"))
+      }
+      row.addView(noteSyncStatus, LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+      ).apply { topMargin = dp(8) })
+
       val dictationStatus = TextView(this).apply {
         text = "Pulsa Iniciar dictado, habla con claridad y finaliza cuando termines. La nota no se guarda automáticamente."
         textSize = 13f
@@ -371,7 +384,7 @@ class MainActivity : AppCompatActivity() {
       row.addView(MaterialButton(this).apply {
         text = "Guardar observación"
         setTextSize(14f)
-        setOnClickListener { saveNote(order, transcriptInput) }
+        setOnClickListener { saveNote(order, transcriptInput, noteSyncStatus) }
       }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(8) })
       val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
       allowedTransitions(order.status).forEach { nextStatus ->
@@ -503,15 +516,26 @@ class MainActivity : AppCompatActivity() {
 
   private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-  private fun saveNote(order: MobileWorkOrder, input: EditText) {
+  private fun saveNote(order: MobileWorkOrder, input: EditText, noteSyncStatus: TextView) {
     val transcript = input.text.toString().trim()
     if (transcript.isBlank()) {
       showStatus("Escribe o dicta una observación antes de guardarla")
       return
     }
     lifecycleScope.launch {
+      noteSyncStatus.text = "Guardando observación…"
+      noteSyncStatus.setTextColor(Color.parseColor("#1D5DBA"))
       showStatus("Guardando observación de ${order.code}…")
-      showStatus(operationsRepository.addNote(order.id, transcript))
+      val result = operationsRepository.addNote(order.id, transcript)
+      val pending = result.contains("sin conexión", ignoreCase = true)
+      val successful = result == "Observación guardada"
+      noteSyncStatus.text = when {
+        successful -> "✓ Observación guardada y sincronizada."
+        pending -> "◷ Observación guardada localmente; pendiente de sincronización."
+        else -> result
+      }
+      noteSyncStatus.setTextColor(Color.parseColor(if (successful) "#16855D" else if (pending) "#A86918" else "#B84D4A"))
+      showStatus(result)
       loadWorkOrders()
     }
   }
