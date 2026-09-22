@@ -9,9 +9,11 @@ input::placeholder, textarea::placeholder { color:#718198; opacity:1; }
 input:not([type='checkbox']):focus, select:focus, textarea:focus { border-color:#2d74df!important; box-shadow:0 0 0 3px rgba(45,116,223,.16); outline:0; }
 input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active { -webkit-box-shadow:0 0 0 1000px #fff inset!important; -webkit-text-fill-color:#23334a!important; caret-color:#23334a; transition:background-color 9999s ease-out 0s; }
 .operational-marker-wrapper { background: transparent; border: 0; }
-.operational-marker { align-items: center; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 2px 8px rgba(12, 29, 55, .3); color: #fff; display: flex; font-size: 11px; font-weight: 700; height: 30px; justify-content: center; width: 30px; }
-.operational-marker.team { background: #1c77c3; }
-.operational-marker.deviation { background: #d54848; }
+.operational-marker { align-items: center; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 2px 8px rgba(12, 29, 55, .3); color: #fff; display: flex; font-size: 11px; font-weight: 700; height: 30px; justify-content: center; position:relative; width: 30px; }
+.operational-marker.team { background:linear-gradient(145deg,#0b97e8,#1559c2); border:3px solid #fff; box-shadow:0 0 0 3px #72d6ff,0 7px 17px rgba(8,73,152,.55); font-size:24px; height:50px; text-shadow:0 1px 2px rgba(0,37,91,.55); width:50px; z-index:3; }
+.operational-marker.team::after { border:2px solid rgba(54,184,255,.8); border-radius:50%; content:''; height:58px; left:50%; position:absolute; top:50%; transform:translate(-50%,-50%); width:58px; animation:team-marker-pulse 1.8s ease-out infinite; }
+.operational-marker.deviation { background:#d54848; box-shadow:0 0 0 3px #ffb5b5,0 7px 17px rgba(150,35,35,.52); }
+@keyframes team-marker-pulse { 0% { opacity:.85; transform:translate(-50%,-50%) scale(.72); } 75%,100% { opacity:0; transform:translate(-50%,-50%) scale(1.25); } }
 .operational-marker.work-order { background: #ec6a3b; }
 .operational-marker.network-node { background: #7359c7; }
 .operational-marker.distribution-box { background: #d58a2d; }

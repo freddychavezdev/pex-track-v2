@@ -62,14 +62,14 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
     );
     const teamMarkers = validMarkers.filter((marker) => marker.marker_type === 'team');
     validMarkers.forEach((marker) => {
-      const symbol = marker.marker_type === 'team' ? 'C' : marker.marker_type === 'network_node' ? 'N' : marker.marker_type === 'distribution_box' ? 'B' : 'OT';
+      const symbol = marker.marker_type === 'team' ? '⚒' : marker.marker_type === 'network_node' ? 'N' : marker.marker_type === 'distribution_box' ? 'B' : 'OT';
       const eta = marker.marker_type === 'work_order' ? this.nearestEta(marker, teamMarkers) : null;
       const deviationKm = marker.marker_type === 'team' ? this.deviationKm(marker) : null;
       const icon = L.divIcon({
         className: 'operational-marker-wrapper',
         html: `<span class="operational-marker ${marker.marker_type}${deviationKm !== null ? ' deviation' : ''}">${deviationKm !== null ? '!' : symbol}</span>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
+        iconSize: marker.marker_type === 'team' ? [50, 50] : [30, 30],
+        iconAnchor: marker.marker_type === 'team' ? [25, 25] : [15, 15]
       });
       L.marker([marker.latitude, marker.longitude] as Leaflet.LatLngExpression, { icon })
         .bindPopup(`<strong>${this.escapeHtml(marker.code)}</strong><br>${this.escapeHtml(marker.label)}<br><small>${this.escapeHtml(marker.status)}${eta ? `<br>ETA aproximado: ${eta} min` : ''}${deviationKm !== null ? `<br><b>Posible desvío: ${deviationKm.toFixed(1)} km de la OT asignada</b>` : ''}</small>`)
