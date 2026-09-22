@@ -27,8 +27,8 @@ android {
     applicationId = "bo.pextrack.mobile"
     minSdk = 28
     targetSdk = 36
-    versionCode = 2
-    versionName = "0.1.1"
+    versionCode = 3
+    versionName = "0.1.2"
     buildConfigField("String", "SUPABASE_URL", buildConfigValue("SUPABASE_URL"))
     buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", buildConfigValue("SUPABASE_PUBLISHABLE_KEY"))
   }
