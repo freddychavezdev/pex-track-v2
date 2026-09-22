@@ -6,11 +6,11 @@ Actualizado: 2026-09-22.
 
 | Área | Evidencia |
 | --- | --- |
-| Panel web | Compilación Angular y 7 pruebas unitarias exitosas. |
+| Panel web | Compilación Angular y 9 pruebas unitarias exitosas. |
 | Despliegue web | `https://pex-track-v2.vercel.app/` respondió HTTP 200. |
-| Base de datos | Las 20 migraciones locales coinciden con el proyecto Supabase remoto. El asesor de rendimiento no reporta problemas. |
+| Base de datos | Las 22 migraciones locales coinciden con el proyecto Supabase remoto. El lint del esquema `public` no reporta errores. |
 | Seguridad móvil | Las RPC de OTs y ubicación no son ejecutables por `anon`; las funciones exigen sesión y validan la cuadrilla activa. |
-| Integración continua | El commit `af09adc` aprobó los jobs web, database y Android. |
+| Integración continua | El commit `8c4eb2d` aprobó los jobs web, database y Android. |
 | APK | GitHub Actions genera un APK release sin firmar como artefacto de CI. |
 
 ## Datos piloto disponibles
