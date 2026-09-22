@@ -1,0 +1,10 @@
+<resources>
+  <color name="pex_primary">#2D74DF</color>
+  <color name="pex_primary_dark">#1D5DBA</color>
+  <color name="pex_surface">#FFFFFF</color>
+  <color name="pex_canvas">#F4F7FC</color>
+  <color name="pex_ink">#17253A</color>
+  <color name="pex_muted">#64748B</color>
+  <color name="pex_info">#EAF2FF</color>
+  <color name="pex_border">#DCE5F0</color>
+</resources>

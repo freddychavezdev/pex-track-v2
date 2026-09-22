@@ -38,6 +38,8 @@ class MainActivity : AppCompatActivity() {
   private lateinit var statusText: TextView
   private lateinit var pendingOperationsText: TextView
   private lateinit var loginButton: Button
+  private lateinit var loginCard: LinearLayout
+  private lateinit var authenticatedOperations: LinearLayout
   private lateinit var signOutButton: Button
   private lateinit var startTrackingButton: Button
   private lateinit var stopTrackingButton: Button
@@ -103,6 +105,8 @@ class MainActivity : AppCompatActivity() {
     statusText = findViewById(R.id.statusText)
     pendingOperationsText = findViewById(R.id.pendingOperationsText)
     loginButton = findViewById(R.id.loginButton)
+    loginCard = findViewById(R.id.loginCard)
+    authenticatedOperations = findViewById(R.id.authenticatedOperations)
     signOutButton = findViewById(R.id.signOutButton)
     startTrackingButton = findViewById(R.id.startTrackingButton)
     stopTrackingButton = findViewById(R.id.stopTrackingButton)
@@ -186,17 +190,9 @@ class MainActivity : AppCompatActivity() {
 
   private fun updateSessionUi() {
     val authenticated = authRepository.hasSession()
-    val operationsVisibility = if (authenticated) View.VISIBLE else View.GONE
-    emailInput.visibility = if (authenticated) View.GONE else View.VISIBLE
-    passwordInput.visibility = if (authenticated) View.GONE else View.VISIBLE
-    loginButton.visibility = if (authenticated) View.GONE else View.VISIBLE
-    signOutButton.visibility = operationsVisibility
-    startTrackingButton.visibility = operationsVisibility
-    stopTrackingButton.visibility = operationsVisibility
-    ordersTitle.visibility = operationsVisibility
-    refreshWorkOrdersButton.visibility = operationsVisibility
-    suspensionReasonInput.visibility = operationsVisibility
-    workOrdersContainer.visibility = operationsVisibility
+    loginCard.visibility = if (authenticated) View.GONE else View.VISIBLE
+    authenticatedOperations.visibility = if (authenticated) View.VISIBLE else View.GONE
+    pendingOperationsText.visibility = if (authenticated) View.VISIBLE else View.GONE
   }
 
   private fun requestPermissionsAndStart() {
