@@ -46,6 +46,8 @@ export class AppComponent implements OnDestroy, OnInit {
   showNewOrder = false;
   showAssignment = false;
   showAdmin = false;
+  showOrdersView = false;
+  showReportsView = false;
   showOrderTable = true;
   showHistory = false;
   showRouteSuggestion = false;
@@ -179,6 +181,9 @@ export class AppComponent implements OnDestroy, OnInit {
     this.adminInitialTab = 'teams';
     this.showAdmin = true;
   }
+
+  openOrdersView(): void { this.showOrdersView = true; this.mobileMenuOpen = false; }
+  openReportsView(): void { this.showReportsView = true; this.mobileMenuOpen = false; }
 
   openPasswordResetRequest(): void {
     this.showLogin = false;
