@@ -15,5 +15,5 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .operational-marker.deviation { background:#d54848; box-shadow:0 0 0 3px #ffb5b5,0 7px 17px rgba(150,35,35,.52); }
 @keyframes team-marker-pulse { 0% { opacity:.85; transform:translate(-50%,-50%) scale(.72); } 75%,100% { opacity:0; transform:translate(-50%,-50%) scale(1.25); } }
 .operational-marker.work-order { background: #ec6a3b; }
-.operational-marker.network-node { background: #7359c7; }
-.operational-marker.distribution-box { background: #d58a2d; }
+.operational-marker.network-node { background:linear-gradient(145deg,#8e68ec,#4f34a9); border:3px solid #fff; box-shadow:0 0 0 2px #c2adff,0 5px 14px rgba(67,41,150,.45); font-size:13px; height:38px; width:38px; }
+.operational-marker.distribution-box { background:linear-gradient(145deg,#f6b73b,#c56d11); border:3px solid #fff; box-shadow:0 0 0 2px #ffe0a1,0 5px 14px rgba(154,88,10,.42); font-size:11px; height:34px; width:34px; }
