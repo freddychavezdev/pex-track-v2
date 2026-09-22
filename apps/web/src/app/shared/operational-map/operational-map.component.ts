@@ -62,9 +62,9 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
     );
     const teamMarkers = validMarkers.filter((marker) => marker.marker_type === 'team');
     validMarkers.forEach((marker) => {
-      // A team is operationally represented by its assigned vehicle.  A van is
-      // easier to distinguish at a glance than a generic team/tool symbol.
-      const symbol = marker.marker_type === 'team' ? '🚐' : marker.marker_type === 'network_node' ? 'N' : marker.marker_type === 'distribution_box' ? 'B' : 'OT';
+      // A compact crew SUV is used instead of a platform-dependent emoji.
+      const crewVehicle = `<svg class="crew-vehicle-icon" viewBox="0 0 64 44" aria-hidden="true"><path d="M8 28V21c0-2 1-4 4-4h6l5-9c1-2 3-3 5-3h15c3 0 5 1 7 4l5 8h4c3 0 5 2 5 5v6h-5a7 7 0 0 0-14 0H27a7 7 0 0 0-14 0H8Z" fill="#fff"/><path d="M24 17l4-7h14c1 0 2 1 3 2l4 5H24Z" fill="#8ed9ff"/><path d="M40 17V10" stroke="#1559c2" stroke-width="2"/><path d="M31 6h7" stroke="#ffd35c" stroke-linecap="round" stroke-width="3"/><circle cx="20" cy="29" r="5" fill="#193b77" stroke="#fff" stroke-width="2"/><circle cx="47" cy="29" r="5" fill="#193b77" stroke="#fff" stroke-width="2"/><circle cx="20" cy="29" r="1.8" fill="#8ed9ff"/><circle cx="47" cy="29" r="1.8" fill="#8ed9ff"/></svg>`;
+      const symbol = marker.marker_type === 'team' ? crewVehicle : marker.marker_type === 'network_node' ? 'N' : marker.marker_type === 'distribution_box' ? 'B' : 'OT';
       const eta = marker.marker_type === 'work_order' ? this.nearestEta(marker, teamMarkers) : null;
       const deviationKm = marker.marker_type === 'team' ? this.deviationKm(marker) : null;
       const markerSize = marker.marker_type === 'team' ? 50 : marker.marker_type === 'network_node' ? 38 : marker.marker_type === 'distribution_box' ? 34 : 30;
