@@ -70,7 +70,7 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
       const markerSize = marker.marker_type === 'team' ? 50 : marker.marker_type === 'network_node' ? 38 : marker.marker_type === 'distribution_box' ? 34 : 30;
       const icon = L.divIcon({
         className: 'operational-marker-wrapper',
-        html: `<span class="operational-marker ${marker.marker_type}${deviationKm !== null ? ' deviation' : ''}">${deviationKm !== null ? '!' : symbol}</span>`,
+        html: `<span class="operational-marker ${marker.marker_type}${deviationKm !== null ? ' deviation' : ''}"><span class="marker-symbol">${symbol}</span>${deviationKm !== null ? '<b class="deviation-badge" aria-label="Posible desvío">!</b>' : ''}</span>`,
         iconSize: [markerSize, markerSize],
         iconAnchor: [markerSize / 2, markerSize / 2]
       });
