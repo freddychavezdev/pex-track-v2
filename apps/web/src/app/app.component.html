@@ -12,7 +12,7 @@
     <div class="sidebar-footer"><div class="connection"><span class="status-dot" [class.online]="browserOnline()" [class.warning-dot]="!browserOnline()"></span><span>{{ browserOnline() ? 'Servicios operativos' : 'Sin conexión' }}</span></div><div class="user-card"><div class="avatar">{{ userInitials() }}</div><div><strong>{{ auth.profile()?.full_name || 'Visitante' }}</strong><span>{{ roleLabel() }}</span></div><span class="more">•••</span></div></div>
   </aside>
   <main class="content">
-    <header class="topbar"><div><p class="eyebrow">OPERACIÓN DIARIA · {{ importDate }}</p><h1>Centro de monitoreo</h1></div><div class="top-actions"><button class="icon-button" title="Notificaciones">♢<span class="notification-dot"></span></button>@if (auth.session()) { <button class="user-button" type="button" (click)="signOut()">Cerrar sesión <span>⌄</span></button> } @else { <button class="user-button" type="button" (click)="showLogin = true">Iniciar sesión <span>→</span></button> }</div></header>
+    <header class="topbar"><div><p class="eyebrow">OPERACIÓN DIARIA · {{ importDate }}</p><h1>Centro de monitoreo</h1></div><div class="top-actions"><button class="icon-button" type="button" aria-label="Notificaciones">♢<span class="notification-dot"></span></button>@if (auth.session()) { <button class="user-button" type="button" (click)="signOut()">Cerrar sesión <span>⌄</span></button> } @else { <button class="user-button" type="button" (click)="showLogin = true">Iniciar sesión <span>→</span></button> }</div></header>
     <section class="global-search" aria-label="Búsqueda global"><div class="search-input-wrap"><span>⌕</span><input pInputText [(ngModel)]="searchTerm" (input)="scheduleGlobalSearch()" placeholder="Buscar OT, cliente, técnico, placa o cuadrilla…" /><small>{{ searching() ? 'Buscando…' : 'Búsqueda multicriterio' }}</small></div>@if (searchResults().length) { <div class="search-results">@for (result of searchResults(); track result.kind + result.id) { <button type="button" (click)="searchResults.set([])"><strong>{{ result.title }}</strong><span>{{ result.subtitle }}</span><em>{{ result.kind === 'work_order' ? 'OT' : result.kind === 'technician' ? 'Técnico' : result.kind === 'vehicle' ? 'Vehículo' : 'Cuadrilla' }}</em></button> }</div> }</section>
     @if (canManageCatalogs() && auth.session() && !teams().length) {
       <section class="setup-banner" aria-label="Configuración operativa inicial">
@@ -46,6 +46,7 @@
         <form [formGroup]="loginForm" (ngSubmit)="submitLogin()">
           <label for="email">Correo institucional</label>
           <input pInputText id="email" type="email" formControlName="email" autocomplete="email" placeholder="nombre@empresa.com" />
+          <p class="login-help">Usa el correo autorizado para PEX Track.</p>
           <label for="password">Contraseña</label>
           <input pInputText id="password" type="password" formControlName="password" autocomplete="current-password" placeholder="••••••••" />
           @if (loginError) { <p class="form-error">{{ loginError }}</p> }
