@@ -25,7 +25,20 @@ Nunca se debe configurar una clave `service_role` en Vercel ni en el navegador.
 Después del despliegue se debe abrir la URL generada y comprobar inicio de
 sesión, mapa, Realtime, importación y exportación de reportes.
 
-## 2. Release Android firmado
+## 2. Autenticación de Supabase
+
+En Supabase, abre `Authentication → URL Configuration` y configura:
+
+- **Site URL**: `https://pex-track-v2.vercel.app`
+- **Redirect URLs**: `https://pex-track-v2.vercel.app/**` y
+  `http://localhost:4200/**` para desarrollo local.
+
+En `Authentication → Settings`, usa una longitud mínima de contraseña de al
+menos 8 caracteres. Si el plan de Supabase lo permite, activa también la
+protección contra contraseñas filtradas. Nunca se deben desactivar RLS ni las
+políticas de la base para resolver un error de acceso.
+
+## 3. Release Android firmado
 
 En GitHub, en `Settings → Secrets and variables → Actions`, crea estos secretos:
 
@@ -44,7 +57,7 @@ La keystore oficial debe conservarse fuera del repositorio y respaldarse en un
 gestor seguro. Si se pierde, no podrá publicarse una actualización sobre la
 misma instalación Android.
 
-## 3. Prueba piloto obligatoria
+## 4. Prueba piloto obligatoria
 
 Antes de distribuir el APK a todos los técnicos, prueba al menos un dispositivo
 Android 9 y uno de una versión reciente:
