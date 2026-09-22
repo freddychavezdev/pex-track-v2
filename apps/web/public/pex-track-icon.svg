@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="PEX Track">
+  <defs>
+    <linearGradient id="g" x1="16" y1="12" x2="114" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3e8cff"/>
+      <stop offset="1" stop-color="#1d57b8"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="#0f2138"/>
+  <path d="M64 16c-20 0-36 16-36 36 0 27 36 60 36 60s36-33 36-60c0-20-16-36-36-36Z" fill="url(#g)"/>
+  <circle cx="64" cy="52" r="17" fill="#fff"/>
+  <path d="M51 46h10c7 0 11 3 11 9 0 7-5 10-12 10h-3v8h-6V46Zm6 5v9h3c4 0 6-1 6-5 0-3-2-4-6-4h-3Z" fill="#1d57b8"/>
+  <path d="M38 98c8 7 17 12 26 16 9-4 18-9 26-16" fill="none" stroke="#bfe0ff" stroke-linecap="round" stroke-width="5"/>
+</svg>

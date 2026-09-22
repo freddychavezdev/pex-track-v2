@@ -34,3 +34,24 @@
   .content { padding:20px 16px 32px; }.topbar h1 { font-size:27px; }.topbar { gap:12px; }.top-actions { gap:6px; }.user-button { font-size:13px; }.metric-grid { grid-template-columns:1fr 1fr; }.metric-card { min-height:142px; padding:16px; }.metric-heading { font-size:13px; }.metric-value { font-size:30px; }.metric-foot { font-size:12px; line-height:1.35; }.panel-header { padding:17px 16px 14px; align-items:flex-start; gap:10px; }.panel-header h2,.report-panel h2 { font-size:18px; }.panel-header p { font-size:13px; line-height:1.35; }.map-controls { flex-wrap:wrap; justify-content:flex-end; }.map-stage { height:315px; }.order-filters,.order-list,.team-table { padding-left:16px; padding-right:16px; }.order-row { align-items:flex-start; flex-wrap:wrap; gap:8px; }.order-info { min-width:calc(100% - 44px); }.order-row .pill { margin-left:39px; }.order-row .text-button { padding:4px 0; }.table-row { font-size:13px; line-height:1.35; }.report-panel { padding:20px; }.report-export-tools { align-items:stretch; flex-wrap:wrap; justify-content:flex-start; }.report-export-tools > span { width:100%; }.login-dialog,.import-dialog { padding:25px 20px; }.login-dialog h2,.import-dialog h2 { font-size:24px; }.login-dialog label,.import-dialog label:not(.file-picker) { font-size:15px; }.control-button,.text-button { font-size:14px; min-height:40px; }.search-input-wrap { padding:10px 12px; }.search-input-wrap small { display:none; }
 }
 .deviation-text { color:#d54848; font-weight:600; }
+
+/* La vista ampliada concentra la atención en la operación, sin desmontar Leaflet. */
+.map-focus-mode .sidebar,
+.map-focus-mode .content > :not(.workspace-grid) { display:none; }
+.map-focus-mode .content { max-width:none; padding:0; }
+.map-focus-mode .workspace-grid { background:#f5f7fb; display:block; inset:0; margin:0; padding:18px; position:fixed; z-index:1500; }
+.map-focus-mode .orders-panel { display:none; }
+.map-focus-mode .map-panel { display:flex; flex-direction:column; height:100%; }
+.map-focus-mode .map-stage { flex:1; height:auto; min-height:0; }
+.map-focus-mode .map-stage app-operational-map { min-height:100%; }
+.map-expand { color:#1d5fae; background:#eaf2ff; border-color:#bcd7fb; font-weight:700; }
+.team-actions { align-items:center; display:flex; gap:13px; }.manage-teams-button { font-weight:700; }
+
+/* Acción de sesión: estado, rol y acción quedan claros de un vistazo. */
+.session-button { align-items:center; background:#fff; border:1px solid #d9e4f0; border-radius:10px; color:#2d4561; cursor:pointer; display:flex; gap:9px; min-height:50px; padding:6px 10px 6px 7px; text-align:left; box-shadow:0 2px 8px rgba(29,56,87,.07); }
+.session-button:hover { border-color:#86b5ee; box-shadow:0 4px 12px rgba(45,116,223,.14); }.session-button > span:nth-child(2) { display:grid; gap:1px; }.session-button b { font-size:12px; }.session-button small { color:#72849a; font-size:10px; }.session-button i { color:#2d74df; font-size:17px; font-style:normal; margin-left:3px; }.session-avatar,.session-lock { align-items:center; background:#e9f2ff; border-radius:8px; color:#2d74df; display:flex; font-size:12px; font-weight:800; height:34px; justify-content:center; width:34px; }.session-button.signed-in .session-avatar { background:#dff7ec; color:#16855d; }
+
+@media (max-width:650px) {
+  .map-focus-mode .workspace-grid { padding:0; }.map-focus-mode .panel { border:0; border-radius:0; }.map-focus-mode .panel-header { padding:14px; }.map-focus-mode .map-controls { gap:6px; }.map-focus-mode .map-controls .control-button { min-height:36px; padding:7px 9px; }.team-actions { align-items:flex-end; flex-direction:column; gap:4px; }
+  .session-button b { font-size:11px; }.session-button small { font-size:9px; }
+}

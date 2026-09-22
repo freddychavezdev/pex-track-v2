@@ -49,6 +49,8 @@ export class AppComponent implements OnDestroy, OnInit {
   showOrderTable = true;
   showHistory = false;
   showRouteSuggestion = false;
+  mapExpanded = false;
+  adminInitialTab: 'users' | 'technicians' | 'vehicles' | 'teams' | 'audit' = 'users';
   savingRoute = false;
   routeError = '';
   routeMessage = '';
@@ -168,6 +170,12 @@ export class AppComponent implements OnDestroy, OnInit {
     this.teams.set([]);
     this.searchTerm = '';
     this.searchResults.set([]);
+    this.mapExpanded = false;
+  }
+
+  openTeamManagement(): void {
+    this.adminInitialTab = 'teams';
+    this.showAdmin = true;
   }
 
   openPasswordResetRequest(): void {

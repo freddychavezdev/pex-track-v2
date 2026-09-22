@@ -1,0 +1,9 @@
+{
+  "name": "PEX Track",
+  "short_name": "PEX Track",
+  "description": "Control operativo de cuadrillas y órdenes de trabajo.",
+  "icons": [{ "src": "pex-track-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }],
+  "theme_color": "#0f2138",
+  "background_color": "#f5f7fb",
+  "display": "standalone"
+}

@@ -16,7 +16,9 @@
 
   <application
     android:allowBackup="false"
+    android:icon="@drawable/ic_pex_track"
     android:label="PEX Track"
+    android:roundIcon="@drawable/ic_pex_track"
     android:theme="@style/Theme.PexTrack"
     android:usesCleartextTraffic="false">
     <activity

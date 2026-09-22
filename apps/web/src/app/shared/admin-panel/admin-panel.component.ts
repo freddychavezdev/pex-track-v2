@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, OnInit, Output, signal } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AppRole, AuditLogRecord, AvailabilityStatus, TeamRecord, TechnicianRecord, UserProfile, VehicleRecord } from '../../core/models/operations.models';
 import { AdminService } from '../../core/services/admin.service';
@@ -14,6 +14,7 @@ type AdminTab = 'users' | 'technicians' | 'vehicles' | 'teams' | 'audit';
 })
 export class AdminPanelComponent implements OnInit {
   @Output() readonly closed = new EventEmitter<void>();
+  @Input() initialTab: AdminTab = 'users';
   private readonly service = inject(AdminService);
   readonly users = signal<UserProfile[]>([]);
   readonly technicians = signal<TechnicianRecord[]>([]);
@@ -29,7 +30,7 @@ export class AdminPanelComponent implements OnInit {
   editingTeam: Partial<TeamRecord> | null = null;
   userForm = { fullName: '', email: '', password: '', role: 'technician' as AppRole };
 
-  ngOnInit(): void { void this.reload(); }
+  ngOnInit(): void { this.activeTab = this.initialTab; void this.reload(); }
 
   async reload(): Promise<void> {
     this.loading.set(true); this.error = '';
