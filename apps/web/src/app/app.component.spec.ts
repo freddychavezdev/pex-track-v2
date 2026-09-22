@@ -109,4 +109,21 @@ describe('AppComponent', () => {
     app.moveSuggestedRoute(1, -1);
     expect(app.suggestedRoute().map((stop) => stop.order.id)).toEqual(['order-2', 'order-1']);
   });
+
+  it('should prefer a nearby available team for an emergency', () => {
+    const app = TestBed.createComponent(AppComponent).componentInstance;
+    const emergency: WorkOrderSummary = {
+      id: 'emergency-1', code: 'OT-EMERG-01', customer_name: null, address: 'Nodo urgente', task_type: 'network_maintenance', status: 'pending', priority: 1, is_emergency: true, route_sequence: null, scheduled_for: '2026-09-22', assigned_team_id: null
+    };
+    app.teams.set([{ id: 'near-team', code: 'CUADRILLA-01', active: true }, { id: 'far-team', code: 'CUADRILLA-02', active: true }]);
+    app.mapMarkers.set([
+      { marker_type: 'work_order', marker_id: 'emergency-1', code: 'OT-EMERG-01', label: 'Nodo urgente', latitude: -16.5, longitude: -68.15, status: 'pending', observed_at: '2026-09-22T00:00:00Z' },
+      { marker_type: 'team', marker_id: 'near-team', code: 'CUADRILLA-01', label: 'Cuadrilla 01', latitude: -16.501, longitude: -68.15, status: 'available', observed_at: '2026-09-22T00:00:00Z' },
+      { marker_type: 'team', marker_id: 'far-team', code: 'CUADRILLA-02', label: 'Cuadrilla 02', latitude: -16.55, longitude: -68.15, status: 'available', observed_at: '2026-09-22T00:00:00Z' }
+    ]);
+
+    const suggestions = (app as unknown as { suggestEmergencyTeams(order: WorkOrderSummary): Array<{ team: { id: string }; etaMinutes: number | null }> }).suggestEmergencyTeams(emergency);
+    expect(suggestions[0].team.id).toBe('near-team');
+    expect(suggestions[0].etaMinutes).toBeGreaterThan(0);
+  });
 });

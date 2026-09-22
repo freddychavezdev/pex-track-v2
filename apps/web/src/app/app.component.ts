@@ -16,6 +16,14 @@ import { OperationalMapComponent } from './shared/operational-map/operational-ma
 import { AdminPanelComponent } from './shared/admin-panel/admin-panel.component';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
+interface EmergencyTeamSuggestion {
+  team: TeamSummary;
+  distanceKm: number | null;
+  etaMinutes: number | null;
+  pendingOrders: number;
+  signalStatus: 'available' | 'active' | 'no_signal';
+}
+
 @Component({
   selector: 'app-root',
   imports: [DatePipe, DecimalPipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent, AdminPanelComponent],
@@ -71,6 +79,7 @@ export class AppComponent implements OnDestroy, OnInit {
   activeOrderFilter: 'all' | WorkOrderStatus = 'all';
   assignmentTeamId = '';
   selectedOrder: WorkOrderSummary | null = null;
+  readonly emergencySuggestions = signal<EmergencyTeamSuggestion[]>([]);
   readonly orders = signal<WorkOrderSummary[]>([]);
   readonly ordersLoading = signal(false);
   readonly ordersError = signal('');
@@ -278,7 +287,12 @@ export class AppComponent implements OnDestroy, OnInit {
     this.selectedOrder = order;
     this.assignmentTeamId = order.assigned_team_id ?? '';
     this.assignmentError = '';
+    this.emergencySuggestions.set(order.is_emergency ? this.suggestEmergencyTeams(order) : []);
     this.showAssignment = true;
+  }
+
+  selectEmergencyTeam(teamId: string): void {
+    this.assignmentTeamId = teamId;
   }
 
   async openHistory(order: WorkOrderSummary): Promise<void> {
@@ -383,6 +397,33 @@ export class AppComponent implements OnDestroy, OnInit {
       const distanceFromPreviousKm = this.distanceKm(current.latitude, current.longitude, marker.latitude, marker.longitude);
       current = marker;
       return { order, distanceFromPreviousKm };
+    });
+  }
+
+  private suggestEmergencyTeams(order: WorkOrderSummary): EmergencyTeamSuggestion[] {
+    const markers = new Map(this.mapMarkers().map((marker) => [marker.marker_id, marker]));
+    const emergencyMarker = markers.get(order.id);
+    return this.teams().map((team) => {
+      const teamMarker = markers.get(team.id);
+      const hasSignal = teamMarker?.marker_type === 'team';
+      const distanceKm = hasSignal && emergencyMarker
+        ? this.distanceKm(teamMarker.latitude, teamMarker.longitude, emergencyMarker.latitude, emergencyMarker.longitude)
+        : null;
+      const pendingOrders = this.orders().filter((candidate) =>
+        candidate.assigned_team_id === team.id && ['pending', 'en_route', 'in_progress'].includes(candidate.status)
+      ).length;
+      const signalStatus: EmergencyTeamSuggestion['signalStatus'] = !hasSignal ? 'no_signal' : pendingOrders ? 'active' : 'available';
+      return {
+        team,
+        distanceKm,
+        etaMinutes: distanceKm === null ? null : Math.ceil(distanceKm / 25 * 60),
+        pendingOrders,
+        signalStatus
+      };
+    }).sort((first, second) => {
+      const firstDistance = first.distanceKm ?? Number.POSITIVE_INFINITY;
+      const secondDistance = second.distanceKm ?? Number.POSITIVE_INFINITY;
+      return firstDistance - secondDistance || first.pendingOrders - second.pendingOrders || first.team.code.localeCompare(second.team.code);
     });
   }
 
