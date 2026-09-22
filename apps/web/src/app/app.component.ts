@@ -33,6 +33,7 @@ export class AppComponent implements OnDestroy, OnInit {
   private readonly teamsService = inject(TeamsService);
   private readonly globalSearch = inject(GlobalSearchService);
   showLogin = false;
+  showPasswordResetRequest = false;
   showImport = false;
   showNewOrder = false;
   showAssignment = false;
@@ -48,11 +49,16 @@ export class AppComponent implements OnDestroy, OnInit {
   readonly suggestedRoute = signal<SuggestedRouteStop[]>([]);
   readonly browserOnline = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
   submitting = false;
+  resetRequestSubmitting = false;
+  passwordRecoverySubmitting = false;
   parsingImport = false;
   savingImport = false;
   savingAssignment = false;
   generatingReport = false;
   loginError = '';
+  resetRequestMessage = '';
+  resetRequestError = '';
+  passwordRecoveryError = '';
   importError = '';
   assignmentError = '';
   reportMessage = '';
@@ -72,6 +78,13 @@ export class AppComponent implements OnDestroy, OnInit {
   readonly loginForm = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] })
+  });
+  readonly passwordResetRequestForm = new FormGroup({
+    email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] })
+  });
+  readonly passwordRecoveryForm = new FormGroup({
+    password: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8)] }),
+    confirmation: new FormControl('', { nonNullable: true, validators: [Validators.required] })
   });
   private realtimeChannel: RealtimeChannel | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -137,6 +150,52 @@ export class AppComponent implements OnDestroy, OnInit {
     this.teams.set([]);
     this.searchTerm = '';
     this.searchResults.set([]);
+  }
+
+  openPasswordResetRequest(): void {
+    this.showLogin = false;
+    this.showPasswordResetRequest = true;
+    this.resetRequestMessage = '';
+    this.resetRequestError = '';
+  }
+
+  async submitPasswordResetRequest(): Promise<void> {
+    if (this.passwordResetRequestForm.invalid || this.resetRequestSubmitting) {
+      this.passwordResetRequestForm.markAllAsTouched();
+      return;
+    }
+    this.resetRequestSubmitting = true;
+    this.resetRequestMessage = '';
+    this.resetRequestError = '';
+    const error = await this.auth.requestPasswordReset(this.passwordResetRequestForm.getRawValue().email);
+    this.resetRequestSubmitting = false;
+    if (error) {
+      this.resetRequestError = error;
+      return;
+    }
+    this.resetRequestMessage = 'Si el correo está registrado, recibirás un enlace para crear una nueva contraseña.';
+  }
+
+  async submitRecoveredPassword(): Promise<void> {
+    if (this.passwordRecoveryForm.invalid || this.passwordRecoverySubmitting) {
+      this.passwordRecoveryForm.markAllAsTouched();
+      return;
+    }
+    const { password, confirmation } = this.passwordRecoveryForm.getRawValue();
+    if (password !== confirmation) {
+      this.passwordRecoveryError = 'Las contraseñas no coinciden.';
+      return;
+    }
+    this.passwordRecoverySubmitting = true;
+    this.passwordRecoveryError = '';
+    const error = await this.auth.updateRecoveredPassword(password);
+    this.passwordRecoverySubmitting = false;
+    if (error) {
+      this.passwordRecoveryError = error;
+      return;
+    }
+    this.passwordRecoveryForm.reset({ password: '', confirmation: '' });
+    this.showLogin = true;
   }
 
   scheduleGlobalSearch(): void {

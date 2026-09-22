@@ -50,8 +50,37 @@
           <input pInputText id="password" type="password" formControlName="password" autocomplete="current-password" placeholder="••••••••" />
           @if (loginError) { <p class="form-error">{{ loginError }}</p> }
           <button pButton class="control-button primary login-submit" type="submit" [disabled]="submitting">{{ submitting ? 'Verificando…' : 'Ingresar' }}</button>
+          <button class="text-button password-link" type="button" (click)="openPasswordResetRequest()">¿Olvidaste tu contraseña?</button>
         </form>
       }
+    </section>
+  }
+  @if (showPasswordResetRequest) {
+    <div class="login-backdrop" role="presentation" (click)="showPasswordResetRequest = false"></div>
+    <section class="login-dialog" role="dialog" aria-modal="true" aria-labelledby="reset-request-title">
+      <button class="dialog-close" type="button" aria-label="Cerrar" (click)="showPasswordResetRequest = false">×</button>
+      <p class="eyebrow">RECUPERACIÓN DE ACCESO</p><h2 id="reset-request-title">Restablecer contraseña</h2>
+      <p class="dialog-description">Te enviaremos un enlace de recuperación a tu correo institucional.</p>
+      <form [formGroup]="passwordResetRequestForm" (ngSubmit)="submitPasswordResetRequest()">
+        <label for="reset-email">Correo institucional</label>
+        <input pInputText id="reset-email" type="email" formControlName="email" autocomplete="email" placeholder="nombre@empresa.com" />
+        @if (resetRequestError) { <p class="form-error">{{ resetRequestError }}</p> }
+        @if (resetRequestMessage) { <p class="success-notice">{{ resetRequestMessage }}</p> }
+        <button pButton class="control-button primary login-submit" type="submit" [disabled]="resetRequestSubmitting">{{ resetRequestSubmitting ? 'Enviando…' : 'Enviar enlace' }}</button>
+      </form>
+    </section>
+  }
+  @if (auth.passwordRecovery()) {
+    <div class="login-backdrop" role="presentation"></div>
+    <section class="login-dialog" role="dialog" aria-modal="true" aria-labelledby="password-recovery-title">
+      <p class="eyebrow">RECUPERACIÓN DE ACCESO</p><h2 id="password-recovery-title">Crea una nueva contraseña</h2>
+      <p class="dialog-description">Usa al menos 8 caracteres y no reutilices una contraseña conocida.</p>
+      <form [formGroup]="passwordRecoveryForm" (ngSubmit)="submitRecoveredPassword()">
+        <label for="recovery-password">Nueva contraseña</label><input pInputText id="recovery-password" type="password" formControlName="password" autocomplete="new-password" />
+        <label for="recovery-confirmation">Confirmar contraseña</label><input pInputText id="recovery-confirmation" type="password" formControlName="confirmation" autocomplete="new-password" />
+        @if (passwordRecoveryError) { <p class="form-error">{{ passwordRecoveryError }}</p> }
+        <button pButton class="control-button primary login-submit" type="submit" [disabled]="passwordRecoverySubmitting">{{ passwordRecoverySubmitting ? 'Actualizando…' : 'Guardar nueva contraseña' }}</button>
+      </form>
     </section>
   }
   @if (showNewOrder) {

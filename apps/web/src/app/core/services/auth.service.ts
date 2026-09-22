@@ -8,23 +8,29 @@ export class AuthService {
   readonly session = signal<Session | null>(null);
   readonly profile = signal<UserProfile | null>(null);
   readonly ready = signal(false);
+  readonly passwordRecovery = signal(false);
+  private initialized = false;
 
   constructor(private readonly supabase: SupabaseClientService) {}
 
   async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
     if (!this.supabase.client) {
       this.ready.set(true);
       return;
     }
 
+    this.supabase.client.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
+      this.session.set(session);
+      if (event === 'PASSWORD_RECOVERY') this.passwordRecovery.set(true);
+      if (event === 'SIGNED_OUT') this.passwordRecovery.set(false);
+      void this.loadProfile();
+    });
     const { data } = await this.supabase.client.auth.getSession();
     this.session.set(data.session);
     await this.loadProfile();
     await this.rejectInactiveSession();
-    this.supabase.client.auth.onAuthStateChange((_event: AuthChangeEvent, session) => {
-      this.session.set(session);
-      void this.loadProfile();
-    });
     this.ready.set(true);
   }
 
@@ -47,6 +53,23 @@ export class AuthService {
     if (this.supabase.client) {
       await this.supabase.client.auth.signOut();
     }
+  }
+
+  async requestPasswordReset(email: string): Promise<string | null> {
+    const client = this.supabase.requireClient();
+    const redirectTo = typeof window === 'undefined' ? undefined : `${window.location.origin}/`;
+    const { error } = await client.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+    return error?.message ?? null;
+  }
+
+  async updateRecoveredPassword(password: string): Promise<string | null> {
+    if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+    const client = this.supabase.requireClient();
+    const { error } = await client.auth.updateUser({ password });
+    if (error) return error.message;
+    await client.auth.signOut();
+    this.passwordRecovery.set(false);
+    return null;
   }
 
   private async loadProfile(): Promise<void> {
