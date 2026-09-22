@@ -29,8 +29,8 @@ retirar estos datos de forma controlada.
 
 ## Acciones obligatorias antes de liberar a técnicos
 
-1. Reemplazar la cuenta supervisora de prueba por una cuenta real con correo
-   accesible, y establecer una contraseña inicial segura.
+1. Completar la invitación enviada a la cuenta supervisora real y establecer
+   una contraseña inicial segura. El perfil ya está activo con rol supervisor.
 2. En Supabase Auth, configurar la URL del sitio y redirecciones:
    `https://pex-track-v2.vercel.app` y `https://pex-track-v2.vercel.app/**`.
 3. Activar la protección contra contraseñas filtradas si está disponible en el

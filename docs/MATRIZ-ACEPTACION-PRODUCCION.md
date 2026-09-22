@@ -44,8 +44,8 @@ usa como sustituto de una prueba con personal, equipos y red reales.
 
 ## Puertas obligatorias antes de liberar a operación
 
-1. Crear o invitar una cuenta supervisora real y accesible; no se debe usar la
-   cuenta de prueba para una operación real.
+1. Completar la invitación enviada a la cuenta supervisora real y definir su
+   contraseña; no se debe usar la cuenta de prueba para una operación real.
 2. Configurar en Supabase Auth la URL del sitio y las redirecciones indicadas
    en [GO-LIVE.md](GO-LIVE.md).
 3. Generar y respaldar la keystore oficial; luego cargar los secretos de firma
