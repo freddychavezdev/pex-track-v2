@@ -132,6 +132,9 @@ export class AppComponent implements OnDestroy, OnInit {
   async submitLogin(): Promise<void> {
     if (this.loginForm.invalid || this.submitting) {
       this.loginForm.markAllAsTouched();
+      if (!this.submitting) {
+        this.loginError = 'Ingresa tu correo y la contraseña que acabas de crear.';
+      }
       return;
     }
     this.submitting = true;
@@ -198,6 +201,7 @@ export class AppComponent implements OnDestroy, OnInit {
       this.passwordRecoveryError = 'Las contraseñas no coinciden.';
       return;
     }
+    const recoveredEmail = this.auth.session()?.user.email ?? '';
     this.passwordRecoverySubmitting = true;
     this.passwordRecoveryError = '';
     const error = await this.auth.updateRecoveredPassword(password);
@@ -207,6 +211,8 @@ export class AppComponent implements OnDestroy, OnInit {
       return;
     }
     this.passwordRecoveryForm.reset({ password: '', confirmation: '' });
+    this.loginForm.reset({ email: recoveredEmail, password: '' });
+    this.loginError = 'Contraseña actualizada. Escribe tu nueva contraseña para ingresar.';
     this.showLogin = true;
   }
 
