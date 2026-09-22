@@ -77,4 +77,12 @@ describe('AppComponent', () => {
 
     expect(app.teamDeviationKm(team)).toBeGreaterThan(0.75);
   });
+
+  it('should include active teams without a location as stale alerts', () => {
+    const app = TestBed.createComponent(AppComponent).componentInstance;
+    app.teams.set([{ id: 'team-without-signal', code: 'CUADRILLA-02', active: true }]);
+
+    expect(app.teamRows()[0].observed_at).toBe('');
+    expect(app.alertCount()).toBe(1);
+  });
 });

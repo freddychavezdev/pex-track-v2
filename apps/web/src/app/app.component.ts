@@ -410,6 +410,14 @@ export class AppComponent implements OnDestroy, OnInit {
     return this.mapMarkers().filter((marker) => marker.marker_type === 'team');
   }
 
+  teamRows(): OperationalMapMarker[] {
+    const markersByTeamId = new Map(this.activeTeamMarkers().map((marker) => [marker.marker_id, marker]));
+    return this.teams().map((team) => markersByTeamId.get(team.id) ?? {
+      marker_type: 'team', marker_id: team.id, code: team.code, label: `Cuadrilla ${team.code}`,
+      latitude: Number.NaN, longitude: Number.NaN, status: 'unknown', observed_at: ''
+    });
+  }
+
   teamDeviationKm(team: OperationalMapMarker): number | null {
     if (team.status !== 'in_progress') return null;
     const assignedOrderIds = new Set(this.orders()
@@ -437,7 +445,7 @@ export class AppComponent implements OnDestroy, OnInit {
 
   alertCount(): number {
     const suspendedOrders = this.orders().filter((order) => order.status === 'suspended').length;
-    return suspendedOrders + this.activeTeamMarkers().filter((team) =>
+    return suspendedOrders + this.teamRows().filter((team) =>
       this.isStale(team.observed_at) || this.teamDeviationKm(team) !== null).length;
   }
 
