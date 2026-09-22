@@ -13,6 +13,18 @@ Actualizado: 2026-09-22.
 | Integración continua | El commit `8c4eb2d` aprobó los jobs web, database y Android. |
 | APK | GitHub Actions genera un APK release sin firmar como artefacto de CI. |
 
+## Revalidación de entrega — 2026-09-22
+
+- La compilación Angular de producción finalizó correctamente y las 9 pruebas
+  web pasaron en Chrome Headless.
+- La compilación y pruebas unitarias Android (`testDebugUnitTest`) finalizaron
+  correctamente usando el JDK incluido por Android Studio.
+- El lint remoto del esquema `public` de Supabase no reportó errores.
+- Vercel publicó los ajustes de accesibilidad, recuperación de contraseña y
+  carga resiliente del mapa; la URL pública respondió HTTP 200.
+- El mapa usa CARTO/OSM como base gratuita y cambia a OpenStreetMap si la
+  primera fuente de tiles no responde.
+
 ## Datos piloto disponibles
 
 Los datos de demostración remotos se identifican explícitamente con el prefijo
