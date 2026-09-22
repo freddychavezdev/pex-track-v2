@@ -5,10 +5,12 @@ import android.content.Intent
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
+import android.net.Uri
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -41,6 +43,7 @@ class MainActivity : AppCompatActivity() {
   private lateinit var workOrdersContainer: LinearLayout
   private var speechRecognizer: SpeechRecognizer? = null
   private var activeTranscriptInput: EditText? = null
+  private var awaitingBackgroundLocationSettings = false
   private lateinit var connectivityManager: ConnectivityManager
   private val networkCallback = object : ConnectivityManager.NetworkCallback() {
     override fun onAvailable(network: Network) {
@@ -60,7 +63,13 @@ class MainActivity : AppCompatActivity() {
     ActivityResultContracts.RequestMultiplePermissions()
   ) { permissions ->
     val preciseGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    if (preciseGranted) requestBackgroundLocationIfNeeded() else showStatus("Se requiere ubicación precisa para iniciar el seguimiento")
+    if (preciseGranted) requestNotificationPermissionThenStart() else showStatus("Se requiere ubicación precisa para iniciar el seguimiento")
+  }
+
+  private val notificationPermissionLauncher = registerForActivityResult(
+    ActivityResultContracts.RequestPermission()
+  ) {
+    requestBackgroundLocationIfNeeded()
   }
 
   private val microphonePermissionLauncher = registerForActivityResult(
@@ -111,6 +120,18 @@ class MainActivity : AppCompatActivity() {
     refreshPendingOperations()
   }
 
+  override fun onResume() {
+    super.onResume()
+    if (awaitingBackgroundLocationSettings) {
+      awaitingBackgroundLocationSettings = false
+      val backgroundGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+      showStatus(
+        if (backgroundGranted) "Seguimiento activo con ubicación en segundo plano autorizada"
+        else "Seguimiento activo con acceso limitado: habilita ‘Permitir siempre’ para seguir con la pantalla bloqueada"
+      )
+    }
+  }
+
   private fun signIn() {
     val email = emailInput.text.toString()
     val password = passwordInput.text.toString()
@@ -154,25 +175,38 @@ class MainActivity : AppCompatActivity() {
       showStatus("Inicia sesión antes de activar el seguimiento")
       return
     }
-    val permissions = buildList {
+    val locationPermissions = buildList {
       if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
         add(Manifest.permission.ACCESS_FINE_LOCATION)
         add(Manifest.permission.ACCESS_COARSE_LOCATION)
       }
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-        ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-      ) add(Manifest.permission.POST_NOTIFICATIONS)
     }
-    if (permissions.isEmpty()) requestBackgroundLocationIfNeeded()
-    else locationPermissionLauncher.launch(permissions.toTypedArray())
+    if (locationPermissions.isEmpty()) requestNotificationPermissionThenStart()
+    else locationPermissionLauncher.launch(locationPermissions.toTypedArray())
+  }
+
+  private fun requestNotificationPermissionThenStart() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+      ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+    ) {
+      notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    } else {
+      requestBackgroundLocationIfNeeded()
+    }
   }
 
   private fun requestBackgroundLocationIfNeeded() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-      ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
-    ) {
+    val backgroundGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && !backgroundGranted) {
       showStatus("Autoriza ‘Permitir siempre’ para mantener la ubicación con la pantalla bloqueada")
       backgroundLocationPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !backgroundGranted) {
+      startTracking()
+      awaitingBackgroundLocationSettings = true
+      showStatus("Abre Ajustes y habilita ‘Permitir siempre’ para continuar con la pantalla bloqueada")
+      startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", packageName, null)
+      })
     } else {
       startTracking()
     }
