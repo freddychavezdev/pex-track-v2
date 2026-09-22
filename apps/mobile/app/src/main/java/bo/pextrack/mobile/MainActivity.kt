@@ -23,6 +23,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import bo.pextrack.mobile.auth.MobileAuthRepository
 import bo.pextrack.mobile.auth.SupabaseProvider
 import bo.pextrack.mobile.auth.TeamSessionStore
@@ -51,6 +52,12 @@ class MainActivity : AppCompatActivity() {
   private lateinit var ordersTitle: TextView
   private var speechRecognizer: SpeechRecognizer? = null
   private var activeTranscriptInput: EditText? = null
+  private var activeDictationStatus: TextView? = null
+  private var activeDictationPreview: TextView? = null
+  private var activeStartDictationButton: MaterialButton? = null
+  private var activeStopDictationButton: MaterialButton? = null
+  private var dictationPrefix = ""
+  private var isDictating = false
   private var awaitingBackgroundLocationSettings = false
   private lateinit var connectivityManager: ConnectivityManager
   private val networkCallback = object : ConnectivityManager.NetworkCallback() {
@@ -291,21 +298,28 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun renderWorkOrders(orders: List<MobileWorkOrder>) {
+    cancelActiveDictation()
     workOrdersContainer.removeAllViews()
     orders.forEach { order ->
       val row = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(0, 16, 0, 16)
+        setBackgroundResource(R.drawable.bg_card)
+        setPadding(dp(18), dp(18), dp(18), dp(18))
       }
+      row.layoutParams = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      ).apply { bottomMargin = dp(14) }
       row.addView(TextView(this).apply {
         val routeLabel = order.route_sequence?.let { "Ruta #$it · " }.orEmpty()
         text = "$routeLabel${order.code} · ${if (order.is_emergency) "EMERGENCIA · " else ""}Prioridad ${order.priority}"
-        textSize = 16f
+        textSize = 17f
+        setTypeface(typeface, android.graphics.Typeface.BOLD)
         setTextColor(Color.parseColor("#182230"))
       })
       row.addView(TextView(this).apply {
         text = "${taskLabel(order.task_type)} · ${order.address}\nEstado: ${statusLabel(order.status)}"
-        textSize = 14f
+        textSize = 15f
         setTextColor(Color.parseColor("#5F7086"))
       })
       val transcriptInput = EditText(this).apply {
@@ -314,17 +328,51 @@ class MainActivity : AppCompatActivity() {
         setText(order.latest_note.orEmpty())
         setSelection(text.length)
       }
-      row.addView(transcriptInput)
+      row.addView(transcriptInput, LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+      ).apply { topMargin = dp(12) })
+
+      val dictationStatus = TextView(this).apply {
+        text = "Pulsa Iniciar dictado, habla con claridad y finaliza cuando termines. La nota no se guarda automáticamente."
+        textSize = 13f
+        setTextColor(Color.parseColor("#52637A"))
+      }
+      row.addView(dictationStatus, LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+      ).apply { topMargin = dp(8) })
+      val dictationPreview = TextView(this).apply {
+        visibility = View.GONE
+        textSize = 14f
+        setTextColor(Color.parseColor("#1D5DBA"))
+        setBackgroundResource(R.drawable.bg_status_card)
+      }
+      row.addView(dictationPreview, LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+      ).apply { topMargin = dp(8) })
       val transcriptActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-      transcriptActions.addView(Button(this).apply {
-        text = "Dictar"
-        setOnClickListener { requestDictation(transcriptInput) }
-      })
-      transcriptActions.addView(Button(this).apply {
+      val startDictationButton = MaterialButton(this).apply {
+        text = "Iniciar dictado"
+        setTextSize(14f)
+        setOnClickListener {
+          requestDictation(transcriptInput, dictationStatus, dictationPreview, this)
+        }
+      }
+      transcriptActions.addView(startDictationButton, LinearLayout.LayoutParams(0, dp(48), 1f).apply { rightMargin = dp(8) })
+      val stopDictationButton = MaterialButton(this).apply {
+        text = "Finalizar"
+        setTextSize(14f)
+        visibility = View.GONE
+        setOnClickListener { finishDictationManually() }
+      }
+      transcriptActions.addView(stopDictationButton, LinearLayout.LayoutParams(0, dp(48), 1f))
+      row.addView(transcriptActions, LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+      ).apply { topMargin = dp(10) })
+      row.addView(MaterialButton(this).apply {
         text = "Guardar observación"
+        setTextSize(14f)
         setOnClickListener { saveNote(order, transcriptInput) }
-      })
-      row.addView(transcriptActions)
+      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(8) })
       val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
       allowedTransitions(order.status).forEach { nextStatus ->
         actions.addView(Button(this).apply {
@@ -337,12 +385,23 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  private fun requestDictation(input: EditText) {
+  private fun requestDictation(
+    input: EditText,
+    dictationStatus: TextView,
+    dictationPreview: TextView,
+    startButton: MaterialButton
+  ) {
     if (speechRecognizer == null) {
       showStatus("Este dispositivo no tiene un servicio de reconocimiento de voz disponible")
       return
     }
+    cancelActiveDictation()
     activeTranscriptInput = input
+    activeDictationStatus = dictationStatus
+    activeDictationPreview = dictationPreview
+    activeStartDictationButton = startButton
+    activeStopDictationButton = (startButton.parent as? LinearLayout)?.getChildAt(1) as? MaterialButton
+    dictationPrefix = input.text.toString().trim()
     if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
       startDictation()
     } else {
@@ -359,30 +418,72 @@ class MainActivity : AppCompatActivity() {
       putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
       putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
     }
-    showStatus("Escuchando la observación…")
+    isDictating = true
+    activeStartDictationButton?.apply { text = "Escuchando…"; isEnabled = false }
+    activeStopDictationButton?.visibility = View.VISIBLE
+    activeDictationStatus?.text = "Preparando micrófono… espera la indicación y empieza a hablar."
+    activeDictationPreview?.visibility = View.GONE
+    showStatus("Dictado iniciado para esta OT")
     recognizer.startListening(intent)
   }
 
+  private fun finishDictationManually() {
+    if (!isDictating) return
+    activeDictationStatus?.text = "Procesando tu voz…"
+    activeStopDictationButton?.isEnabled = false
+    speechRecognizer?.stopListening()
+  }
+
+  private fun cancelActiveDictation() {
+    if (isDictating) speechRecognizer?.cancel()
+    isDictating = false
+    activeStartDictationButton?.apply { text = "Iniciar dictado"; isEnabled = true }
+    activeStopDictationButton?.apply { visibility = View.GONE; isEnabled = true }
+    activeTranscriptInput = null
+    activeDictationStatus = null
+    activeDictationPreview = null
+    activeStartDictationButton = null
+    activeStopDictationButton = null
+  }
+
   private fun createRecognitionListener() = object : RecognitionListener {
-    override fun onReadyForSpeech(params: Bundle?) = Unit
-    override fun onBeginningOfSpeech() = Unit
+    override fun onReadyForSpeech(params: Bundle?) {
+      activeDictationStatus?.text = "Micrófono listo. Habla ahora y pulsa Finalizar al terminar."
+    }
+    override fun onBeginningOfSpeech() {
+      activeDictationStatus?.text = "● Escuchando… tu voz se mostrará como borrador."
+    }
     override fun onRmsChanged(rmsdB: Float) = Unit
     override fun onBufferReceived(buffer: ByteArray?) = Unit
-    override fun onEndOfSpeech() = Unit
+    override fun onEndOfSpeech() {
+      activeDictationStatus?.text = "Procesando tu voz…"
+    }
     override fun onPartialResults(partialResults: Bundle?) {
       val text = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-      if (!text.isNullOrBlank()) activeTranscriptInput?.setText(text)
+      if (!text.isNullOrBlank()) {
+        activeDictationPreview?.apply {
+          visibility = View.VISIBLE
+          this.text = "Borrador: $text"
+        }
+      }
     }
     override fun onEvent(eventType: Int, params: Bundle?) = Unit
     override fun onResults(results: Bundle?) {
       val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
       if (!text.isNullOrBlank()) {
-        activeTranscriptInput?.setText(text)
-        activeTranscriptInput?.setSelection(text.length)
+        val finalText = listOf(dictationPrefix, text).filter { it.isNotBlank() }.joinToString(" ")
+        activeTranscriptInput?.setText(finalText)
+        activeTranscriptInput?.setSelection(finalText.length)
+        activeDictationStatus?.text = "Transcripción lista. Revísala antes de guardar la observación."
+        activeDictationPreview?.apply { visibility = View.VISIBLE; this.text = "Transcripción: $text" }
         showStatus("Transcripción lista; revísala y guárdala en la OT")
       } else {
+        activeDictationStatus?.text = "No se recibió una frase. Pulsa Iniciar dictado e inténtalo de nuevo."
         showStatus("No se pudo obtener una transcripción")
       }
+      isDictating = false
+      activeStartDictationButton?.apply { this.text = "Dictar nuevamente"; isEnabled = true }
+      activeStopDictationButton?.apply { visibility = View.GONE; isEnabled = true }
     }
     override fun onError(error: Int) {
       val message = when (error) {
@@ -392,9 +493,15 @@ class MainActivity : AppCompatActivity() {
         SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "El reconocimiento de voz está ocupado"
         else -> "No se pudo transcribir la observación"
       }
+      activeDictationStatus?.text = "$message Pulsa Iniciar dictado para reintentar."
+      isDictating = false
+      activeStartDictationButton?.apply { text = "Iniciar dictado"; isEnabled = true }
+      activeStopDictationButton?.apply { visibility = View.GONE; isEnabled = true }
       showStatus(message)
     }
   }
+
+  private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
   private fun saveNote(order: MobileWorkOrder, input: EditText) {
     val transcript = input.text.toString().trim()
