@@ -2,6 +2,7 @@ node_modules/
 dist/
 .angular/
 **/.gradle/
+**/.kotlin/
 **/build/
 .env
 .env.*
@@ -13,3 +14,4 @@ dist/
 local.properties
 supabase/.temp/
 tmp/
+artifacts/
