@@ -56,12 +56,28 @@ class MainActivity : AppCompatActivity() {
   private val networkCallback = object : ConnectivityManager.NetworkCallback() {
     override fun onAvailable(network: Network) {
       OfflineSyncScheduler.enqueue(this@MainActivity)
-      runOnUiThread { showStatus("Conexión recuperada; sincronizando registros pendientes…") }
+      runOnUiThread {
+        showStatus(
+          if (authRepository.hasSession()) {
+            "Conexión recuperada; sincronizando registros pendientes…"
+          } else {
+            "Con conexión. Inicia sesión para consultar tus órdenes asignadas."
+          }
+        )
+      }
       refreshPendingOperations()
     }
 
     override fun onLost(network: Network) {
-      runOnUiThread { showStatus("Sin conexión: los cambios se guardarán localmente") }
+      runOnUiThread {
+        showStatus(
+          if (authRepository.hasSession()) {
+            "Sin conexión: los cambios se guardarán localmente"
+          } else {
+            "Sin conexión. Conéctate para iniciar sesión."
+          }
+        )
+      }
     }
   }
   private val authRepository by lazy { MobileAuthRepository(this) }
