@@ -1,6 +1,6 @@
-<div class="app-shell" [class.map-focus-mode]="mapExpanded">
+<div class="app-shell" [class.map-focus-mode]="mapExpanded" [class.sidebar-collapsed]="sidebarCollapsed">
   <aside class="sidebar" [class.mobile-open]="mobileMenuOpen">
-    <div class="brand"><div class="brand-mark">PX</div><div><strong>PEX Track</strong><span>Control operativo</span></div><button class="menu-close" type="button" aria-label="Cerrar menú" (click)="mobileMenuOpen = false">×</button></div>
+    <div class="brand"><div class="brand-mark">PX</div><div class="brand-copy"><strong>PEX Track</strong><span>Control operativo</span></div><button class="sidebar-toggle" type="button" [attr.aria-label]="sidebarCollapsed ? 'Mostrar barra lateral' : 'Ocultar barra lateral'" [attr.title]="sidebarCollapsed ? 'Mostrar barra lateral' : 'Ocultar barra lateral'" (click)="sidebarCollapsed = !sidebarCollapsed"><span>{{ sidebarCollapsed ? '›' : '‹' }}</span></button><button class="menu-close" type="button" aria-label="Cerrar menú" (click)="mobileMenuOpen = false">×</button></div>
     <nav class="nav-list" aria-label="Navegación principal">
       <span class="nav-section-label">OPERACIÓN</span>
       <a class="nav-item active" href="#monitoring" (click)="mobileMenuOpen = false"><span class="nav-icon">⌖</span><span>Monitoreo<small>Vista general</small></span></a>
