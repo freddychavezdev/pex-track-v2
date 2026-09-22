@@ -12,6 +12,9 @@ Aplicación Android nativa en Kotlin para técnicos de campo.
 - Identificadores idempotentes por evento para evitar duplicados.
 - La cola offline queda aislada por usuario y cuadrilla para impedir que una
   sesión distinta sincronice operaciones pendientes de otro técnico.
+- La cola conserva un máximo de 500 operaciones y reserva 100 espacios para
+  cambios de estado y observaciones; cuando no hay red, descarta primero las
+  posiciones GPS más antiguas para no bloquear la atención de OTs.
 
 La implementación móvil se conecta con el mismo contrato de Supabase y no utiliza
 una PWA para el seguimiento de ubicación en segundo plano. El APK se genera con

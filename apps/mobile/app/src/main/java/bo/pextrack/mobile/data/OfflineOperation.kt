@@ -16,5 +16,6 @@ data class OfflineOperation(
 ) {
   companion object {
     const val MAX_PENDING_OPERATIONS = 500
+    const val RESERVED_OPERATION_CAPACITY = 100
   }
 }

@@ -16,6 +16,12 @@ interface OfflineOperationDao {
   @Query("SELECT COUNT(*) FROM offline_operations WHERE ownerUserId = :ownerUserId AND teamId = :teamId")
   suspend fun pendingCount(ownerUserId: String, teamId: String): Int
 
+  @Query("SELECT COUNT(*) FROM offline_operations WHERE ownerUserId = :ownerUserId AND teamId = :teamId AND operationType = :operationType")
+  suspend fun pendingCountByType(ownerUserId: String, teamId: String, operationType: String): Int
+
+  @Query("DELETE FROM offline_operations WHERE id IN (SELECT id FROM offline_operations WHERE ownerUserId = :ownerUserId AND teamId = :teamId AND operationType = :operationType ORDER BY createdAt LIMIT :limit)")
+  suspend fun deleteOldestByType(ownerUserId: String, teamId: String, operationType: String, limit: Int)
+
   @Query("DELETE FROM offline_operations WHERE id IN (:ids)")
   suspend fun deleteByIds(ids: List<String>)
 }

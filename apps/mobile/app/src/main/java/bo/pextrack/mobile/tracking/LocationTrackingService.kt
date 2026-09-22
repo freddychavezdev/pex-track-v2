@@ -26,12 +26,14 @@ import com.google.android.gms.location.Priority
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class LocationTrackingService : Service() {
   private lateinit var fusedLocationClient: FusedLocationProviderClient
-  private val ioScope = CoroutineScope(Dispatchers.IO)
+  private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 15_000)
     .setMinUpdateIntervalMillis(5_000)
     .setMinUpdateDistanceMeters(10f)
@@ -55,6 +57,7 @@ class LocationTrackingService : Service() {
 
   override fun onDestroy() {
     fusedLocationClient.removeLocationUpdates(locationCallback)
+    ioScope.cancel()
     super.onDestroy()
   }
 
@@ -81,10 +84,22 @@ class LocationTrackingService : Service() {
       val dao = PexTrackDatabase.get(this@LocationTrackingService).offlineOperationDao()
       val ownerUserId = SupabaseProvider.client?.auth?.currentUserOrNull()?.id ?: return@launch
       val teamId = TeamSessionStore(this@LocationTrackingService).currentTeamId() ?: return@launch
-      if (dao.pendingCount(ownerUserId, teamId) < OfflineOperation.MAX_PENDING_OPERATIONS) {
-        dao.insert(OfflineOperation(operationType = "team_location", payload = payload, ownerUserId = ownerUserId, teamId = teamId))
-        OfflineSyncScheduler.enqueue(this@LocationTrackingService)
+      val totalPending = dao.pendingCount(ownerUserId, teamId)
+      val pendingLocations = dao.pendingCountByType(ownerUserId, teamId, LOCATION_OPERATION_TYPE)
+      val criticalOperations = totalPending - pendingLocations
+      val locationCapacity = (
+        OfflineOperation.MAX_PENDING_OPERATIONS -
+          OfflineOperation.RESERVED_OPERATION_CAPACITY -
+          criticalOperations
+        ).coerceAtLeast(0)
+
+      if (locationCapacity == 0) return@launch
+      val locationsToDiscard = pendingLocations - locationCapacity + 1
+      if (locationsToDiscard > 0) {
+        dao.deleteOldestByType(ownerUserId, teamId, LOCATION_OPERATION_TYPE, locationsToDiscard)
       }
+      dao.insert(OfflineOperation(operationType = LOCATION_OPERATION_TYPE, payload = payload, ownerUserId = ownerUserId, teamId = teamId))
+      OfflineSyncScheduler.enqueue(this@LocationTrackingService)
     }
   }
 
@@ -103,5 +118,6 @@ class LocationTrackingService : Service() {
   private companion object {
     const val CHANNEL_ID = "pex-track-location"
     const val NOTIFICATION_ID = 1001
+    const val LOCATION_OPERATION_TYPE = "team_location"
   }
 }
