@@ -57,6 +57,15 @@ La keystore oficial debe conservarse fuera del repositorio y respaldarse en un
 gestor seguro. Si se pierde, no podrá publicarse una actualización sobre la
 misma instalación Android.
 
+## 3.1 Secreto de la función administrativa
+
+La Edge Function `admin-users` usa el secreto remoto
+`PEX_TRACK_SERVER_KEY`. Debe contener una clave de servidor moderna de
+Supabase (`sb_secret_...`) y configurarse únicamente mediante `supabase secrets
+set`; nunca debe incluirse en Vercel, Android ni archivos versionados. Esto
+permite rotar la clave de la función sin depender de la clave heredada
+`service_role`.
+
 ## 4. Prueba piloto obligatoria
 
 Antes de distribuir el APK a todos los técnicos, prueba al menos un dispositivo

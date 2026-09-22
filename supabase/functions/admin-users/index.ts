@@ -11,7 +11,9 @@ const response = (body: unknown, status = 200) => new Response(JSON.stringify(bo
 
 const credentials = () => {
   const url = Deno.env.get('SUPABASE_URL');
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  // Use an application-owned secret rather than Supabase's legacy runtime
+  // service-role variable. The custom secret can be rotated independently.
+  const key = Deno.env.get('PEX_TRACK_SERVER_KEY');
   if (!url || !key) throw new Error('Supabase server credentials are not configured');
   return { url, key };
 };
