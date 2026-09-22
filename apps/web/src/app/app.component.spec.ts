@@ -56,4 +56,25 @@ describe('AppComponent', () => {
 
     expect(app.taskLabel(order)).toContain('EMERGENCIA · Asistencia');
   });
+
+  it('should flag an in-progress team far from its assigned work order', () => {
+    const app = TestBed.createComponent(AppComponent).componentInstance;
+    const order: WorkOrderSummary = {
+      id: 'order-1', code: 'OT-001', customer_name: null, address: 'Av. Principal 123',
+      task_type: 'technical_assistance', status: 'in_progress', priority: 2,
+      is_emergency: false, scheduled_for: '2026-09-22', assigned_team_id: 'team-1'
+    };
+    const team = {
+      marker_type: 'team' as const, marker_id: 'team-1', code: 'CUADRILLA-01',
+      label: 'Cuadrilla 01', latitude: -16.5, longitude: -68.15,
+      status: 'in_progress', observed_at: '2026-09-22T00:00:00Z'
+    };
+    app.orders.set([order]);
+    app.mapMarkers.set([
+      team,
+      { marker_type: 'work_order', marker_id: 'order-1', code: 'OT-001', label: 'Av. Principal 123', latitude: -16.51, longitude: -68.15, status: 'in_progress', observed_at: '2026-09-22T00:00:00Z' }
+    ]);
+
+    expect(app.teamDeviationKm(team)).toBeGreaterThan(0.75);
+  });
 });

@@ -5,6 +5,7 @@ button, input, select, textarea { font:inherit; }
 .operational-marker-wrapper { background: transparent; border: 0; }
 .operational-marker { align-items: center; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 2px 8px rgba(12, 29, 55, .3); color: #fff; display: flex; font-size: 11px; font-weight: 700; height: 30px; justify-content: center; width: 30px; }
 .operational-marker.team { background: #1c77c3; }
+.operational-marker.deviation { background: #d54848; }
 .operational-marker.work-order { background: #ec6a3b; }
 .operational-marker.network-node { background: #7359c7; }
 .operational-marker.distribution-box { background: #d58a2d; }

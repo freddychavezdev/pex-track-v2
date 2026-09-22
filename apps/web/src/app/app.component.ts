@@ -410,6 +410,19 @@ export class AppComponent implements OnDestroy, OnInit {
     return this.mapMarkers().filter((marker) => marker.marker_type === 'team');
   }
 
+  teamDeviationKm(team: OperationalMapMarker): number | null {
+    if (team.status !== 'in_progress') return null;
+    const assignedOrderIds = new Set(this.orders()
+      .filter((order) => order.assigned_team_id === team.marker_id && order.status === 'in_progress')
+      .map((order) => order.id));
+    const assignedMarkers = this.mapMarkers().filter((marker) =>
+      marker.marker_type === 'work_order' && assignedOrderIds.has(marker.marker_id));
+    if (!assignedMarkers.length) return null;
+    const distance = Math.min(...assignedMarkers.map((order) =>
+      this.distanceKm(team.latitude, team.longitude, order.latitude, order.longitude)));
+    return distance > 0.75 ? distance : null;
+  }
+
   signalLabel(observedAt: string): string {
     if (!observedAt) return 'Sin señal';
     const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(observedAt).getTime()) / 1000));
@@ -424,7 +437,8 @@ export class AppComponent implements OnDestroy, OnInit {
 
   alertCount(): number {
     const suspendedOrders = this.orders().filter((order) => order.status === 'suspended').length;
-    return suspendedOrders + this.activeTeamMarkers().filter((team) => this.isStale(team.observed_at)).length;
+    return suspendedOrders + this.activeTeamMarkers().filter((team) =>
+      this.isStale(team.observed_at) || this.teamDeviationKm(team) !== null).length;
   }
 
   isStale(observedAt: string): boolean {

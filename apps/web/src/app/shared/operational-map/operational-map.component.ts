@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
 import type * as Leaflet from 'leaflet';
-import { OperationalMapMarker } from '../../core/models/operations.models';
+import { OperationalMapMarker, WorkOrderSummary } from '../../core/models/operations.models';
 
 @Component({
   selector: 'app-operational-map',
@@ -11,6 +11,7 @@ import { OperationalMapMarker } from '../../core/models/operations.models';
 })
 export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() markers: OperationalMapMarker[] = [];
+  @Input() workOrders: WorkOrderSummary[] = [];
   @Input() emptyMessage = 'Inicia sesión para consultar el mapa operativo.';
   @ViewChild('map') private mapElement?: ElementRef<HTMLDivElement>;
 
@@ -54,14 +55,15 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
     validMarkers.forEach((marker) => {
       const symbol = marker.marker_type === 'team' ? 'C' : marker.marker_type === 'network_node' ? 'N' : marker.marker_type === 'distribution_box' ? 'B' : 'OT';
       const eta = marker.marker_type === 'work_order' ? this.nearestEta(marker, teamMarkers) : null;
+      const deviationKm = marker.marker_type === 'team' ? this.deviationKm(marker) : null;
       const icon = L.divIcon({
         className: 'operational-marker-wrapper',
-        html: `<span class="operational-marker ${marker.marker_type}">${symbol}</span>`,
+        html: `<span class="operational-marker ${marker.marker_type}${deviationKm !== null ? ' deviation' : ''}">${deviationKm !== null ? '!' : symbol}</span>`,
         iconSize: [30, 30],
         iconAnchor: [15, 15]
       });
       L.marker([marker.latitude, marker.longitude] as Leaflet.LatLngExpression, { icon })
-        .bindPopup(`<strong>${this.escapeHtml(marker.code)}</strong><br>${this.escapeHtml(marker.label)}<br><small>${this.escapeHtml(marker.status)}${eta ? `<br>ETA aproximado: ${eta} min` : ''}</small>`)
+        .bindPopup(`<strong>${this.escapeHtml(marker.code)}</strong><br>${this.escapeHtml(marker.label)}<br><small>${this.escapeHtml(marker.status)}${eta ? `<br>ETA aproximado: ${eta} min` : ''}${deviationKm !== null ? `<br><b>Posible desvío: ${deviationKm.toFixed(1)} km de la OT asignada</b>` : ''}</small>`)
         .addTo(markerLayer);
     });
     if (validMarkers.length) {
@@ -75,6 +77,19 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
     if (!teams.length) return null;
     const distance = Math.min(...teams.map((team) => this.distanceKm(order.latitude, order.longitude, team.latitude, team.longitude)));
     return Math.max(1, Math.ceil((distance / 25) * 60));
+  }
+
+  private deviationKm(team: OperationalMapMarker): number | null {
+    if (team.status !== 'in_progress') return null;
+    const assignedOrderIds = new Set(this.workOrders
+      .filter((order) => order.assigned_team_id === team.marker_id && order.status === 'in_progress')
+      .map((order) => order.id));
+    const assignedMarkers = this.markers.filter((marker) =>
+      marker.marker_type === 'work_order' && assignedOrderIds.has(marker.marker_id));
+    if (!assignedMarkers.length) return null;
+    const distance = Math.min(...assignedMarkers.map((order) =>
+      this.distanceKm(team.latitude, team.longitude, order.latitude, order.longitude)));
+    return distance > 0.75 ? distance : null;
   }
 
   private distanceKm(latitudeA: number, longitudeA: number, latitudeB: number, longitudeB: number): number {
