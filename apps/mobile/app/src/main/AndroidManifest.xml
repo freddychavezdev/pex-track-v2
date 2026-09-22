@@ -15,9 +15,10 @@
   </queries>
 
   <application
-    android:allowBackup="true"
+    android:allowBackup="false"
     android:label="PEX Track"
-    android:theme="@style/Theme.PexTrack">
+    android:theme="@style/Theme.PexTrack"
+    android:usesCleartextTraffic="false">
     <activity
       android:name=".MainActivity"
       android:exported="true">
