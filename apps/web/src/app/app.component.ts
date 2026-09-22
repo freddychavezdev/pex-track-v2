@@ -99,6 +99,7 @@ export class AppComponent implements OnDestroy, OnInit {
     confirmation: new FormControl('', { nonNullable: true, validators: [Validators.required] })
   });
   private realtimeChannel: RealtimeChannel | null = null;
+  private mapRefreshTimer: ReturnType<typeof setInterval> | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly onlineHandler = () => this.browserOnline.set(true);
   private readonly offlineHandler = () => this.browserOnline.set(false);
@@ -116,6 +117,7 @@ export class AppComponent implements OnDestroy, OnInit {
   ngOnDestroy(): void {
     window.removeEventListener('online', this.onlineHandler);
     window.removeEventListener('offline', this.offlineHandler);
+    this.stopMapPolling();
     if (this.realtimeChannel) void this.supabase.client?.removeChannel(this.realtimeChannel);
   }
 
@@ -158,6 +160,7 @@ export class AppComponent implements OnDestroy, OnInit {
       void this.supabase.client?.removeChannel(this.realtimeChannel);
       this.realtimeChannel = null;
     }
+    this.stopMapPolling();
     this.orders.set([]);
     this.ordersError.set('');
     this.mapMarkers.set([]);
@@ -234,10 +237,24 @@ export class AppComponent implements OnDestroy, OnInit {
 
   private startRealtime(): void {
     if (!this.supabase.client || this.realtimeChannel || !this.auth.session()) return;
+    this.startMapPolling();
     this.realtimeChannel = this.supabase.client.channel('pex-track-operational-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'work_orders' }, () => void this.refreshOperations())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_locations' }, () => void this.loadMapSnapshot())
       .subscribe();
+  }
+
+  private startMapPolling(): void {
+    if (this.mapRefreshTimer) return;
+    this.mapRefreshTimer = setInterval(() => {
+      if (this.auth.session() && !document.hidden) void this.loadMapSnapshot();
+    }, 15_000);
+  }
+
+  private stopMapPolling(): void {
+    if (!this.mapRefreshTimer) return;
+    clearInterval(this.mapRefreshTimer);
+    this.mapRefreshTimer = null;
   }
 
   async refreshOperations(): Promise<void> {
