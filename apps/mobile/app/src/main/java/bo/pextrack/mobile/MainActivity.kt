@@ -12,6 +12,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -64,6 +65,7 @@ class MainActivity : AppCompatActivity() {
   private var activeStopDictationButton: MaterialButton? = null
   private var dictationPrefix = ""
   private var isDictating = false
+  private var awaitingLocationSettings = false
   private var awaitingBackgroundLocationSettings = false
   private var trackingActive = false
   private lateinit var connectivityManager: ConnectivityManager
@@ -168,6 +170,15 @@ class MainActivity : AppCompatActivity() {
 
   override fun onResume() {
     super.onResume()
+    if (awaitingLocationSettings) {
+      awaitingLocationSettings = false
+      if (isLocationEnabled()) {
+        showStatus("Ubicación activada. Verificando permisos…")
+        requestPermissionsAndStart()
+      } else {
+        showStatus("La ubicación sigue desactivada. Activa el GPS para iniciar el seguimiento.")
+      }
+    }
     if (awaitingBackgroundLocationSettings) {
       awaitingBackgroundLocationSettings = false
       val backgroundGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -244,6 +255,12 @@ class MainActivity : AppCompatActivity() {
       showStatus("Inicia sesión antes de activar el seguimiento")
       return
     }
+    if (!isLocationEnabled()) {
+      awaitingLocationSettings = true
+      showStatus("La ubicación está desactivada. Activa el GPS para iniciar el seguimiento.")
+      startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+      return
+    }
     val locationPermissions = buildList {
       if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
         add(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -252,6 +269,18 @@ class MainActivity : AppCompatActivity() {
     }
     if (locationPermissions.isEmpty()) requestNotificationPermissionThenStart()
     else locationPermissionLauncher.launch(locationPermissions.toTypedArray())
+  }
+
+  private fun isLocationEnabled(): Boolean {
+    val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      locationManager.isLocationEnabled
+    } else {
+      runCatching {
+        locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+          locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+      }.getOrDefault(false)
+    }
   }
 
   private fun requestNotificationPermissionThenStart() {
