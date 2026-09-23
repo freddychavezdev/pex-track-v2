@@ -705,7 +705,14 @@ class MainActivity : AppCompatActivity() {
       putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
     }
     isDictating = true
-    activeStartDictationButton?.apply { text = "● Escuchando…"; isEnabled = false }
+    activeStartDictationButton?.apply {
+      text = "Escuchando"
+      setTextSize(13f)
+      isSingleLine = true
+      isEnabled = false
+      backgroundTintList = ColorStateList.valueOf(Color.parseColor("#DFF7EC"))
+      setTextColor(Color.parseColor("#16855D"))
+    }
     activeStopDictationButton?.visibility = View.VISIBLE
     activeDictationStatus?.text = "Preparando micrófono… espera la indicación y empieza a hablar."
     activeDictationPreview?.visibility = View.GONE
