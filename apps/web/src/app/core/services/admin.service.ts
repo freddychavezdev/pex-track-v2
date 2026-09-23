@@ -71,11 +71,25 @@ export class AdminService {
   }
 
   async listTeams(): Promise<TeamRecord[]> {
-    const { data, error } = await this.supabase.requireClient().from('teams')
+    const { data, error } = await this.supabase.requireClient().rpc('operation_team_catalog');
+    if (error) throw error;
+    const { data: details, error: detailsError } = await this.supabase.requireClient().from('teams')
       .select('id, code, technician_one_id, technician_two_id, vehicle_id, active, technician_one:technicians!teams_technician_one_id_fkey(profiles(full_name)), technician_two:technicians!teams_technician_two_id_fkey(profiles(full_name)), vehicle:vehicles(plate, model)')
       .order('code');
-    if (error) throw error;
-    return (data ?? []).map((row: any) => ({ ...row, technician_one: row.technician_one ? { profile: row.technician_one.profiles } : null, technician_two: row.technician_two ? { profile: row.technician_two.profiles } : null })) as TeamRecord[];
+    if (detailsError) throw detailsError;
+    const dispatch = new Map<string, any>((data ?? []).map((row: any) => [row.id, row]));
+    return (details ?? []).map((row: any) => {
+      const profile = dispatch.get(row.id) ?? {};
+      return {
+        ...row,
+        dispatch_status: profile.dispatch_status ?? 'available',
+        base_label: profile.base_label ?? null,
+        base_latitude: profile.base_latitude ?? null,
+        base_longitude: profile.base_longitude ?? null,
+        technician_one: row.technician_one ? { profile: row.technician_one.profiles } : null,
+        technician_two: row.technician_two ? { profile: row.technician_two.profiles } : null
+      };
+    }) as TeamRecord[];
   }
 
   async saveTeam(input: Partial<TeamRecord> & { id?: string }): Promise<void> {
@@ -83,7 +97,17 @@ export class AdminService {
     if (input.technician_one_id === input.technician_two_id) throw new Error('Los técnicos de una cuadrilla deben ser distintos.');
     const payload = { code: input.code.trim().toUpperCase(), technician_one_id: input.technician_one_id, technician_two_id: input.technician_two_id, vehicle_id: input.vehicle_id, active: input.active ?? true };
     const query = this.supabase.requireClient().from('teams');
-    const result = input.id ? await query.update(payload).eq('id', input.id) : await query.insert(payload);
+    const result = input.id ? await query.update(payload).eq('id', input.id).select('id').single() : await query.insert(payload).select('id').single();
     if (result.error) throw result.error;
+    const teamId = input.id ?? result.data?.id;
+    if (!teamId) throw new Error('No se pudo identificar la cuadrilla guardada.');
+    const { error: profileError } = await this.supabase.requireClient().rpc('set_team_dispatch_profile', {
+      p_team_id: teamId,
+      p_dispatch_status: input.dispatch_status ?? 'available',
+      p_base_label: input.base_label?.trim() || null,
+      p_base_latitude: input.base_latitude ?? null,
+      p_base_longitude: input.base_longitude ?? null
+    });
+    if (profileError) throw profileError;
   }
 }

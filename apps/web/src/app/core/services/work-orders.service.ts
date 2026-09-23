@@ -64,6 +64,18 @@ export class WorkOrdersService {
     if (error) throw error;
   }
 
+  async applyDispatchPlan(scheduledFor: string, assignments: Array<{ workOrderId: string; teamId: string; routeSequence: number }>): Promise<void> {
+    const { error } = await this.supabase.requireClient().rpc('apply_dispatch_plan', {
+      p_scheduled_for: scheduledFor,
+      p_assignments: assignments.map((assignment) => ({
+        work_order_id: assignment.workOrderId,
+        team_id: assignment.teamId,
+        route_sequence: assignment.routeSequence
+      }))
+    });
+    if (error) throw error;
+  }
+
   async historyForOrder(workOrderId: string): Promise<WorkOrderHistoryRecord[]> {
     const { data, error } = await this.supabase.requireClient()
       .from('work_order_status_history')

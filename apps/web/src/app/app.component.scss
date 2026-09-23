@@ -145,3 +145,21 @@ html.app-dark .team-actions .refresh-team-button:hover { background:#164a52; }
 .status-cell:not(:has(.status-dot.online)) { color:#b91c1c; }
 html.app-dark.app-dark .status-cell:has(.status-dot.online) { color:#86efac; }
 html.app-dark.app-dark .status-cell:not(:has(.status-dot.online)) { color:#fca5a5; }
+
+.planning-button { border-color:#5eead4; background:#5eead4; color:#073b3a; font-weight:800; }
+.planning-button:hover { background:#99f6e4; border-color:#99f6e4; }
+.dispatch-planning-dialog { max-width:920px; width:min(94vw,920px); }
+.planning-summary { align-items:center; background:var(--surface-soft,#edfdfa); border:1px solid rgba(15,118,110,.22); border-radius:12px; display:flex; flex-wrap:wrap; gap:12px 20px; margin:18px 0; padding:12px 14px; }
+.planning-summary strong { color:#0f766e; font-size:18px; }
+.planning-summary span { color:var(--muted-text,#60758b); font-size:13px; }
+.dispatch-plan-list { display:grid; gap:12px; max-height:52vh; overflow:auto; padding:2px; }
+.dispatch-team-card { background:var(--surface-card,#fff); border:1px solid var(--border-color,#d9e4f0); border-radius:14px; overflow:hidden; }
+.dispatch-team-heading { align-items:center; background:rgba(94,234,212,.12); display:flex; justify-content:space-between; gap:12px; padding:12px 14px; }
+.dispatch-team-heading div { display:grid; gap:3px; }.dispatch-team-heading strong { color:var(--text-strong,#17253a); font-size:16px; }.dispatch-team-heading span,.dispatch-team-heading small { color:var(--muted-text,#60758b); font-size:12px; }
+.dispatch-plan-row { align-items:center; border-top:1px solid var(--border-color,#e4ebf2); display:flex; gap:14px; justify-content:space-between; padding:11px 14px; }
+.dispatch-plan-row > div { display:grid; gap:3px; min-width:0; }.dispatch-plan-row strong { color:var(--text-strong,#17253a); font-size:13px; }.dispatch-plan-row span,.dispatch-plan-row small { color:var(--muted-text,#60758b); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dispatch-plan-row select { flex:0 0 160px; min-height:38px; }
+html.app-dark .planning-summary { background:rgba(20,184,166,.12); border-color:rgba(94,234,212,.34); }
+html.app-dark .dispatch-team-card { background:#0f2c36; border-color:#28515b; }
+html.app-dark .dispatch-team-heading { background:rgba(94,234,212,.1); }.app-dark .dispatch-team-heading strong,.app-dark .dispatch-plan-row strong { color:#e6fffb; }.app-dark .dispatch-team-heading span,.app-dark .dispatch-team-heading small,.app-dark .dispatch-plan-row span,.app-dark .dispatch-plan-row small { color:#a8c6ca; }
+@media (max-width:650px) { .dispatch-planning-dialog { padding:18px 14px; }.dispatch-team-heading,.dispatch-plan-row { align-items:flex-start; flex-direction:column; }.dispatch-plan-row select { flex-basis:auto; width:100%; }.planning-summary { align-items:flex-start; flex-direction:column; gap:6px; } }

@@ -69,7 +69,7 @@ export class AdminPanelComponent implements OnInit {
 
   newTechnician(): void { this.editingTechnician = { availability: 'available', active: true }; }
   newVehicle(): void { this.editingVehicle = { status: 'available', active: true }; }
-  newTeam(): void { this.editingTeam = { active: true }; }
+  newTeam(): void { this.editingTeam = { active: true, dispatch_status: 'available', base_label: null, base_latitude: null, base_longitude: null }; }
   editTechnician(value: TechnicianRecord): void { this.editingTechnician = { ...value }; }
   editVehicle(value: VehicleRecord): void { this.editingVehicle = { ...value }; }
   editTeam(value: TeamRecord): void { this.editingTeam = { ...value }; }

@@ -39,6 +39,10 @@ export interface TeamRecord {
   technician_two_id: string;
   vehicle_id: string;
   active: boolean;
+  dispatch_status: 'available' | 'unavailable' | 'on_service';
+  base_label: string | null;
+  base_latitude: number | null;
+  base_longitude: number | null;
   technician_one?: { profile?: Pick<UserProfile, 'full_name'> | null } | null;
   technician_two?: { profile?: Pick<UserProfile, 'full_name'> | null } | null;
   vehicle?: Pick<VehicleRecord, 'plate' | 'model'> | null;
@@ -80,6 +84,10 @@ export interface TeamSummary {
   id: string;
   code: string;
   active: boolean;
+  dispatch_status?: 'available' | 'unavailable' | 'on_service';
+  base_label?: string | null;
+  base_latitude?: number | null;
+  base_longitude?: number | null;
 }
 
 export interface NetworkNodeOption {

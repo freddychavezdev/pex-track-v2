@@ -29,6 +29,13 @@ interface EmergencyTeamSuggestion {
   signalStatus: 'available' | 'active' | 'no_signal';
 }
 
+interface DispatchPlanItem {
+  order: WorkOrderSummary;
+  teamId: string;
+  teamCode: string;
+  distanceKm: number | null;
+}
+
 @Component({
   selector: 'app-root',
   imports: [DatePipe, DecimalPipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, FocusTrapModule, SelectModule, DatePickerModule, InputNumberModule, CheckboxModule, OperationalMapComponent, AdminPanelComponent],
@@ -56,6 +63,7 @@ export class AppComponent implements OnDestroy, OnInit {
   showOrderTable = true;
   showHistory = false;
   showRouteSuggestion = false;
+  showDispatchPlanning = false;
   mapExpanded = false;
   mobileMenuOpen = false;
   sidebarCollapsed = false;
@@ -78,6 +86,7 @@ export class AppComponent implements OnDestroy, OnInit {
   importDragActive = false;
   savingImport = false;
   savingAssignment = false;
+  savingDispatchPlan = false;
   generatingReport = false;
   loginError = '';
   resetRequestMessage = '';
@@ -86,6 +95,8 @@ export class AppComponent implements OnDestroy, OnInit {
   importError = '';
   importSuccess = '';
   assignmentError = '';
+  dispatchPlanningError = '';
+  dispatchPlanningMessage = '';
   reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
   importDate = new Date().toISOString().slice(0, 10);
@@ -107,6 +118,7 @@ export class AppComponent implements OnDestroy, OnInit {
   assignmentTeamId = '';
   selectedOrder: WorkOrderSummary | null = null;
   readonly emergencySuggestions = signal<EmergencyTeamSuggestion[]>([]);
+  readonly dispatchPlan = signal<DispatchPlanItem[]>([]);
   readonly orders = signal<WorkOrderSummary[]>([]);
   readonly ordersLoading = signal(false);
   readonly ordersError = signal('');
@@ -221,6 +233,83 @@ export class AppComponent implements OnDestroy, OnInit {
   }
 
   openOrdersView(): void { this.showOrdersView = true; this.mobileMenuOpen = false; }
+  openDispatchPlanning(): void {
+    if (!this.canManageOperations()) return;
+    this.showOrdersView = true;
+    this.showDispatchPlanning = true;
+    this.dispatchPlanningError = '';
+    this.dispatchPlanningMessage = '';
+    this.generateDispatchPlan();
+  }
+
+  generateDispatchPlan(): void {
+    this.dispatchPlanningError = '';
+    this.dispatchPlanningMessage = '';
+    const availableTeams = this.teams().filter((team) => team.active && (team.dispatch_status ?? 'available') === 'available');
+    const pendingOrders = this.orders().filter((order) => order.status === 'pending' && !order.assigned_team_id);
+    if (!availableTeams.length) { this.dispatchPlan.set([]); this.dispatchPlanningError = 'No hay cuadrillas disponibles para planificar esta jornada.'; return; }
+    if (!pendingOrders.length) { this.dispatchPlan.set([]); this.dispatchPlanningError = 'No hay OTs pendientes y sin asignar para esta jornada.'; return; }
+
+    const markers = new Map(this.mapMarkers().map((marker) => [marker.marker_id, marker]));
+    const teamPositions = new Map<string, { latitude: number; longitude: number } | null>();
+    const assignedCounts = new Map<string, number>();
+    availableTeams.forEach((team) => {
+      const marker = markers.get(team.id);
+      teamPositions.set(team.id, marker?.marker_type === 'team'
+        ? { latitude: marker.latitude, longitude: marker.longitude }
+        : team.base_latitude !== null && team.base_latitude !== undefined && team.base_longitude !== null && team.base_longitude !== undefined
+          ? { latitude: team.base_latitude, longitude: team.base_longitude }
+          : null);
+      assignedCounts.set(team.id, 0);
+    });
+
+    const plan: DispatchPlanItem[] = [];
+    [...pendingOrders].sort((first, second) => first.priority - second.priority || first.code.localeCompare(second.code)).forEach((order) => {
+      const orderMarker = markers.get(order.id)
+        ?? (order.box ? this.mapMarkers().find((marker) => marker.marker_type === 'distribution_box' && marker.code === order.box?.code) : undefined)
+        ?? (order.node ? this.mapMarkers().find((marker) => marker.marker_type === 'network_node' && marker.code === order.node?.code) : undefined);
+      const candidates = availableTeams.map((team) => {
+        const position = teamPositions.get(team.id);
+        const distanceKm = position && orderMarker ? this.distanceKm(position.latitude, position.longitude, orderMarker.latitude, orderMarker.longitude) : null;
+        const load = assignedCounts.get(team.id) ?? 0;
+        return { team, distanceKm, score: load * 4 + (distanceKm ?? 20) };
+      }).sort((first, second) => first.score - second.score || first.team.code.localeCompare(second.team.code));
+      const selected = candidates[0];
+      assignedCounts.set(selected.team.id, (assignedCounts.get(selected.team.id) ?? 0) + 1);
+      if (orderMarker) teamPositions.set(selected.team.id, { latitude: orderMarker.latitude, longitude: orderMarker.longitude });
+      plan.push({ order, teamId: selected.team.id, teamCode: selected.team.code, distanceKm: selected.distanceKm });
+    });
+    this.dispatchPlan.set(plan);
+  }
+
+  dispatchPlanTeams(): Array<{ id: string; code: string; orders: DispatchPlanItem[]; totalDistanceKm: number }> {
+    return this.teams().filter((team) => team.active && (team.dispatch_status ?? 'available') === 'available').map((team) => {
+      const orders = this.dispatchPlan().filter((item) => item.teamId === team.id);
+      return { id: team.id, code: team.code, orders, totalDistanceKm: orders.reduce((total, item) => total + (item.distanceKm ?? 0), 0) };
+    });
+  }
+
+  changeDispatchPlanTeam(orderId: string, teamId: string): void {
+    const team = this.teams().find((item) => item.id === teamId);
+    if (!team) return;
+    this.dispatchPlan.update((plan) => plan.map((item) => item.order.id === orderId ? { ...item, teamId, teamCode: team.code } : item));
+  }
+
+  async applyDispatchPlan(): Promise<void> {
+    if (this.savingDispatchPlan || !this.dispatchPlan().length) return;
+    this.savingDispatchPlan = true;
+    this.dispatchPlanningError = '';
+    this.dispatchPlanningMessage = '';
+    try {
+      const assignments = this.dispatchPlanTeams().flatMap((team) => team.orders.map((item, index) => ({ workOrderId: item.order.id, teamId: team.id, routeSequence: index + 1 })));
+      await this.workOrders.applyDispatchPlan(this.importDate, assignments);
+      this.dispatchPlanningMessage = `Se asignaron ${assignments.length} OT(s) según la planificación aprobada.`;
+      await this.refreshOperations();
+      this.showDispatchPlanning = false;
+    } catch (error) {
+      this.dispatchPlanningError = error instanceof Error ? error.message : 'No se pudo aplicar la planificación.';
+    } finally { this.savingDispatchPlan = false; }
+  }
   openReportsView(): void { this.showReportsView = true; this.mobileMenuOpen = false; }
 
   openPasswordResetRequest(): void {
