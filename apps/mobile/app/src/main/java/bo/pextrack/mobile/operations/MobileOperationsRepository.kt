@@ -10,8 +10,18 @@ import bo.pextrack.mobile.data.PexTrackDatabase
 import bo.pextrack.mobile.sync.OfflineSyncScheduler
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.json.JSONObject
@@ -20,7 +30,49 @@ import java.util.UUID
 class MobileOperationsRepository(private val context: Context) {
   suspend fun assignedWorkOrders(): Result<List<MobileWorkOrder>> = runCatching {
     val client = requireAuthenticatedClient()
-    Json.decodeFromString<List<MobileWorkOrder>>(client.postgrest.rpc("my_assigned_work_orders").data)
+    val orders = Json.decodeFromString<List<MobileWorkOrder>>(client.postgrest.rpc("my_assigned_work_orders").data)
+    val locations = runCatching { assignedWorkOrderLocations(client) }.getOrDefault(emptyMap())
+    orders.map { order ->
+      val location = locations[order.id]
+      if (location == null || (order.latitude != null && order.longitude != null)) order
+      else order.copy(latitude = location.first, longitude = location.second)
+    }
+  }
+
+  private suspend fun assignedWorkOrderLocations(client: io.github.jan.supabase.SupabaseClient): Map<String, Pair<Double, Double>> {
+    val raw = client.postgrest.from("work_orders")
+      .select(columns = Columns.list("id", "location"))
+      .data
+    val rows = Json.parseToJsonElement(raw).jsonArray
+    return rows.mapNotNull { row ->
+      val objectRow = row.jsonObject
+      val id = objectRow["id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+      val coordinates = parseCoordinates(objectRow["location"] ?: return@mapNotNull null) ?: return@mapNotNull null
+      id to coordinates
+    }.toMap()
+  }
+
+  private fun parseCoordinates(element: JsonElement): Pair<Double, Double>? {
+    if (element is JsonObject) {
+      val coordinates = element["coordinates"]
+      if (coordinates is JsonArray && coordinates.size >= 2) {
+        val longitude = coordinates[0].jsonPrimitive.doubleOrNull
+        val latitude = coordinates[1].jsonPrimitive.doubleOrNull
+        if (longitude != null && latitude != null) return latitude to longitude
+      }
+    }
+    if (element is JsonPrimitive) {
+      val text = element.contentOrNull.orEmpty()
+      val geoJson = runCatching { Json.parseToJsonElement(text) }.getOrNull()
+      if (geoJson != null && geoJson !is JsonPrimitive) return parseCoordinates(geoJson)
+      val match = Regex("POINT\\s*\\(\\s*(-?\\d+(?:\\.\\d+)?)\\s+(-?\\d+(?:\\.\\d+)?)\\s*\\)", RegexOption.IGNORE_CASE).find(text)
+      if (match != null) {
+        val latitude = match.groupValues[2].toDoubleOrNull()
+        val longitude = match.groupValues[1].toDoubleOrNull()
+        if (latitude != null && longitude != null) return latitude to longitude
+      }
+    }
+    return null
   }
 
   suspend fun changeStatus(workOrderId: String, newStatus: String, reason: String?): String? {
