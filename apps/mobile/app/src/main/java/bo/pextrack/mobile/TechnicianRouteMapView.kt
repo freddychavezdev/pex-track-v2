@@ -16,6 +16,10 @@ class TechnicianRouteMapView(
   private val distanceKm: Double
 ) : View(context) {
   private var zoom = 1f
+  private var panX = 0f
+  private var panY = 0f
+  private var lastTouchX = 0f
+  private var lastTouchY = 0f
   private val scaleDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
     override fun onScale(detector: ScaleGestureDetector): Boolean {
       zoom = (zoom * detector.scaleFactor).coerceIn(1f, 3f)
@@ -34,6 +38,7 @@ class TechnicianRouteMapView(
     super.onDraw(canvas)
     canvas.drawColor(Color.rgb(239, 248, 248))
     canvas.save()
+    canvas.translate(panX, panY)
     canvas.scale(zoom, zoom, width / 2f, height / 2f)
     val left = paddingLeft.toFloat()
     val top = paddingTop.toFloat()
@@ -78,17 +83,46 @@ class TechnicianRouteMapView(
 
   override fun onTouchEvent(event: MotionEvent): Boolean {
     scaleDetector.onTouchEvent(event)
+    when (event.actionMasked) {
+      MotionEvent.ACTION_DOWN -> {
+        lastTouchX = event.x
+        lastTouchY = event.y
+      }
+      MotionEvent.ACTION_MOVE -> if (event.pointerCount == 1 && !scaleDetector.isInProgress) {
+        panX += event.x - lastTouchX
+        panY += event.y - lastTouchY
+        clampPan()
+        lastTouchX = event.x
+        lastTouchY = event.y
+        invalidate()
+      }
+      MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> performClick()
+    }
+    return true
+  }
+
+  override fun performClick(): Boolean {
+    super.performClick()
     return true
   }
 
   fun zoomIn() {
     zoom = (zoom + .25f).coerceAtMost(3f)
+    clampPan()
     invalidate()
   }
 
   fun zoomOut() {
     zoom = (zoom - .25f).coerceAtLeast(1f)
+    clampPan()
     invalidate()
+  }
+
+  private fun clampPan() {
+    val maxPanX = width * (zoom - 1f) / 2f
+    val maxPanY = height * (zoom - 1f) / 2f
+    panX = panX.coerceIn(-maxPanX, maxPanX)
+    panY = panY.coerceIn(-maxPanY, maxPanY)
   }
 
   private fun drawMarker(canvas: Canvas, x: Float, y: Float, color: Paint, label: String) {

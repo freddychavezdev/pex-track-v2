@@ -604,17 +604,23 @@ class MainActivity : AppCompatActivity() {
       orientation = LinearLayout.HORIZONTAL
     }
     mapControls.addView(MaterialButton(this).apply {
-      text = "−"
-      setTextSize(20f)
+      setIconResource(R.drawable.ic_zoom_out)
+      iconSize = dp(22)
+      iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+      iconPadding = 0
       setAllCaps(false)
       contentDescription = "Reducir zoom del mapa"
+      minWidth = dp(52)
       setOnClickListener { routeMap.zoomOut() }
     }, LinearLayout.LayoutParams(dp(52), dp(44)).apply { rightMargin = dp(8) })
     mapControls.addView(MaterialButton(this).apply {
-      text = "+"
-      setTextSize(20f)
+      setIconResource(R.drawable.ic_zoom_in)
+      iconSize = dp(22)
+      iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+      iconPadding = 0
       setAllCaps(false)
       contentDescription = "Ampliar mapa"
+      minWidth = dp(52)
       setOnClickListener { routeMap.zoomIn() }
     }, LinearLayout.LayoutParams(dp(52), dp(44)))
     content.addView(mapControls, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)))
