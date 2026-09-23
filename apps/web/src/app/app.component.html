@@ -131,7 +131,7 @@
         <div class="planning-summary"><strong>{{ dispatchPlan().length }} OTs</strong><span>{{ dispatchPlanTeams().length }} cuadrillas disponibles</span><span>Modifica una asignación con el selector y luego confirma.</span></div>
         <div class="dispatch-plan-list">
           @for (team of dispatchPlanTeams(); track team.id) {
-            <article class="dispatch-team-card"><div class="dispatch-team-heading"><div><strong>{{ team.code }}</strong><span>{{ team.orders.length }} OT(s) asignada(s)</span></div><small>Grupo geográfico recomendado</small></div>
+            <article class="dispatch-team-card"><div class="dispatch-team-heading"><div><strong>{{ team.code }}</strong><span>{{ team.orders.length }} OT(s) asignada(s)</span></div><small>Sector recomendado: {{ team.sectors.join(' · ') }}</small></div>
               @for (item of team.orders; track item.order.id) { <div class="dispatch-plan-row"><div><strong>{{ item.order.code }}</strong><span>{{ item.order.address }}</span><small>Prioridad {{ item.order.priority }} · {{ item.distanceKm === null ? 'Sin coordenadas de referencia' : (item.distanceKm | number:'1.1-1') + ' km del centro del grupo' }}</small></div><p-select class="dispatch-team-select" [ariaLabel]="'Asignar ' + item.order.code" [ngModel]="item.teamId" (ngModelChange)="changeDispatchPlanTeam(item.order.id, $event)" [options]="dispatchPlanningTeamOptions()" optionLabel="code" optionValue="id" [checkmark]="true" [filter]="true" filterBy="code" variant="filled" fluid /></div> }
             </article>
           }

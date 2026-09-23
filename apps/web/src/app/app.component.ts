@@ -34,6 +34,7 @@ interface DispatchPlanItem {
   teamId: string;
   teamCode: string;
   distanceKm: number | null;
+  sector: 'El Alto' | 'La Paz';
 }
 
 @Component({
@@ -267,78 +268,122 @@ export class AppComponent implements OnDestroy, OnInit {
         ?? (order.node ? this.mapMarkers().find((item) => item.marker_type === 'network_node' && item.code === order.node?.code) : undefined);
       return marker ? { latitude: marker.latitude, longitude: marker.longitude } : null;
     };
-    const locations = new Map(pendingOrders.map((order) => [order.id, locationFor(order)]));
-    const ordersWithLocation = pendingOrders.filter((order) => locations.get(order.id));
-    const grouped = new Map(availableTeams.map((team) => [team.id, [] as WorkOrderSummary[]]));
-    const centroid = new Map<string, { latitude: number; longitude: number } | null>(availableTeams.map((team) => [team.id, null]));
-    const capacity = Math.ceil(pendingOrders.length / availableTeams.length);
-    const ordered = [...pendingOrders].sort((first, second) => first.priority - second.priority || first.code.localeCompare(second.code));
-
-    // Primero crea grupos geográficos separados; después incorpora cada OT al
-    // grupo más cercano sin superar una carga equilibrada por cuadrilla.
-    const seeds: WorkOrderSummary[] = [];
-    while (seeds.length < availableTeams.length && seeds.length < ordersWithLocation.length) {
-      const candidate = ordersWithLocation.filter((order) => !seeds.some((seed) => seed.id === order.id)).sort((first, second) => {
-        if (!seeds.length) return first.priority - second.priority || first.code.localeCompare(second.code);
-        const distanceFor = (order: WorkOrderSummary) => Math.min(...seeds.map((seed) => {
-          const from = locations.get(order.id)!; const to = locations.get(seed.id)!;
-          return this.distanceKm(from.latitude, from.longitude, to.latitude, to.longitude);
-        }));
-        return distanceFor(second) - distanceFor(first) || first.priority - second.priority;
-      })[0];
-      if (!candidate) break;
-      seeds.push(candidate);
+    const locations = new Map<string, { latitude: number; longitude: number }>();
+    pendingOrders.forEach((order) => {
+      const location = locationFor(order);
+      if (location) locations.set(order.id, location);
+    });
+    const withoutLocation = pendingOrders.filter((order) => !locations.has(order.id));
+    if (withoutLocation.length) {
+      this.dispatchPlan.set([]);
+      this.dispatchPlanningError = `${withoutLocation.length} OT(s) no tiene(n) coordenadas verificables. Completa su latitud y longitud antes de planificar; el sistema no hará asignaciones por cercanía sin ubicación.`;
+      return;
     }
-    seeds.forEach((order, index) => {
-      const team = availableTeams[index];
-      grouped.get(team.id)!.push(order);
-      centroid.set(team.id, locations.get(order.id)!);
-    });
 
-    ordered.filter((order) => !seeds.some((seed) => seed.id === order.id)).forEach((order) => {
-      const location = locations.get(order.id);
-      const candidates = availableTeams.filter((team) => (grouped.get(team.id)?.length ?? 0) < capacity);
-      const pool = candidates.length ? candidates : availableTeams;
-      const selected = [...pool].sort((first, second) => {
-        const score = (team: TeamSummary) => {
-          const center = centroid.get(team.id);
-          const distance = location && center ? this.distanceKm(location.latitude, location.longitude, center.latitude, center.longitude) : 0;
-          return distance + (grouped.get(team.id)?.length ?? 0) * 1.5;
-        };
-        return score(first) - score(second) || first.code.localeCompare(second.code);
-      })[0];
-      const current = grouped.get(selected.id)!;
-      current.push(order);
-      if (location) {
-        const known = current.map((item) => locations.get(item.id)).filter((item): item is { latitude: number; longitude: number } => item !== null);
-        centroid.set(selected.id, {
-          latitude: known.reduce((total, item) => total + item.latitude, 0) / known.length,
-          longitude: known.reduce((total, item) => total + item.longitude, 0) / known.length
-        });
-      }
-    });
+    // El proyecto opera en dos ciudades. Primero se protege la separación
+    // El Alto / La Paz y recién dentro de cada sector se equilibran distancias.
+    // Así una cuadrilla recomendada no recibe extremos de ambas ciudades.
+    const ordersBySector = new Map<'El Alto' | 'La Paz', WorkOrderSummary[]>([['El Alto', []], ['La Paz', []]]);
+    pendingOrders.forEach((order) => ordersBySector.get(this.planningSector(order, locations.get(order.id)!))!.push(order));
+    const activeSectors = [...ordersBySector.entries()].filter(([, orders]) => orders.length > 0);
+    if (availableTeams.length < activeSectors.length) {
+      this.dispatchPlan.set([]);
+      this.dispatchPlanningError = 'Se requiere al menos una cuadrilla disponible por sector geográfico para no mezclar El Alto y La Paz.';
+      return;
+    }
 
-    const plan: DispatchPlanItem[] = availableTeams.flatMap((team) => {
-      const center = centroid.get(team.id);
-      return (grouped.get(team.id) ?? []).map((order) => {
-        const location = locations.get(order.id);
-        return { order, teamId: team.id, teamCode: team.code, distanceKm: location && center ? this.distanceKm(location.latitude, location.longitude, center.latitude, center.longitude) : null };
-      });
+    const teamsBySector = new Map<'El Alto' | 'La Paz', TeamSummary[]>([['El Alto', []], ['La Paz', []]]);
+    const availableByCode = [...availableTeams].sort((first, second) => first.code.localeCompare(second.code));
+    activeSectors.sort((first, second) => second[1].length - first[1].length || first[0].localeCompare(second[0])).forEach(([sector]) => {
+      teamsBySector.get(sector)!.push(availableByCode.shift()!);
     });
+    while (availableByCode.length) {
+      const target = [...activeSectors].sort((first, second) => {
+        const firstLoad = first[1].length / teamsBySector.get(first[0])!.length;
+        const secondLoad = second[1].length / teamsBySector.get(second[0])!.length;
+        return secondLoad - firstLoad || first[0].localeCompare(second[0]);
+      })[0][0];
+      teamsBySector.get(target)!.push(availableByCode.shift()!);
+    }
+
+    const plan: DispatchPlanItem[] = activeSectors.flatMap(([sector, sectorOrders]) => this.planSector(sector, sectorOrders, teamsBySector.get(sector)!, locations));
     this.dispatchPlan.set(plan);
   }
 
-  dispatchPlanTeams(): Array<{ id: string; code: string; orders: DispatchPlanItem[]; totalDistanceKm: number }> {
+  private planningSector(order: WorkOrderSummary, location: { latitude: number; longitude: number }): 'El Alto' | 'La Paz' {
+    const descriptor = `${order.zone?.code ?? ''} ${order.address}`.toLocaleLowerCase('es-BO');
+    if (/el alto|senkata|río seco|rio seco|villa adela|ciudad satélite|ciudad satelite|villa bolívar|villa bolivar|villa dolores/.test(descriptor)) return 'El Alto';
+    if (/la paz|sopocachi|obrajes|calacoto|miraflores|achumani|san miguel|villa fátima|villa fatima/.test(descriptor)) return 'La Paz';
+    // Respaldo geográfico para OTs sin ciudad escrita. El límite separa ambas
+    // áreas metropolitanas para las coordenadas usadas por PEX Track.
+    return location.longitude <= -68.155 ? 'El Alto' : 'La Paz';
+  }
+
+  private planSector(
+    sector: 'El Alto' | 'La Paz', orders: WorkOrderSummary[], teams: TeamSummary[],
+    locations: Map<string, { latitude: number; longitude: number }>
+  ): DispatchPlanItem[] {
+    const grouped = new Map(teams.map((team) => [team.id, [] as WorkOrderSummary[]]));
+    const centroids = new Map<string, { latitude: number; longitude: number } | null>(teams.map((team) => [team.id, null]));
+    const capacity = Math.ceil(orders.length / teams.length);
+    const ordered = [...orders].sort((first, second) => first.priority - second.priority || first.code.localeCompare(second.code));
+    const seeds: WorkOrderSummary[] = [];
+    while (seeds.length < teams.length && seeds.length < orders.length) {
+      const candidate = orders.filter((order) => !seeds.some((seed) => seed.id === order.id)).sort((first, second) => {
+        if (!seeds.length) return first.priority - second.priority || first.code.localeCompare(second.code);
+        const nearestDistance = (order: WorkOrderSummary) => Math.min(...seeds.map((seed) => {
+          const from = locations.get(order.id)!; const to = locations.get(seed.id)!;
+          return this.distanceKm(from.latitude, from.longitude, to.latitude, to.longitude);
+        }));
+        return nearestDistance(second) - nearestDistance(first) || first.priority - second.priority;
+      })[0];
+      if (candidate) seeds.push(candidate);
+    }
+    seeds.forEach((order, index) => { grouped.get(teams[index].id)!.push(order); centroids.set(teams[index].id, locations.get(order.id)!); });
+    ordered.filter((order) => !seeds.some((seed) => seed.id === order.id)).forEach((order) => {
+      const candidates = teams.filter((team) => grouped.get(team.id)!.length < capacity);
+      const pool = candidates.length ? candidates : teams;
+      const location = locations.get(order.id)!;
+      const selected = [...pool].sort((first, second) => {
+        const score = (team: TeamSummary) => {
+          const center = centroids.get(team.id)!;
+          return this.distanceKm(location.latitude, location.longitude, center.latitude, center.longitude) + grouped.get(team.id)!.length * 1.5;
+        };
+        return score(first) - score(second) || first.code.localeCompare(second.code);
+      })[0];
+      const teamOrders = grouped.get(selected.id)!;
+      teamOrders.push(order);
+      const known = teamOrders.map((item) => locations.get(item.id)!);
+      centroids.set(selected.id, {
+        latitude: known.reduce((total, item) => total + item.latitude, 0) / known.length,
+        longitude: known.reduce((total, item) => total + item.longitude, 0) / known.length
+      });
+    });
+    return teams.flatMap((team) => {
+      const center = centroids.get(team.id)!;
+      return grouped.get(team.id)!.map((order) => {
+        const location = locations.get(order.id)!;
+        return { order, teamId: team.id, teamCode: team.code, sector, distanceKm: this.distanceKm(location.latitude, location.longitude, center.latitude, center.longitude) };
+      });
+    });
+  }
+
+  dispatchPlanTeams(): Array<{ id: string; code: string; orders: DispatchPlanItem[]; totalDistanceKm: number; sectors: string[] }> {
     return this.teams().filter((team) => team.active && (team.dispatch_status ?? 'available') === 'available').map((team) => {
       const orders = this.dispatchPlan().filter((item) => item.teamId === team.id);
-      return { id: team.id, code: team.code, orders, totalDistanceKm: orders.reduce((total, item) => total + (item.distanceKm ?? 0), 0) };
+      return { id: team.id, code: team.code, orders, totalDistanceKm: orders.reduce((total, item) => total + (item.distanceKm ?? 0), 0), sectors: [...new Set(orders.map((item) => item.sector))] };
     });
   }
 
   changeDispatchPlanTeam(orderId: string, teamId: string): void {
     const team = this.teams().find((item) => item.id === teamId);
     if (!team) return;
+    const moving = this.dispatchPlan().find((item) => item.order.id === orderId);
+    const destinationSectors = this.dispatchPlan().filter((item) => item.teamId === teamId && item.order.id !== orderId).map((item) => item.sector);
     this.dispatchPlan.update((plan) => plan.map((item) => item.order.id === orderId ? { ...item, teamId, teamCode: team.code } : item));
+    this.dispatchPlanningMessage = moving && destinationSectors.length && destinationSectors.some((sector) => sector !== moving.sector)
+      ? `Advertencia: al mover ${moving.order.code} se mezclan sectores de El Alto y La Paz en ${team.code}. La recomendación inicial evita esa combinación.`
+      : '';
   }
 
   async applyDispatchPlan(): Promise<void> {
