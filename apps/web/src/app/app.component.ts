@@ -65,6 +65,8 @@ export class AppComponent implements OnDestroy, OnInit {
   showOrdersView = false;
   showReportsView = false;
   showOrderTable = true;
+  showDashboardOrdersTable = true;
+  showDashboardTeamsTable = true;
   showHistory = false;
   showRouteSuggestion = false;
   showDispatchPlanning = false;
