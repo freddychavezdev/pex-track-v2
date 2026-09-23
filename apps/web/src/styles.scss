@@ -57,7 +57,10 @@ html.app-dark.app-dark .metric-card,html.app-dark.app-dark .panel,html.app-dark.
 html.app-dark.app-dark .metric-card .metric-heading,html.app-dark.app-dark .panel-header p,html.app-dark.app-dark .metric-foot,html.app-dark.app-dark .report-panel p { color:#9ab8c0!important; }
 html.app-dark.app-dark .metric-value,html.app-dark.app-dark .panel-header h2,html.app-dark.app-dark .report-panel h2 { color:#e7f7f8!important; }
 html.app-dark.app-dark .global-search .search-input-wrap,html.app-dark.app-dark .search-results,html.app-dark.app-dark .search-results button { background:#102f3b!important; border-color:#315866!important; color:#dceff1!important; }
-html.app-dark.app-dark .search-input-wrap input,html.app-dark.app-dark .search-results strong { color:#e6f5f6!important; }
+html.app-dark.app-dark .search-input-wrap input { background:transparent!important; color:#e6f5f6!important; color-scheme:dark; }
+html.app-dark.app-dark .search-results strong { color:#e6f5f6!important; }
+html.app-dark.app-dark .search-clear { background:#164a52!important; border-color:#3d6873!important; color:#bfe8e6!important; }
+html.app-dark.app-dark .search-clear:hover { background:#1f6670!important; color:#fff!important; }
 html.app-dark.app-dark .order-filters,html.app-dark.app-dark .table-row,html.app-dark.app-dark .admin-tabs,html.app-dark.app-dark .catalog-row { border-color:#244653!important; }
 html.app-dark.app-dark .order-info strong,html.app-dark.app-dark .table-row strong,html.app-dark.app-dark .catalog-row strong { color:#dceff1!important; }
 html.app-dark.app-dark .order-info span,html.app-dark.app-dark .table-row,html.app-dark.app-dark .catalog-row small { color:#9ab8c0!important; }

@@ -277,6 +277,13 @@ export class AppComponent implements OnDestroy, OnInit {
     this.searchTimer = setTimeout(() => void this.runGlobalSearch(), 250);
   }
 
+  clearGlobalSearch(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTerm = '';
+    this.searchResults.set([]);
+    this.searching.set(false);
+  }
+
   async runGlobalSearch(): Promise<void> {
     if (!this.auth.session() || this.searchTerm.trim().length < 2) {
       this.searchResults.set([]);
