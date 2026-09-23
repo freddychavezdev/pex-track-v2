@@ -4,6 +4,10 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { FocusTrapModule } from 'primeng/focustrap';
+import { SelectModule } from 'primeng/select';
+import { DatePickerModule } from 'primeng/datepicker';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { CheckboxModule } from 'primeng/checkbox';
 import { AuthService } from './core/services/auth.service';
 import { DistributionBoxOption, GlobalSearchResult, NetworkNodeOption, OperationalMapMarker, SuggestedRouteStop, TeamSummary, WorkOrderHistoryRecord, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
@@ -27,7 +31,7 @@ interface EmergencyTeamSuggestion {
 
 @Component({
   selector: 'app-root',
-  imports: [DatePipe, DecimalPipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, FocusTrapModule, OperationalMapComponent, AdminPanelComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, FocusTrapModule, SelectModule, DatePickerModule, InputNumberModule, CheckboxModule, OperationalMapComponent, AdminPanelComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -85,6 +89,17 @@ export class AppComponent implements OnDestroy, OnInit {
   reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
   importDate = new Date().toISOString().slice(0, 10);
+  newOrderDate: Date | null = new Date();
+  readonly taskTypeOptions = [
+    { label: 'Asistencia técnica', value: 'technical_assistance' },
+    { label: 'Instalación nueva', value: 'new_installation' },
+    { label: 'Traslado de servicio', value: 'service_transfer' },
+    { label: 'Mantenimiento de red', value: 'network_maintenance' }
+  ];
+  readonly priorityOptions = [
+    { label: '1 · Urgente', value: 1 }, { label: '2 · Alta', value: 2 }, { label: '3 · Normal', value: 3 },
+    { label: '4 · Baja', value: 4 }, { label: '5 · Programada', value: 5 }
+  ];
   newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance' as WorkOrderImportRow['taskType'], priority: 3, isEmergency: false, scheduledFor: new Date().toISOString().slice(0, 10), latitude: null as number | null, longitude: null as number | null, nodeId: '', boxId: '' };
   readonly networkNodes = signal<NetworkNodeOption[]>([]);
   readonly distributionBoxes = signal<DistributionBoxOption[]>([]);
@@ -361,6 +376,7 @@ export class AppComponent implements OnDestroy, OnInit {
       const references = await this.workOrders.listNetworkReferenceOptions();
       this.networkNodes.set(references.nodes);
       this.distributionBoxes.set(references.boxes);
+      this.newOrderDate = new Date(`${this.newOrder.scheduledFor}T12:00:00`);
       this.showNewOrder = true;
       this.mobileMenuOpen = false;
     } catch (error) {
@@ -376,6 +392,11 @@ export class AppComponent implements OnDestroy, OnInit {
   selectNewOrderNode(): void {
     const box = this.distributionBoxes().find((item) => item.id === this.newOrder.boxId);
     if (box && this.newOrder.nodeId && box.node_id !== this.newOrder.nodeId) this.newOrder.boxId = '';
+  }
+
+  updateNewOrderDate(date: Date | null): void {
+    this.newOrderDate = date;
+    if (date) this.newOrder.scheduledFor = date.toISOString().slice(0, 10);
   }
 
   async openHistory(order: WorkOrderSummary): Promise<void> {
@@ -744,6 +765,7 @@ export class AppComponent implements OnDestroy, OnInit {
       await this.workOrders.createManual(this.newOrder);
       this.showNewOrder = false;
       this.newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance', priority: 3, isEmergency: false, scheduledFor: this.importDate, latitude: null, longitude: null, nodeId: '', boxId: '' };
+      this.newOrderDate = new Date(`${this.importDate}T12:00:00`);
       await this.refreshOperations();
     } catch (error) {
       this.importError = error instanceof Error ? error.message : 'No se pudo crear la OT.';

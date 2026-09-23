@@ -116,3 +116,18 @@ html.app-dark.app-dark .order-refresh-button:hover { background:#164a52!importan
 .landing-content { max-width:620px; }.landing-content .eyebrow { color:#5EEAD4; font-weight:700; letter-spacing:1.5px; }.landing-content h1 { font-size:clamp(30px,5vw,52px); line-height:1.08; margin:12px 0 18px; }.landing-content > p:not(.eyebrow) { color:#b7d4d8; font-size:16px; line-height:1.6; margin:0 auto 28px; max-width:520px; }.landing-action { min-width:190px; min-height:48px; }
 .landing-page > small { bottom:25px; color:#83aeb5; font-size:11px; position:absolute; }
 @media (max-width:650px) { .landing-page { padding:88px 20px 60px; }.landing-brand { left:20px; top:20px; }.landing-content h1 { font-size:34px; }.landing-content > p:not(.eyebrow) { font-size:14px; }.landing-page > small { bottom:18px; max-width:280px; } }
+
+/* Formulario de OT: grilla amplia en escritorio y una columna al reducirse. */
+.new-order-dialog { box-sizing:border-box!important; max-height:calc(100dvh - 48px)!important; overflow-x:hidden!important; padding:30px 32px!important; width:min(920px,calc(100vw - 48px))!important; }
+.new-order-dialog h2 { margin-bottom:8px!important; }.new-order-dialog .dialog-description { margin-bottom:22px!important; max-width:640px; }
+.new-order-grid { align-items:start; display:grid; gap:18px 20px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.new-order-grid > label { color:#3f556c; display:grid; font-size:13px; font-weight:700; gap:7px; margin:0!important; min-width:0; }
+.new-order-grid .span-two { grid-column:1 / -1; }
+.new-order-grid p-select,.new-order-grid p-datepicker,.new-order-grid p-inputnumber { display:block; min-width:0; width:100%; }
+.new-order-grid .p-select,.new-order-grid .p-datepicker,.new-order-grid .p-inputnumber { width:100%; }
+.new-order-grid .login-help { margin:-8px 0 0; }
+.new-order-grid .emergency-check { align-items:center; background:#f0fdfa; border:1px solid #99f6e4; border-radius:12px; box-sizing:border-box; display:flex; gap:10px; padding:12px 14px; }
+.new-order-grid .emergency-check label { color:#115e59; cursor:pointer; font-size:14px; font-weight:700; }.new-order-grid .emergency-check small { color:#4f7d79; font-size:12px; font-weight:400; margin-left:5px; }
+.new-order-dialog .login-submit { margin-top:24px; min-height:48px; }
+html.app-dark.app-dark .new-order-grid > label { color:#cce7e9; }.app-dark .new-order-grid .emergency-check { background:#103b40; border-color:#287e7b; }.app-dark .new-order-grid .emergency-check label { color:#9ff4e6; }.app-dark .new-order-grid .emergency-check small { color:#9fc5c7; }
+@media (max-width:650px) { .new-order-dialog { max-height:calc(100dvh - 24px)!important; padding:24px 18px!important; width:calc(100vw - 24px)!important; }.new-order-grid { gap:15px; grid-template-columns:1fr; }.new-order-grid .span-two { grid-column:auto; }.new-order-grid .emergency-check { align-items:flex-start; }.new-order-grid .emergency-check small { display:block; margin:4px 0 0; } }

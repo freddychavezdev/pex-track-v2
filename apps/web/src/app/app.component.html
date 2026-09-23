@@ -95,21 +95,25 @@
   }
   @if (showNewOrder) {
     <div class="login-backdrop" role="presentation" (click)="showNewOrder = false"></div>
-    <section class="import-dialog" role="dialog" aria-modal="true" aria-labelledby="new-order-title">
+    <section pFocusTrap class="import-dialog new-order-dialog" role="dialog" aria-modal="true" aria-labelledby="new-order-title">
       <button class="dialog-close" type="button" aria-label="Cerrar" (click)="showNewOrder = false">×</button>
       <p class="eyebrow">DESPACHO OPERATIVO</p><h2 id="new-order-title">Nueva orden de trabajo</h2>
       <p class="dialog-description">Registra una OT individual para asignarla y monitorearla durante la jornada.</p>
-      <label for="new-code">Código</label><input pInputText id="new-code" [(ngModel)]="newOrder.code" placeholder="OT-2026-0001" />
-      <label for="new-address">Dirección</label><input pInputText id="new-address" [(ngModel)]="newOrder.address" placeholder="Av. principal #123" />
-      <div class="coordinate-fields"><label for="new-latitude">Latitud<input pInputText id="new-latitude" type="number" step="any" [(ngModel)]="newOrder.latitude" placeholder="-16.5000" /></label><label for="new-longitude">Longitud<input pInputText id="new-longitude" type="number" step="any" [(ngModel)]="newOrder.longitude" placeholder="-68.1500" /></label></div>
-      <label for="new-node">Nodo asociado</label><select id="new-node" [(ngModel)]="newOrder.nodeId" (ngModelChange)="selectNewOrderNode()"><option value="">Sin nodo asociado</option>@for (node of networkNodes(); track node.id) { <option [value]="node.id">{{ node.code }}{{ node.name ? ' · ' + node.name : '' }}</option> }</select>
-      <label for="new-box">Caja asociada</label><select id="new-box" [(ngModel)]="newOrder.boxId"><option value="">Sin caja asociada</option>@for (box of availableBoxesForNewOrder(); track box.id) { <option [value]="box.id">{{ box.code }}</option> }</select><p class="login-help">Vincula la OT a la red para que la recomendación de cuadrilla use esta ubicación.</p>
-      <label for="new-customer">Cliente</label><input pInputText id="new-customer" [(ngModel)]="newOrder.customerName" />
-      <label for="new-phone">Teléfono</label><input pInputText id="new-phone" [(ngModel)]="newOrder.customerPhone" />
-      <label for="new-type">Tipo de tarea</label><select id="new-type" [(ngModel)]="newOrder.taskType"><option value="technical_assistance">Asistencia técnica</option><option value="new_installation">Nueva instalación</option><option value="service_transfer">Traslado de servicio</option><option value="network_maintenance">Mantenimiento de red</option></select>
-      <label for="new-priority">Prioridad (1 es máxima)</label><select id="new-priority" [(ngModel)]="newOrder.priority" [disabled]="newOrder.isEmergency"><option [ngValue]="1">1 · Urgente</option><option [ngValue]="2">2 · Alta</option><option [ngValue]="3">3 · Normal</option><option [ngValue]="4">4 · Baja</option><option [ngValue]="5">5 · Programada</option></select>
-      <label class="emergency-check"><input type="checkbox" name="isEmergency" [(ngModel)]="newOrder.isEmergency" /> Marcar como OT de emergencia <small>Se guardará con prioridad 1.</small></label>
-      <label for="new-date">Fecha programada</label><input pInputText id="new-date" type="date" [(ngModel)]="newOrder.scheduledFor" />
+      <div class="new-order-grid">
+        <label for="new-code">Código<input pInputText id="new-code" [(ngModel)]="newOrder.code" placeholder="OT-2026-0001" autofocus /></label>
+        <label for="new-date">Fecha programada<p-datepicker inputId="new-date" [(ngModel)]="newOrderDate" (onSelect)="updateNewOrderDate($event)" dateFormat="dd/mm/yy" [showIcon]="true" iconDisplay="input" [showButtonBar]="true" [readonlyInput]="true" fluid /></label>
+        <label class="span-two" for="new-address">Dirección<input pInputText id="new-address" [(ngModel)]="newOrder.address" placeholder="Av. principal #123" /></label>
+        <label for="new-latitude">Latitud<p-inputnumber inputId="new-latitude" [(ngModel)]="newOrder.latitude" mode="decimal" [useGrouping]="false" [minFractionDigits]="4" [maxFractionDigits]="6" placeholder="-16.5000" fluid /></label>
+        <label for="new-longitude">Longitud<p-inputnumber inputId="new-longitude" [(ngModel)]="newOrder.longitude" mode="decimal" [useGrouping]="false" [minFractionDigits]="4" [maxFractionDigits]="6" placeholder="-68.1500" fluid /></label>
+        <label for="new-node">Nodo asociado<p-select inputId="new-node" [(ngModel)]="newOrder.nodeId" [options]="networkNodes()" optionLabel="code" optionValue="id" placeholder="Sin nodo asociado" [showClear]="true" [filter]="true" filterBy="code,name" (ngModelChange)="selectNewOrderNode()" fluid /></label>
+        <label for="new-box">Caja asociada<p-select inputId="new-box" [(ngModel)]="newOrder.boxId" [options]="availableBoxesForNewOrder()" optionLabel="code" optionValue="id" placeholder="Sin caja asociada" [showClear]="true" [filter]="true" filterBy="code" fluid /></label>
+        <p class="login-help span-two">Vincula la OT a la red para que la recomendación de cuadrilla use esta ubicación.</p>
+        <label for="new-customer">Cliente<input pInputText id="new-customer" [(ngModel)]="newOrder.customerName" placeholder="Nombre o razón social" /></label>
+        <label for="new-phone">Teléfono<input pInputText id="new-phone" [(ngModel)]="newOrder.customerPhone" placeholder="70000000" /></label>
+        <label for="new-type">Tipo de tarea<p-select inputId="new-type" [(ngModel)]="newOrder.taskType" [options]="taskTypeOptions" optionLabel="label" optionValue="value" fluid /></label>
+        <label for="new-priority">Prioridad<p-select inputId="new-priority" [(ngModel)]="newOrder.priority" [options]="priorityOptions" optionLabel="label" optionValue="value" [disabled]="newOrder.isEmergency" fluid /></label>
+        <div class="emergency-check span-two"><p-checkbox inputId="new-emergency" name="isEmergency" [(ngModel)]="newOrder.isEmergency" [binary]="true" /><label for="new-emergency">Marcar como OT de emergencia <small>Se guardará con prioridad 1.</small></label></div>
+      </div>
       @if (importError) { <p class="form-error">{{ importError }}</p> }
       <button pButton class="control-button primary login-submit" type="button" [disabled]="savingImport" (click)="saveNewOrder()">{{ savingImport ? 'Guardando…' : 'Crear OT' }}</button>
     </section>
