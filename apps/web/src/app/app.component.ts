@@ -926,7 +926,8 @@ export class AppComponent implements OnDestroy, OnInit {
 
   teamStatusLabel(team: OperationalMapMarker): string {
     if (this.isStale(team.observed_at)) return team.observed_at ? 'Seguimiento detenido' : 'Sin seguimiento';
-    return team.status === 'available' ? 'Seguimiento activo' : this.statusLabel(team.status);
+    if (team.status === 'en_route' || team.status === 'in_progress') return 'Con seguimiento';
+    return 'En línea';
   }
 
   statusLabel(status: WorkOrderStatus | string): string {

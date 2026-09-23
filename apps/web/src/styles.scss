@@ -23,6 +23,40 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .work-order-client-marker.highlighted::after { animation:work-order-highlight 1s ease-in-out 2; border:3px solid currentColor; border-radius:50%; content:''; height:56px; left:50%; opacity:0; position:absolute; top:47%; transform:translate(-50%,-50%); width:56px; }
 .work-order-client-marker.status-completed { color:#16a34a; }.work-order-client-marker.status-suspended { color:#dc2626; }.work-order-client-marker.status-pending,.work-order-client-marker.status-en_route,.work-order-client-marker.status-in_progress { color:#f97316; }
 @keyframes work-order-highlight { 0% { opacity:0; transform:translate(-50%,-50%) scale(.65); } 35% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-50%) scale(1.3); } }
+.dashboard-orders-panel { margin:0 0 20px; overflow:hidden; }
+.dashboard-orders-panel .panel-header { border-bottom:1px solid #edf0f4; }
+.panel-count { background:#eaf2ff; border-radius:999px; color:#2d74df; font-size:11px; font-weight:700; padding:7px 10px; white-space:nowrap; }
+.dashboard-order-table { padding:0 20px 8px; }
+.dashboard-order-head,.dashboard-order-row { align-items:center; display:grid; gap:14px; grid-template-columns:1.05fr 2fr 1.05fr .9fr .65fr; }
+.dashboard-order-head { color:#a1acb9; font-size:9px; padding:11px 0 9px; }
+.dashboard-order-row { border-top:1px solid #eef1f4; color:#68778a; font-size:10px; min-height:58px; padding:9px 0; }
+.dashboard-order-code { align-items:center; display:flex; gap:9px; min-width:0; }
+.dashboard-order-code strong { color:#34455a; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dashboard-order-code .order-badge { flex:0 0 28px; height:28px; width:28px; }
+.dashboard-order-address,.dashboard-order-team { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dashboard-order-team { color:#2d74df; font-weight:700; }
+.dashboard-order-priority { color:#718096; font-size:10px; font-weight:700; }
+.pill.completed { background:#e7f8ef; color:#15803d; }.pill.suspended { background:#feeceb; color:#b91c1c; }
+.dashboard-orders-panel .orders-notice { margin:0; padding:20px 0; }
+html.app-dark .dashboard-orders-panel .panel-header { border-color:#244b57; }
+html.app-dark .panel-count { background:#123f4c; color:#8beee3; }
+html.app-dark .dashboard-order-row { border-color:#244b57; color:#b5d2d6; }
+html.app-dark .dashboard-order-code strong { color:#e6fffb; }
+html.app-dark .dashboard-order-team { color:#7ee7de; }
+html.app-dark .dashboard-order-priority { color:#b5d2d6; }
+
+@media (max-width:650px) {
+  .dashboard-orders-panel { margin-bottom:16px; }
+  .dashboard-orders-panel .panel-header { padding-left:16px; padding-right:16px; }
+  .dashboard-order-table { padding-left:16px; padding-right:16px; }
+  .dashboard-order-head { display:none; }
+  .dashboard-order-row { gap:7px 10px; grid-template-columns:1.25fr .9fr .7fr; padding:12px 0; }
+  .dashboard-order-code { grid-column:1 / span 2; }
+  .dashboard-order-address { grid-column:1 / span 2; grid-row:2; }
+  .dashboard-order-team { grid-column:1; grid-row:3; }
+  .dashboard-order-row .pill { grid-column:2; grid-row:3; justify-self:start; }
+  .dashboard-order-priority { grid-column:3; grid-row:3; justify-self:end; }
+}
 .team-actions .text-button { align-items:center; border:1px solid #d7e3f1; border-radius:9px; display:inline-flex; font-size:0; height:34px; justify-content:center; padding:0; width:34px; }
 .team-actions .text-button::before { color:#2d74df; content:'↻'; font-size:20px; line-height:1; }
 .team-actions .text-button:hover { background:#eef5ff; border-color:#86b5ee; }
