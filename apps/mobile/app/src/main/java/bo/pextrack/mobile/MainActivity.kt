@@ -61,7 +61,6 @@ class MainActivity : AppCompatActivity() {
   private lateinit var refreshWorkOrdersButton: Button
   private lateinit var emailInput: EditText
   private lateinit var passwordInput: EditText
-  private lateinit var suspensionReasonInput: EditText
   private lateinit var workOrdersContainer: LinearLayout
   private lateinit var ordersTitle: TextView
   private lateinit var fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient
@@ -155,7 +154,6 @@ class MainActivity : AppCompatActivity() {
     refreshWorkOrdersButton = findViewById(R.id.refreshWorkOrdersButton)
     emailInput = findViewById(R.id.emailInput)
     passwordInput = findViewById(R.id.passwordInput)
-    suspensionReasonInput = findViewById(R.id.suspensionReasonInput)
     workOrdersContainer = findViewById(R.id.workOrdersContainer)
     ordersTitle = findViewById(R.id.ordersTitle)
     fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -540,7 +538,7 @@ class MainActivity : AppCompatActivity() {
           backgroundTintList = ColorStateList.valueOf(actionColor)
           setTextColor(Color.WHITE)
           contentDescription = "${statusActionLabel(nextStatus)} orden ${order.code}"
-          setOnClickListener { changeWorkOrderStatus(order, nextStatus) }
+          setOnClickListener { requestStatusChange(order, nextStatus, this) }
         }, LinearLayout.LayoutParams(
           LinearLayout.LayoutParams.MATCH_PARENT, dp(52)
         ).apply { if (nextStatus != allowedTransitions(order.status).last()) bottomMargin = dp(8) })
@@ -815,17 +813,77 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  private fun changeWorkOrderStatus(order: MobileWorkOrder, nextStatus: String) {
-    val reason = suspensionReasonInput.text.toString().trim()
-    if (nextStatus == "suspended" && reason.isBlank()) {
-      showStatus("Escribe el motivo antes de suspender una OT")
+  private fun requestStatusChange(order: MobileWorkOrder, nextStatus: String, actionButton: MaterialButton) {
+    if (nextStatus == "suspended") {
+      showSuspensionDialog(order, actionButton)
       return
     }
+    val title = statusActionLabel(nextStatus)
+    val message = when (nextStatus) {
+      "in_progress" -> "La OT ${order.code} pasará a En progreso y quedará registrada como atención en curso."
+      "completed" -> "La OT ${order.code} se marcará como completada. Verifica que la atención haya finalizado."
+      "en_route" -> "La OT ${order.code} se marcará como En camino."
+      else -> "Se actualizará el estado de la OT ${order.code}."
+    }
+    androidx.appcompat.app.AlertDialog.Builder(this)
+      .setTitle(title)
+      .setMessage(message)
+      .setNegativeButton("Cancelar", null)
+      .setPositiveButton("Confirmar") { _, _ -> changeWorkOrderStatus(order, nextStatus, null, actionButton) }
+      .show()
+  }
+
+  private fun showSuspensionDialog(order: MobileWorkOrder, actionButton: MaterialButton) {
+    val reasonInput = EditText(this).apply {
+      hint = "Ej.: cliente ausente, riesgo o falta de acceso"
+      inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+      minLines = 3
+      maxLines = 5
+      setPadding(dp(12), dp(10), dp(12), dp(10))
+    }
+    val container = LinearLayout(this).apply {
+      orientation = LinearLayout.VERTICAL
+      setPadding(dp(22), 0, dp(22), 0)
+      addView(TextView(this@MainActivity).apply {
+        text = "Indica por qué se suspende ${order.code}. Este motivo quedará registrado en el historial."
+        textSize = 14f
+        setTextColor(Color.parseColor("#52637A"))
+      })
+      addView(reasonInput, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(14) })
+    }
+    val dialog = androidx.appcompat.app.AlertDialog.Builder(this)
+      .setTitle("Suspender OT")
+      .setView(container)
+      .setNegativeButton("Cancelar", null)
+      .setPositiveButton("Suspender", null)
+      .create()
+    dialog.setOnShowListener {
+      val suspendButton = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+      suspendButton.isEnabled = false
+      reasonInput.addTextChangedListener(object : android.text.TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+          suspendButton.isEnabled = !s.isNullOrBlank()
+        }
+        override fun afterTextChanged(s: android.text.Editable?) = Unit
+      })
+      suspendButton.setOnClickListener {
+        val reason = reasonInput.text.toString().trim()
+        if (reason.isBlank()) return@setOnClickListener
+        dialog.dismiss()
+        changeWorkOrderStatus(order, "suspended", reason, actionButton)
+      }
+    }
+    dialog.show()
+  }
+
+  private fun changeWorkOrderStatus(order: MobileWorkOrder, nextStatus: String, reason: String?, actionButton: MaterialButton) {
+    actionButton.isEnabled = false
     lifecycleScope.launch {
       showStatus("Actualizando ${order.code}…")
-      val result = operationsRepository.changeStatus(order.id, nextStatus, reason.ifBlank { null })
+      val result = operationsRepository.changeStatus(order.id, nextStatus, reason)
       showStatus(result ?: "${order.code}: ${statusLabel(nextStatus)}")
-      if (nextStatus == "suspended") suspensionReasonInput.setText("")
+      actionButton.isEnabled = true
       loadWorkOrders()
     }
   }
