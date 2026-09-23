@@ -8,8 +8,10 @@ class TeamSessionStore(context: Context) {
   fun currentTeamId(): String? = preferences.getString(KEY_TEAM_ID, null)
   fun currentTeamCode(): String? = preferences.getString(KEY_TEAM_CODE, null)
 
-  fun saveTeam(teamId: String, teamCode: String) {
-    preferences.edit().putString(KEY_TEAM_ID, teamId).putString(KEY_TEAM_CODE, teamCode).apply()
+  fun saveTeam(teamId: String, teamCode: String? = null) {
+    preferences.edit().putString(KEY_TEAM_ID, teamId).apply {
+      if (teamCode.isNullOrBlank()) remove(KEY_TEAM_CODE) else putString(KEY_TEAM_CODE, teamCode)
+    }.apply()
   }
 
   fun clear() {

@@ -31,9 +31,14 @@ class MobileAuthRepository(private val context: Context) {
       }
       val teamId = Json.decodeFromString<String?>(client.postgrest.rpc("current_team_id").data)
         ?: error("Este usuario no pertenece a una cuadrilla activa.")
-      val teamCode = Json.decodeFromString<List<TeamSummary>>(
-        client.postgrest.from("teams").select { filter { eq("id", teamId) } }.data
-      ).firstOrNull()?.code ?: error("No se pudo identificar la cuadrilla activa.")
+      // La cuenta ya quedó autenticada y vinculada a una cuadrilla mediante
+      // current_team_id. El nombre es informativo; si su consulta falla no
+      // debe impedir el acceso del técnico.
+      val teamCode = runCatching {
+        Json.decodeFromString<List<TeamSummary>>(
+          client.postgrest.from("teams").select { filter { eq("id", teamId) } }.data
+        ).firstOrNull()?.code
+      }.getOrNull()
       sessionStore.saveTeam(teamId, teamCode)
       OfflineSyncScheduler.enqueue(context)
       null
