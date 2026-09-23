@@ -648,7 +648,7 @@ export class AppComponent implements OnDestroy, OnInit {
     const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(observedAt).getTime()) / 1000));
     if (elapsedSeconds < 60) return `Hace ${elapsedSeconds} s`;
     const elapsedMinutes = Math.floor(elapsedSeconds / 60);
-    return elapsedMinutes > 10 ? `Sin señal reciente · Hace ${elapsedMinutes} min` : `Hace ${elapsedMinutes} min`;
+    return elapsedMinutes >= 1 ? `Hace ${elapsedMinutes} min` : 'Sin señal';
   }
 
   orderCount(status?: WorkOrderStatus): number {
@@ -662,11 +662,14 @@ export class AppComponent implements OnDestroy, OnInit {
   }
 
   isStale(observedAt: string): boolean {
-    return !observedAt || Date.now() - new Date(observedAt).getTime() > 10 * 60 * 1000;
+    // La APK emite cada 15 s. Un minuto sin nuevos puntos indica que el
+    // seguimiento se detuvo o que el teléfono perdió la conexión.
+    return !observedAt || Date.now() - new Date(observedAt).getTime() > 60 * 1000;
   }
 
   teamStatusLabel(team: OperationalMapMarker): string {
-    return this.isStale(team.observed_at) ? 'Sin señal reciente' : this.statusLabel(team.status);
+    if (this.isStale(team.observed_at)) return team.observed_at ? 'Seguimiento detenido' : 'Sin seguimiento';
+    return team.status === 'available' ? 'Seguimiento activo' : this.statusLabel(team.status);
   }
 
   statusLabel(status: WorkOrderStatus | string): string {
@@ -675,7 +678,11 @@ export class AppComponent implements OnDestroy, OnInit {
       en_route: 'En camino',
       in_progress: 'En progreso',
       completed: 'Completada',
-      suspended: 'Suspendida'
+      suspended: 'Suspendida',
+      available: 'Disponible',
+      active: 'Activo',
+      unknown: 'Sin seguimiento',
+      no_signal: 'Sin señal'
     }[status as WorkOrderStatus] ?? status;
   }
 

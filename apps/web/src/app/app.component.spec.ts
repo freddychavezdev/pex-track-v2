@@ -35,8 +35,8 @@ describe('AppComponent', () => {
   it('should mark a team signal as stale after ten minutes', () => {
     const app = TestBed.createComponent(AppComponent).componentInstance;
 
-    expect(app.isStale(new Date(Date.now() - 10 * 60 * 1000 - 1).toISOString())).toBeTrue();
-    expect(app.isStale(new Date(Date.now() - 2 * 60 * 1000).toISOString())).toBeFalse();
+    expect(app.isStale(new Date(Date.now() - 60 * 1000 - 1).toISOString())).toBeTrue();
+    expect(app.isStale(new Date(Date.now() - 30 * 1000).toISOString())).toBeFalse();
   });
 
   it('should label emergency work orders explicitly', () => {
