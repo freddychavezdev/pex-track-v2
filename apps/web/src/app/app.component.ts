@@ -906,6 +906,11 @@ export class AppComponent implements OnDestroy, OnInit {
     return status ? this.orders().filter((order) => order.status === status).length : this.orders().length;
   }
 
+  assignedTeamCode(order: WorkOrderSummary): string {
+    if (!order.assigned_team_id) return 'Sin asignar';
+    return this.teams().find((team) => team.id === order.assigned_team_id)?.code ?? 'Cuadrilla asignada';
+  }
+
   alertCount(): number {
     const suspendedOrders = this.orders().filter((order) => order.status === 'suspended').length;
     return suspendedOrders + this.teamRows().filter((team) =>
