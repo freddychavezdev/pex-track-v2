@@ -7,9 +7,8 @@
       <a class="nav-item active" href="#monitoring" (click)="mobileMenuOpen = false"><span class="nav-icon">⌖</span><span>Monitoreo<small>Vista general</small></span></a>
       <button class="nav-item nav-button" type="button" (click)="openOrdersView()"><span class="nav-icon">▤</span><span>Órdenes de trabajo<small>Agenda y asignaciones</small></span></button>
       @if (canManageOperations()) { <button class="nav-item nav-button" type="button" (click)="openNewOrder()"><span class="nav-icon">＋</span><span>Nueva OT<small>Registrar despacho</small></span></button> }
-      <button class="nav-item nav-button" type="button" (click)="openTeamManagement(); mobileMenuOpen = false"><span class="nav-icon">♙</span><span>Cuadrillas<small>Personal y vehículos</small></span></button>
+      <button class="nav-item nav-button" type="button" (click)="openTeamManagement(); mobileMenuOpen = false"><span class="nav-icon">♙</span><span>Personal y recursos<small>Usuarios, técnicos y cuadrillas</small></span></button>
       <button class="nav-item nav-button" type="button" (click)="openReportsView()"><span class="nav-icon">▥</span><span>Reportes<small>Resultados semanales</small></span></button>
-      @if (canManageCatalogs()) { <button class="nav-item nav-button" type="button" (click)="showAdmin = true; mobileMenuOpen = false"><span class="nav-icon">⚙</span><span>Administración<small>Catálogos y usuarios</small></span></button> }
     </nav>
     <div class="sidebar-footer"><div class="connection"><span class="status-dot" [class.online]="browserOnline()" [class.warning-dot]="!browserOnline()"></span><span>{{ browserOnline() ? 'Servicios operativos' : 'Sin conexión' }}</span></div><div class="user-card"><div class="avatar">{{ userInitials() }}</div><div><strong>{{ auth.profile()?.full_name || 'Visitante' }}</strong><span>{{ roleLabel() }}</span></div><span class="more">•••</span></div></div>
   </aside>
