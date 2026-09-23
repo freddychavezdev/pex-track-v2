@@ -19,8 +19,8 @@ export class WorkOrdersService {
     return (data ?? []).map((row: any) => ({ ...row, zone: row.zone?.[0] ?? null, node: row.node?.[0] ?? null, box: row.box?.[0] ?? null })) as WorkOrderSummary[];
   }
 
-  async importRows(rows: WorkOrderImportRow[]): Promise<void> {
-    if (!rows.length) return;
+  async importRows(rows: WorkOrderImportRow[]): Promise<{ savedCount: number; locationWarningCount: number }> {
+    if (!rows.length) return { savedCount: 0, locationWarningCount: 0 };
     const references = await this.resolveNetworkReferences(rows);
     const payload = rows.map((row) => ({
       code: row.code,
@@ -37,10 +37,14 @@ export class WorkOrdersService {
     }));
     const { data, error } = await this.supabase.requireClient().from('work_orders').upsert(payload, { onConflict: 'code' }).select('id, code');
     if (error) throw error;
-    await Promise.all(rows.filter((row) => row.latitude !== null && row.longitude !== null).map((row) => {
+    const locationResults = await Promise.allSettled(rows.filter((row) => row.latitude !== null && row.longitude !== null).map((row) => {
       const saved = (data ?? []).find((item) => item.code === row.code);
       return saved ? this.setLocation(saved.id, row.latitude!, row.longitude!) : Promise.resolve();
     }));
+    return {
+      savedCount: data?.length ?? rows.length,
+      locationWarningCount: locationResults.filter((result) => result.status === 'rejected').length
+    };
   }
 
   async assignTeam(workOrderId: string, teamId: string): Promise<void> {

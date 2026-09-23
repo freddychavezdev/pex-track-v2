@@ -78,6 +78,7 @@ export class AppComponent implements OnDestroy, OnInit {
   resetRequestError = '';
   passwordRecoveryError = '';
   importError = '';
+  importSuccess = '';
   assignmentError = '';
   reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
@@ -339,6 +340,7 @@ export class AppComponent implements OnDestroy, OnInit {
   async openNewOrder(): Promise<void> {
     if (!this.canManageOperations()) return;
     this.importError = '';
+    this.importSuccess = '';
     try {
       const references = await this.workOrders.listNetworkReferenceOptions();
       this.networkNodes.set(references.nodes);
@@ -688,16 +690,25 @@ export class AppComponent implements OnDestroy, OnInit {
     if (!this.importResult?.valid.length || this.savingImport) return;
     this.savingImport = true;
     this.importError = '';
+    this.importSuccess = '';
     try {
-      await this.workOrders.importRows(this.importResult.valid);
-      this.showImport = false;
+      const result = await this.workOrders.importRows(this.importResult.valid);
       this.importResult = null;
       await this.refreshOperations();
+      this.importSuccess = result.locationWarningCount
+        ? `Se guardaron ${result.savedCount} OT(s). ${result.locationWarningCount} ubicación(es) no se pudieron registrar; las OTs sí fueron guardadas.`
+        : `Se guardaron ${result.savedCount} OT(s) correctamente. La tabla se actualizó.`;
     } catch (error) {
-      this.importError = error instanceof Error ? error.message : 'No se pudieron guardar las OTs.';
+      this.importError = `No se guardó ninguna OT. ${this.errorMessage(error, 'Revisa las referencias de nodo/caja y tus permisos de supervisor o coordinador.')}`;
     } finally {
       this.savingImport = false;
     }
+  }
+
+  private errorMessage(error: unknown, fallback: string): string {
+    if (error instanceof Error) return error.message;
+    if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') return error.message;
+    return fallback;
   }
 
   async saveNewOrder(): Promise<void> {
