@@ -256,7 +256,8 @@ export class AppComponent implements OnDestroy, OnInit {
     return this.teams().filter((team) => team.active && (team.dispatch_status ?? 'available') === 'available');
   }
 
-  generateDispatchPlan(): void {
+  generateDispatchPlan(showFeedback = false): void {
+    const previousPlanSignature = this.dispatchPlanSignature(this.dispatchPlan());
     this.dispatchPlanningError = '';
     this.dispatchPlanningMessage = '';
     const availableTeams = this.teams().filter((team) => team.active && (team.dispatch_status ?? 'available') === 'available');
@@ -311,6 +312,19 @@ export class AppComponent implements OnDestroy, OnInit {
 
     const plan: DispatchPlanItem[] = activeSectors.flatMap(([sector, sectorOrders]) => this.planSector(sector, sectorOrders, teamsBySector.get(sector)!, locations));
     this.dispatchPlan.set(plan);
+    if (showFeedback) {
+      const proposalIsUnchanged = previousPlanSignature.length > 0 && previousPlanSignature === this.dispatchPlanSignature(plan);
+      this.dispatchPlanningMessage = proposalIsUnchanged
+        ? 'Propuesta analizada nuevamente: con las OTs, prioridades y cuadrillas disponibles actuales, esta sigue siendo la mejor distribución y secuencia recomendada.'
+        : 'Propuesta regenerada: se actualizó la distribución o el orden de ruta usando las OTs, prioridades y cuadrillas disponibles actuales.';
+    }
+  }
+
+  private dispatchPlanSignature(plan: DispatchPlanItem[]): string {
+    return [...plan]
+      .sort((first, second) => first.teamId.localeCompare(second.teamId) || first.routeSequence - second.routeSequence)
+      .map((item) => `${item.teamId}:${item.routeSequence}:${item.order.id}`)
+      .join('|');
   }
 
   private planningSector(order: WorkOrderSummary, location: { latitude: number; longitude: number }): 'El Alto' | 'La Paz' {

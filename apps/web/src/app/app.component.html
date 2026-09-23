@@ -137,7 +137,7 @@
           }
         </div>
       }
-      <div class="form-actions dispatch-plan-actions"><button pButton class="planning-regenerate" type="button" (click)="generateDispatchPlan()" [disabled]="planningLoading || savingDispatchPlan"><span aria-hidden="true">↻</span> Regenerar propuesta</button><button pButton class="control-button primary planning-apply" type="button" (click)="applyDispatchPlan()" [disabled]="planningLoading || !dispatchPlan().length || savingDispatchPlan"><span aria-hidden="true">✓</span> {{ savingDispatchPlan ? 'Aplicando…' : 'Aceptar y asignar plan' }}</button></div>
+      <div class="form-actions dispatch-plan-actions"><button pButton class="planning-regenerate" type="button" (click)="generateDispatchPlan(true)" [disabled]="planningLoading || savingDispatchPlan"><span aria-hidden="true">↻</span> Regenerar propuesta</button><button pButton class="control-button primary planning-apply" type="button" (click)="applyDispatchPlan()" [disabled]="planningLoading || !dispatchPlan().length || savingDispatchPlan"><span aria-hidden="true">✓</span> {{ savingDispatchPlan ? 'Aplicando…' : 'Aceptar y asignar plan' }}</button></div>
     </section>
   }
   @if (showAssignment && selectedOrder) {
