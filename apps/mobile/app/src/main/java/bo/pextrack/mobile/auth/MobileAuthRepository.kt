@@ -6,7 +6,10 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -14,9 +17,6 @@ import java.net.UnknownHostException
 
 class MobileAuthRepository(private val context: Context) {
   private val sessionStore = TeamSessionStore(context)
-
-  @Serializable
-  private data class TeamSummary(val code: String)
 
   fun isConfigured(): Boolean = SupabaseProvider.isConfigured
 
@@ -35,9 +35,7 @@ class MobileAuthRepository(private val context: Context) {
       // current_team_id. El nombre es informativo; si su consulta falla no
       // debe impedir el acceso del técnico.
       val teamCode = runCatching {
-        Json.decodeFromString<List<TeamSummary>>(
-          client.postgrest.from("teams").select { filter { eq("id", teamId) } }.data
-        ).firstOrNull()?.code
+        teamCodeFrom(client.postgrest.from("teams").select { filter { eq("id", teamId) } }.data)
       }.getOrNull()
       sessionStore.saveTeam(teamId, teamCode)
       OfflineSyncScheduler.enqueue(context)
@@ -55,12 +53,23 @@ class MobileAuthRepository(private val context: Context) {
     val client = SupabaseProvider.client ?: return
     val teamId = sessionStore.currentTeamId() ?: return
     runCatching {
-      val teamCode = Json.decodeFromString<List<TeamSummary>>(
+      val teamCode = teamCodeFrom(
         client.postgrest.from("teams").select { filter { eq("id", teamId) } }.data
-      ).firstOrNull()?.code ?: return
+      ) ?: return
       sessionStore.saveTeam(teamId, teamCode)
     }
   }
+
+  private fun teamCodeFrom(raw: String): String? = runCatching {
+    Json.parseToJsonElement(raw)
+      .jsonArray
+      .firstOrNull()
+      ?.jsonObject
+      ?.get("code")
+      ?.jsonPrimitive
+      ?.contentOrNull
+      ?.takeIf { it.isNotBlank() }
+  }.getOrNull()
 
   private fun friendlyAuthError(error: Throwable): String {
     val details = generateSequence(error) { it.cause }
