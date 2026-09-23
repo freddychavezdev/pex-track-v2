@@ -36,7 +36,9 @@ class LocationTrackingService : Service() {
   private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 15_000)
     .setMinUpdateIntervalMillis(5_000)
-    .setMinUpdateDistanceMeters(10f)
+    // La señal debe mantenerse vigente aunque la cuadrilla esté detenida.
+    // El estado de la web depende de recibir estos latidos periódicos.
+    .setMinUpdateDistanceMeters(0f)
     .build()
 
   private val locationCallback = object : LocationCallback() {

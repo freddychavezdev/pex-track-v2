@@ -662,9 +662,10 @@ export class AppComponent implements OnDestroy, OnInit {
   }
 
   isStale(observedAt: string): boolean {
-    // La APK emite cada 15 s. Un minuto sin nuevos puntos indica que el
-    // seguimiento se detuvo o que el teléfono perdió la conexión.
-    return !observedAt || Date.now() - new Date(observedAt).getTime() > 60 * 1000;
+    // La APK emite cada 15 s, incluso si el vehículo está detenido. Se deja
+    // margen para latencia de red y para la sincronización offline antes de
+    // mostrar la cuadrilla como detenida.
+    return !observedAt || Date.now() - new Date(observedAt).getTime() > 90 * 1000;
   }
 
   teamStatusLabel(team: OperationalMapMarker): string {
