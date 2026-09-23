@@ -124,10 +124,35 @@ html.app-dark.app-dark .order-refresh-button:hover { background:#164a52!importan
 .new-order-grid > label { color:#3f556c; display:grid; font-size:13px; font-weight:700; gap:7px; margin:0!important; min-width:0; }
 .new-order-grid .span-two { grid-column:1 / -1; }
 .new-order-grid p-select,.new-order-grid p-datepicker,.new-order-grid p-inputnumber { display:block; min-width:0; width:100%; }
-.new-order-grid .p-select,.new-order-grid .p-datepicker,.new-order-grid .p-inputnumber { width:100%; }
+/* PrimeNG renders these controls with child elements.  Making only the host
+   fluid leaves their input/label at its intrinsic width in a CSS grid. */
+.new-order-grid .p-select { align-items:center; box-sizing:border-box; display:flex!important; min-height:46px; min-width:0; width:100%!important; }
+.new-order-grid .p-select-label { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.new-order-grid .p-select-clear-icon,.new-order-grid .p-select-dropdown { flex:0 0 auto; }
+.new-order-grid .p-select-dropdown { align-items:center; align-self:stretch; display:flex; justify-content:center; min-width:2.8rem; }
+.new-order-grid .p-inputnumber { display:block!important; min-width:0; width:100%!important; }
+.new-order-grid .p-inputnumber-input { box-sizing:border-box!important; min-height:46px; min-width:0!important; width:100%!important; }
+.new-order-grid .p-datepicker { align-items:stretch; box-sizing:border-box; display:flex!important; min-width:0; width:100%!important; }
+.new-order-grid .p-datepicker-input { box-sizing:border-box!important; flex:1 1 auto; min-height:46px; min-width:0!important; width:100%!important; }
+.new-order-grid .p-datepicker-input-icon-container { align-items:center; display:flex; flex:0 0 auto; justify-content:center; min-width:2.8rem; }
 .new-order-grid .login-help { margin:-8px 0 0; }
 .new-order-grid .emergency-check { align-items:center; background:#f0fdfa; border:1px solid #99f6e4; border-radius:12px; box-sizing:border-box; display:flex; gap:10px; padding:12px 14px; }
 .new-order-grid .emergency-check label { color:#115e59; cursor:pointer; font-size:14px; font-weight:700; }.new-order-grid .emergency-check small { color:#4f7d79; font-size:12px; font-weight:400; margin-left:5px; }
 .new-order-dialog .login-submit { margin-top:24px; min-height:48px; }
 html.app-dark.app-dark .new-order-grid > label { color:#cce7e9; }.app-dark .new-order-grid .emergency-check { background:#103b40; border-color:#287e7b; }.app-dark .new-order-grid .emergency-check label { color:#9ff4e6; }.app-dark .new-order-grid .emergency-check small { color:#9fc5c7; }
+/* Overlay panels are mounted outside the dialog.  Style them from the root so
+   the Select options and DatePicker calendar keep the same ocean dark surface. */
+html.app-dark.app-dark .p-select,html.app-dark.app-dark .p-inputnumber-input,html.app-dark.app-dark .p-datepicker-input { background:#102f3b!important; border-color:#3d6873!important; color:#e6f5f6!important; }
+html.app-dark.app-dark .p-select-label,html.app-dark.app-dark .p-datepicker-input,html.app-dark.app-dark .p-inputnumber-input { color:#e6f5f6!important; }
+html.app-dark.app-dark .p-select-label.p-placeholder,html.app-dark.app-dark .p-datepicker-input::placeholder,html.app-dark.app-dark .p-inputnumber-input::placeholder { color:#9fc5c7!important; opacity:1; }
+html.app-dark.app-dark .p-select-clear-icon,html.app-dark.app-dark .p-select-dropdown,html.app-dark.app-dark .p-datepicker-input-icon,html.app-dark.app-dark .p-datepicker-input-icon-container { color:#8ee7df!important; }
+html.app-dark.app-dark .p-select-overlay,html.app-dark.app-dark .p-datepicker-panel { background:#102f3b!important; border:1px solid #3d6873!important; color:#e6f5f6!important; }
+html.app-dark.app-dark .p-select-header,html.app-dark.app-dark .p-select-filter { background:#0d2833!important; border-color:#3d6873!important; color:#e6f5f6!important; }
+html.app-dark.app-dark .p-select-option,html.app-dark.app-dark .p-select-option-label { color:#dceff1!important; }
+html.app-dark.app-dark .p-select-option:not(.p-select-option-selected):hover,html.app-dark.app-dark .p-select-option.p-focus { background:#164a52!important; }
+html.app-dark.app-dark .p-select-option.p-select-option-selected { background:#0f766e!important; color:#fff!important; }
+html.app-dark.app-dark .p-datepicker-panel .p-datepicker-header,html.app-dark.app-dark .p-datepicker-panel .p-datepicker-title,html.app-dark.app-dark .p-datepicker-panel .p-datepicker-weekday,html.app-dark.app-dark .p-datepicker-panel .p-datepicker-day { color:#e6f5f6!important; }
+html.app-dark.app-dark .p-datepicker-panel .p-datepicker-day:not(.p-disabled):hover,html.app-dark.app-dark .p-datepicker-panel .p-datepicker-prev-button:hover,html.app-dark.app-dark .p-datepicker-panel .p-datepicker-next-button:hover { background:#164a52!important; color:#e6f5f6!important; }
+html.app-dark.app-dark .p-datepicker-panel .p-datepicker-day.p-datepicker-day-selected { background:#5EEAD4!important; color:#07343a!important; }
+html.app-dark.app-dark .p-datepicker-panel .p-datepicker-other-month .p-datepicker-day { color:#729da4!important; }
 @media (max-width:650px) { .new-order-dialog { max-height:calc(100dvh - 24px)!important; padding:24px 18px!important; width:calc(100vw - 24px)!important; }.new-order-grid { gap:15px; grid-template-columns:1fr; }.new-order-grid .span-two { grid-column:auto; }.new-order-grid .emergency-check { align-items:flex-start; }.new-order-grid .emergency-check small { display:block; margin:4px 0 0; } }
