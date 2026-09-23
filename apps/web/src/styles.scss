@@ -48,3 +48,22 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .app-dark .nav-item.active,.app-dark .nav-item:hover { background:#123f4c; }
 .app-dark .sidebar-toggle,.app-dark .connection { border-color:#1b3b47; }
 .app-dark .theme-toggle { background:#123542; border-color:#3d6873; color:#f8d477; }
+
+/* Los estilos propios de Angular tienen encapsulación; esta capa con prioridad
+   mantiene sincronizadas las superficies de la aplicación con PrimeNG. */
+html.app-dark.app-dark,html.app-dark.app-dark body { background:#071b24!important; color:#e3f3f5; }
+html.app-dark.app-dark .app-shell,html.app-dark.app-dark .content { background:#071b24!important; }
+html.app-dark.app-dark .metric-card,html.app-dark.app-dark .panel,html.app-dark.app-dark .workspace-window,html.app-dark.app-dark .workspace-window-inner > .panel,html.app-dark.app-dark .report-card { background:#0d2833!important; border-color:#244653!important; color:#dceff1; }
+html.app-dark.app-dark .metric-card .metric-heading,html.app-dark.app-dark .panel-header p,html.app-dark.app-dark .metric-foot,html.app-dark.app-dark .report-panel p { color:#9ab8c0!important; }
+html.app-dark.app-dark .metric-value,html.app-dark.app-dark .panel-header h2,html.app-dark.app-dark .report-panel h2 { color:#e7f7f8!important; }
+html.app-dark.app-dark .global-search .search-input-wrap,html.app-dark.app-dark .search-results,html.app-dark.app-dark .search-results button { background:#102f3b!important; border-color:#315866!important; color:#dceff1!important; }
+html.app-dark.app-dark .search-input-wrap input,html.app-dark.app-dark .search-results strong { color:#e6f5f6!important; }
+html.app-dark.app-dark .order-filters,html.app-dark.app-dark .table-row,html.app-dark.app-dark .admin-tabs,html.app-dark.app-dark .catalog-row { border-color:#244653!important; }
+html.app-dark.app-dark .order-info strong,html.app-dark.app-dark .table-row strong,html.app-dark.app-dark .catalog-row strong { color:#dceff1!important; }
+html.app-dark.app-dark .order-info span,html.app-dark.app-dark .table-row,html.app-dark.app-dark .catalog-row small { color:#9ab8c0!important; }
+html.app-dark.app-dark .map-stage { background:#102f3b!important; }
+html.app-dark.app-dark .map-focus-mode .workspace-grid { background:#071b24!important; }
+html.app-dark.app-dark .setup-banner { background:#103440!important; border-color:#285666!important; }
+html.app-dark.app-dark .setup-banner h2,html.app-dark.app-dark .setup-banner > div > p:not(.eyebrow),html.app-dark.app-dark .setup-banner ol { color:#c6e5e8!important; }
+html.app-dark.app-dark .login-dialog,html.app-dark.app-dark .import-dialog,html.app-dark.app-dark .close-button { background:#0d2833!important; color:#dceff1!important; }
+html.app-dark.app-dark .login-dialog input,html.app-dark.app-dark .import-dialog input[type="date"],html.app-dark.app-dark .catalog-form input,html.app-dark.app-dark .catalog-form select { background:#102f3b!important; border-color:#315866!important; color:#e6f5f6!important; }
