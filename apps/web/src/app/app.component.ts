@@ -213,7 +213,10 @@ export class AppComponent implements OnDestroy, OnInit {
   }
 
   openTeamManagement(): void {
-    this.adminInitialTab = 'teams';
+    // La entrada "Cuadrillas" abre el catálogo administrativo desde su
+    // primera pestaña para que el supervisor pueda revisar usuarios antes de
+    // vincular técnicos y vehículos.
+    this.adminInitialTab = 'users';
     this.showAdmin = true;
   }
 
