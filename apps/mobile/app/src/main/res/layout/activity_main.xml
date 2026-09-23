@@ -5,6 +5,7 @@
       <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="PEX Track" android:textColor="@color/pex_ink" android:textSize="24sp" android:textStyle="bold" />
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Aplicación de técnico" android:textColor="@color/pex_muted" android:textSize="14sp" />
+        <TextView android:id="@+id/teamMembershipText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:textColor="@color/pex_primary_dark" android:textSize="13sp" android:textStyle="bold" android:visibility="gone" />
       </LinearLayout>
     </LinearLayout>
 

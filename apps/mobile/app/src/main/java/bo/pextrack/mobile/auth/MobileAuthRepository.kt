@@ -6,6 +6,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.Serializable
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -13,6 +14,9 @@ import java.net.UnknownHostException
 
 class MobileAuthRepository(private val context: Context) {
   private val sessionStore = TeamSessionStore(context)
+
+  @Serializable
+  private data class TeamSummary(val code: String)
 
   fun isConfigured(): Boolean = SupabaseProvider.isConfigured
 
@@ -27,13 +31,29 @@ class MobileAuthRepository(private val context: Context) {
       }
       val teamId = Json.decodeFromString<String?>(client.postgrest.rpc("current_team_id").data)
         ?: error("Este usuario no pertenece a una cuadrilla activa.")
-      sessionStore.saveTeamId(teamId)
+      val teamCode = Json.decodeFromString<List<TeamSummary>>(
+        client.postgrest.from("teams").select { filter { eq("id", teamId) } }.data
+      ).firstOrNull()?.code ?: error("No se pudo identificar la cuadrilla activa.")
+      sessionStore.saveTeam(teamId, teamCode)
       OfflineSyncScheduler.enqueue(context)
       null
     } catch (error: Throwable) {
       sessionStore.clear()
       runCatching { client.auth.signOut() }
       friendlyAuthError(error)
+    }
+  }
+
+  fun currentTeamCode(): String? = sessionStore.currentTeamCode()
+
+  suspend fun refreshTeamCode() {
+    val client = SupabaseProvider.client ?: return
+    val teamId = sessionStore.currentTeamId() ?: return
+    runCatching {
+      val teamCode = Json.decodeFromString<List<TeamSummary>>(
+        client.postgrest.from("teams").select { filter { eq("id", teamId) } }.data
+      ).firstOrNull()?.code ?: return
+      sessionStore.saveTeam(teamId, teamCode)
     }
   }
 
