@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { WorkOrderHistoryRecord, WorkOrderImportRow, WorkOrderSummary } from '../models/operations.models';
+import { DistributionBoxOption, NetworkNodeOption, WorkOrderHistoryRecord, WorkOrderImportRow, WorkOrderSummary } from '../models/operations.models';
 import { SupabaseClientService } from './supabase-client.service';
 
 @Injectable({ providedIn: 'root' })
@@ -70,13 +70,24 @@ export class WorkOrdersService {
     return (data ?? []).map((row: any) => ({ ...row, actor: row.actor?.[0] ?? row.actor ?? null })) as WorkOrderHistoryRecord[];
   }
 
-  async createManual(input: { code: string; customerName: string; customerPhone: string; address: string; taskType: WorkOrderImportRow['taskType']; priority: number; isEmergency?: boolean; scheduledFor: string; latitude: number | null; longitude: number | null }): Promise<void> {
+  async createManual(input: { code: string; customerName: string; customerPhone: string; address: string; taskType: WorkOrderImportRow['taskType']; priority: number; isEmergency?: boolean; scheduledFor: string; latitude: number | null; longitude: number | null; nodeId: string | null; boxId: string | null }): Promise<void> {
     const { data, error } = await this.supabase.requireClient().from('work_orders').insert({
       code: input.code.trim(), customer_name: input.customerName.trim() || null, customer_phone: input.customerPhone.trim() || null,
-      address: input.address.trim(), task_type: input.taskType, priority: input.isEmergency ? 1 : input.priority, is_emergency: input.isEmergency ?? false, scheduled_for: input.scheduledFor
+      address: input.address.trim(), task_type: input.taskType, priority: input.isEmergency ? 1 : input.priority, is_emergency: input.isEmergency ?? false, scheduled_for: input.scheduledFor, node_id: input.nodeId || null, box_id: input.boxId || null
     }).select('id').single();
     if (error) throw error;
     if (input.latitude !== null && input.longitude !== null) await this.setLocation(data.id, input.latitude, input.longitude);
+  }
+
+  async listNetworkReferenceOptions(): Promise<{ nodes: NetworkNodeOption[]; boxes: DistributionBoxOption[] }> {
+    const client = this.supabase.requireClient();
+    const [nodes, boxes] = await Promise.all([
+      client.from('network_nodes').select('id, code, name').order('code'),
+      client.from('distribution_boxes').select('id, code, node_id').order('code')
+    ]);
+    if (nodes.error) throw nodes.error;
+    if (boxes.error) throw boxes.error;
+    return { nodes: (nodes.data ?? []) as NetworkNodeOption[], boxes: (boxes.data ?? []) as DistributionBoxOption[] };
   }
 
   private async setLocation(id: string, latitude: number, longitude: number): Promise<void> {

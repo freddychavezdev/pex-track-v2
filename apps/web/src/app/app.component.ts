@@ -4,7 +4,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AuthService } from './core/services/auth.service';
-import { GlobalSearchResult, OperationalMapMarker, SuggestedRouteStop, TeamSummary, WorkOrderHistoryRecord, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
+import { DistributionBoxOption, GlobalSearchResult, NetworkNodeOption, OperationalMapMarker, SuggestedRouteStop, TeamSummary, WorkOrderHistoryRecord, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
 import { ReportsService } from './core/services/reports.service';
 import { SupabaseClientService } from './core/services/supabase-client.service';
@@ -82,7 +82,9 @@ export class AppComponent implements OnDestroy, OnInit {
   reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
   importDate = new Date().toISOString().slice(0, 10);
-  newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance' as WorkOrderImportRow['taskType'], priority: 3, isEmergency: false, scheduledFor: new Date().toISOString().slice(0, 10), latitude: null as number | null, longitude: null as number | null };
+  newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance' as WorkOrderImportRow['taskType'], priority: 3, isEmergency: false, scheduledFor: new Date().toISOString().slice(0, 10), latitude: null as number | null, longitude: null as number | null, nodeId: '', boxId: '' };
+  readonly networkNodes = signal<NetworkNodeOption[]>([]);
+  readonly distributionBoxes = signal<DistributionBoxOption[]>([]);
   activeOrderFilter: 'all' | WorkOrderStatus = 'all';
   assignmentTeamId = '';
   selectedOrder: WorkOrderSummary | null = null;
@@ -326,12 +328,36 @@ export class AppComponent implements OnDestroy, OnInit {
     this.selectedOrder = order;
     this.assignmentTeamId = order.assigned_team_id ?? '';
     this.assignmentError = '';
-    this.emergencySuggestions.set(order.is_emergency ? this.suggestEmergencyTeams(order) : []);
+    this.emergencySuggestions.set(this.suggestEmergencyTeams(order));
     this.showAssignment = true;
   }
 
   selectEmergencyTeam(teamId: string): void {
     this.assignmentTeamId = teamId;
+  }
+
+  async openNewOrder(): Promise<void> {
+    if (!this.canManageOperations()) return;
+    this.importError = '';
+    try {
+      const references = await this.workOrders.listNetworkReferenceOptions();
+      this.networkNodes.set(references.nodes);
+      this.distributionBoxes.set(references.boxes);
+      this.showNewOrder = true;
+      this.mobileMenuOpen = false;
+    } catch (error) {
+      this.importError = error instanceof Error ? error.message : 'No se pudieron cargar los nodos y cajas.';
+      this.showNewOrder = true;
+    }
+  }
+
+  availableBoxesForNewOrder(): DistributionBoxOption[] {
+    return this.distributionBoxes().filter((box) => !this.newOrder.nodeId || box.node_id === this.newOrder.nodeId);
+  }
+
+  selectNewOrderNode(): void {
+    const box = this.distributionBoxes().find((item) => item.id === this.newOrder.boxId);
+    if (box && this.newOrder.nodeId && box.node_id !== this.newOrder.nodeId) this.newOrder.boxId = '';
   }
 
   async openHistory(order: WorkOrderSummary): Promise<void> {
@@ -441,7 +467,9 @@ export class AppComponent implements OnDestroy, OnInit {
 
   private suggestEmergencyTeams(order: WorkOrderSummary): EmergencyTeamSuggestion[] {
     const markers = new Map(this.mapMarkers().map((marker) => [marker.marker_id, marker]));
-    const emergencyMarker = markers.get(order.id);
+    const emergencyMarker = markers.get(order.id)
+      ?? (order.box ? this.mapMarkers().find((marker) => marker.marker_type === 'distribution_box' && marker.code === order.box?.code) : undefined)
+      ?? (order.node ? this.mapMarkers().find((marker) => marker.marker_type === 'network_node' && marker.code === order.node?.code) : undefined);
     return this.teams().map((team) => {
       const teamMarker = markers.get(team.id);
       const hasSignal = teamMarker?.marker_type === 'team';
@@ -686,7 +714,7 @@ export class AppComponent implements OnDestroy, OnInit {
     try {
       await this.workOrders.createManual(this.newOrder);
       this.showNewOrder = false;
-      this.newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance', priority: 3, isEmergency: false, scheduledFor: this.importDate, latitude: null, longitude: null };
+      this.newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance', priority: 3, isEmergency: false, scheduledFor: this.importDate, latitude: null, longitude: null, nodeId: '', boxId: '' };
       await this.refreshOperations();
     } catch (error) {
       this.importError = error instanceof Error ? error.message : 'No se pudo crear la OT.';

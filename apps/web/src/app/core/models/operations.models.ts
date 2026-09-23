@@ -82,6 +82,18 @@ export interface TeamSummary {
   active: boolean;
 }
 
+export interface NetworkNodeOption {
+  id: string;
+  code: string;
+  name: string | null;
+}
+
+export interface DistributionBoxOption {
+  id: string;
+  code: string;
+  node_id: string | null;
+}
+
 export type WorkOrderType = 'technical_assistance' | 'new_installation' | 'service_transfer' | 'network_maintenance';
 
 export interface WorkOrderImportRow {
