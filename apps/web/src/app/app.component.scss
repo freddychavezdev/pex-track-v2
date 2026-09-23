@@ -138,3 +138,10 @@ html.app-dark .team-actions .refresh-team-button:hover { background:#164a52; }
   .map-focus-mode .workspace-grid { padding:0; }.map-focus-mode .panel { border:0; border-radius:0; }.map-focus-mode .panel-header { padding:14px; }.map-focus-mode .map-controls { gap:6px; }.map-focus-mode .map-controls .control-button { min-height:36px; padding:7px 9px; }.team-actions { align-items:flex-end; flex-direction:column; gap:4px; }
   .session-button b { font-size:11px; }.session-button small { font-size:9px; }
 }
+
+.status-cell .status-dot { background:#dc3545; box-shadow:0 0 0 3px rgba(220,53,69,.15); }
+.status-cell .status-dot.online { background:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.16); }
+.status-cell:has(.status-dot.online) { color:#166534; font-weight:700; }
+.status-cell:not(:has(.status-dot.online)) { color:#b91c1c; }
+html.app-dark.app-dark .status-cell:has(.status-dot.online) { color:#86efac; }
+html.app-dark.app-dark .status-cell:not(:has(.status-dot.online)) { color:#fca5a5; }
