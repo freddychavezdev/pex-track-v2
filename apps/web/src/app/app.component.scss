@@ -112,6 +112,18 @@
   .session-button i { margin-left:0; }
 }
 
+/* Encabezado compacto para ventanas estrechas: conserva el nombre completo
+   del producto y evita que el control de sesión consuma el área operativa. */
+@media (max-width:780px) {
+  .topbar { align-items:flex-start; gap:10px; }
+  .mobile-topbar { align-items:flex-start; flex:1 1 auto; min-width:0; }
+  .mobile-topbar h1 { font-size:clamp(20px,5.4vw,25px); line-height:1.15; white-space:normal; overflow:visible; text-overflow:clip; }
+  .top-actions { flex:0 0 auto; gap:6px; }
+  .session-button { min-height:42px; min-width:42px; padding:4px; justify-content:center; }
+  .session-button > span:nth-child(2),.session-button > i { display:none; }
+  .session-avatar,.session-lock { height:34px; width:34px; }
+}
+
 /* Acción de sesión: estado, rol y acción quedan claros de un vistazo. */
 .session-button { align-items:center; background:#fff; border:1px solid #d9e4f0; border-radius:10px; color:#2d4561; cursor:pointer; display:flex; gap:9px; min-height:50px; padding:6px 10px 6px 7px; text-align:left; box-shadow:0 2px 8px rgba(29,56,87,.07); }
 .session-button:hover { border-color:#86b5ee; box-shadow:0 4px 12px rgba(45,116,223,.14); }.session-button > span:nth-child(2) { display:grid; gap:1px; }.session-button b { font-size:12px; }.session-button small { color:#72849a; font-size:10px; }.session-button i { color:#2d74df; font-size:17px; font-style:normal; margin-left:3px; }.session-avatar,.session-lock { align-items:center; background:#e9f2ff; border-radius:8px; color:#2d74df; display:flex; font-size:12px; font-weight:800; height:34px; justify-content:center; width:34px; }.session-button.signed-in .session-avatar { background:#dff7ec; color:#16855d; }
