@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import { SpreadsheetFile, Workbook } from '@oai/artifact-tool';
 
 const outputDir = 'D:/UNI/6to_Semestre/01_Ingenieria_Software/Proyecto_PT/outputs/ot-import-pilot';
-const outputPath = `${outputDir}/ot-simuladas-pex-track.xlsx`;
+const outputPath = `${outputDir}/ot-simuladas-pex-track-sin-referencias.xlsx`;
 
 const headers = [
   'Código OT', 'Código cliente', 'Cliente', 'Teléfono', 'Dirección', 'Tipo',
@@ -10,16 +10,16 @@ const headers = [
 ];
 
 const orders = [
-  ['SIM-OT-001', 'CLI-1001', 'Ana Quispe', '76543210', 'Av. 6 de Marzo, zona 16 de Julio, El Alto', 'Asistencia técnica', 2, '2026-09-22', 'EL ALTO', '', '', -16.50848, -68.16354],
-  ['SIM-OT-002', 'CLI-1002', 'Carlos Mamani', '71234567', 'Calle 3, Villa Adela, El Alto', 'Instalación nueva', 3, '2026-09-22', 'EL ALTO', '', '', -16.53574, -68.19235],
-  ['SIM-OT-003', 'CLI-1003', 'María Choque', '69876543', 'Av. Juan Pablo II, Ciudad Satélite, El Alto', 'Mantenimiento de red', 1, '2026-09-22', 'EL ALTO', '', '', -16.52017, -68.18281],
-  ['SIM-OT-004', 'CLI-1004', 'Jorge Huanca', '77788990', 'Calle Bolívar, Villa Dolores, El Alto', 'Traslado de servicio', 4, '2026-09-22', 'EL ALTO', '', '', -16.49656, -68.18076],
-  ['SIM-OT-005', 'CLI-1005', 'Lucía Flores', '72001122', 'Av. Tiahuanaco, zona Villa Bolívar A, El Alto', 'Asistencia técnica', 2, '2026-09-22', 'EL ALTO', '', '', -16.50431, -68.19493],
-  ['SIM-OT-006', 'CLI-1006', 'Pedro Apaza', '73445566', 'Av. Mariscal Santa Cruz, Centro, La Paz', 'Instalación nueva', 3, '2026-09-22', 'LA PAZ', '', '', -16.49502, -68.13545],
-  ['SIM-OT-007', 'CLI-1007', 'Sofía Vargas', '70112233', 'Calle Bueno, Sopocachi, La Paz', 'Asistencia técnica', 2, '2026-09-22', 'LA PAZ', '', '', -16.51034, -68.12694],
-  ['SIM-OT-008', 'CLI-1008', 'Diego Condori', '75566778', 'Av. del Poeta, Obrajes, La Paz', 'Mantenimiento de red', 1, '2026-09-22', 'LA PAZ', '', '', -16.52678, -68.10361],
-  ['SIM-OT-009', 'CLI-1009', 'Elena Fernández', '78990011', 'Av. Ballivián, Calacoto, La Paz', 'Traslado de servicio', 4, '2026-09-22', 'LA PAZ', '', '', -16.54068, -68.08533],
-  ['SIM-OT-010', 'CLI-1010', 'Roberto Ticona', '76655443', 'Av. Montenegro, San Miguel, La Paz', 'Instalación nueva', 3, '2026-09-22', 'LA PAZ', '', '', -16.53917, -68.07796]
+  ['SIM-OT-001', 'CLI-1001', 'Ana Quispe', '76543210', 'Av. 6 de Marzo, zona 16 de Julio, El Alto', 'Asistencia técnica', 2, '2026-09-22', '', '', '', -16.50848, -68.16354],
+  ['SIM-OT-002', 'CLI-1002', 'Carlos Mamani', '71234567', 'Calle 3, Villa Adela, El Alto', 'Instalación nueva', 3, '2026-09-22', '', '', '', -16.53574, -68.19235],
+  ['SIM-OT-003', 'CLI-1003', 'María Choque', '69876543', 'Av. Juan Pablo II, Ciudad Satélite, El Alto', 'Mantenimiento de red', 1, '2026-09-22', '', '', '', -16.52017, -68.18281],
+  ['SIM-OT-004', 'CLI-1004', 'Jorge Huanca', '77788990', 'Calle Bolívar, Villa Dolores, El Alto', 'Traslado de servicio', 4, '2026-09-22', '', '', '', -16.49656, -68.18076],
+  ['SIM-OT-005', 'CLI-1005', 'Lucía Flores', '72001122', 'Av. Tiahuanaco, zona Villa Bolívar A, El Alto', 'Asistencia técnica', 2, '2026-09-22', '', '', '', -16.50431, -68.19493],
+  ['SIM-OT-006', 'CLI-1006', 'Pedro Apaza', '73445566', 'Av. Mariscal Santa Cruz, Centro, La Paz', 'Instalación nueva', 3, '2026-09-22', '', '', '', -16.49502, -68.13545],
+  ['SIM-OT-007', 'CLI-1007', 'Sofía Vargas', '70112233', 'Calle Bueno, Sopocachi, La Paz', 'Asistencia técnica', 2, '2026-09-22', '', '', '', -16.51034, -68.12694],
+  ['SIM-OT-008', 'CLI-1008', 'Diego Condori', '75566778', 'Av. del Poeta, Obrajes, La Paz', 'Mantenimiento de red', 1, '2026-09-22', '', '', '', -16.52678, -68.10361],
+  ['SIM-OT-009', 'CLI-1009', 'Elena Fernández', '78990011', 'Av. Ballivián, Calacoto, La Paz', 'Traslado de servicio', 4, '2026-09-22', '', '', '', -16.54068, -68.08533],
+  ['SIM-OT-010', 'CLI-1010', 'Roberto Ticona', '76655443', 'Av. Montenegro, San Miguel, La Paz', 'Instalación nueva', 3, '2026-09-22', '', '', '', -16.53917, -68.07796]
 ];
 
 const workbook = Workbook.create();

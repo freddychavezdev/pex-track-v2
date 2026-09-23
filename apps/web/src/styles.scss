@@ -20,3 +20,6 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .operational-marker.work-order { background: #ec6a3b; }
 .operational-marker.network-node { background:linear-gradient(145deg,#8e68ec,#4f34a9); border:3px solid #fff; box-shadow:0 0 0 2px #c2adff,0 5px 14px rgba(67,41,150,.45); font-size:13px; height:38px; width:38px; }
 .operational-marker.distribution-box { background:linear-gradient(145deg,#f6b73b,#c56d11); border:3px solid #fff; box-shadow:0 0 0 2px #ffe0a1,0 5px 14px rgba(154,88,10,.42); font-size:11px; height:34px; width:34px; }
+.team-actions .text-button { align-items:center; border:1px solid #d7e3f1; border-radius:9px; display:inline-flex; font-size:0; height:34px; justify-content:center; padding:0; width:34px; }
+.team-actions .text-button::before { color:#2d74df; content:'↻'; font-size:20px; line-height:1; }
+.team-actions .text-button:hover { background:#eef5ff; border-color:#86b5ee; }
