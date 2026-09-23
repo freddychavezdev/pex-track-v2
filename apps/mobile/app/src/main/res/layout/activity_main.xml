@@ -8,6 +8,12 @@
       </LinearLayout>
     </LinearLayout>
 
+    <LinearLayout android:id="@+id/landingIntro" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="26dp" android:orientation="vertical">
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CONTROL OPERATIVO" android:textColor="@color/pex_primary_dark" android:textSize="12sp" android:textStyle="bold" />
+      <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="Coordina tu jornada con PEX Track" android:textColor="@color/pex_ink" android:textSize="28sp" android:textStyle="bold" />
+      <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Consulta tus órdenes, registra la atención y comparte la ubicación de tu cuadrilla de forma segura." android:textColor="@color/pex_muted" android:textSize="15sp" />
+    </LinearLayout>
+
     <LinearLayout android:id="@+id/loginCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:background="@drawable/bg_card" android:elevation="2dp" android:orientation="vertical">
       <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Acceso de técnico" android:textColor="@color/pex_ink" android:textSize="20sp" android:textStyle="bold" />
       <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Ingresa con una cuenta técnica asignada a una cuadrilla." android:textColor="@color/pex_muted" android:textSize="14sp" />

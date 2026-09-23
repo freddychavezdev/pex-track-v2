@@ -3,6 +3,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonDirective } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
+import { FocusTrapModule } from 'primeng/focustrap';
 import { AuthService } from './core/services/auth.service';
 import { DistributionBoxOption, GlobalSearchResult, NetworkNodeOption, OperationalMapMarker, SuggestedRouteStop, TeamSummary, WorkOrderHistoryRecord, WorkOrderImportResult, WorkOrderImportRow, WorkOrderStatus, WorkOrderSummary } from './core/models/operations.models';
 import { OperationalMapService } from './core/services/operational-map.service';
@@ -26,7 +27,7 @@ interface EmergencyTeamSuggestion {
 
 @Component({
   selector: 'app-root',
-  imports: [DatePipe, DecimalPipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, OperationalMapComponent, AdminPanelComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, ReactiveFormsModule, ButtonDirective, InputText, FocusTrapModule, OperationalMapComponent, AdminPanelComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -121,6 +122,7 @@ export class AppComponent implements OnDestroy, OnInit {
   ngOnInit(): void {
     this.isDarkMode = localStorage.getItem('pex-track-theme') === 'dark';
     this.applyTheme();
+    if (!this.auth.session()) this.showLogin = true;
     window.addEventListener('online', this.onlineHandler);
     window.addEventListener('offline', this.offlineHandler);
     void this.refreshOperations();
@@ -192,6 +194,7 @@ export class AppComponent implements OnDestroy, OnInit {
     this.searchTerm = '';
     this.searchResults.set([]);
     this.mapExpanded = false;
+    this.showLogin = true;
   }
 
   openTeamManagement(): void {

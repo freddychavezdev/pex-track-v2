@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
   private lateinit var pendingOperationsText: TextView
   private lateinit var loginButton: Button
   private lateinit var loginCard: LinearLayout
+  private lateinit var landingIntro: LinearLayout
   private lateinit var authenticatedOperations: LinearLayout
   private lateinit var signOutButton: Button
   private lateinit var trackingToggleButton: MaterialButton
@@ -133,6 +134,7 @@ class MainActivity : AppCompatActivity() {
     pendingOperationsText = findViewById(R.id.pendingOperationsText)
     loginButton = findViewById(R.id.loginButton)
     loginCard = findViewById(R.id.loginCard)
+    landingIntro = findViewById(R.id.landingIntro)
     authenticatedOperations = findViewById(R.id.authenticatedOperations)
     signOutButton = findViewById(R.id.signOutButton)
     trackingToggleButton = findViewById(R.id.trackingToggleButton)
@@ -218,6 +220,7 @@ class MainActivity : AppCompatActivity() {
   private fun updateSessionUi() {
     val authenticated = authRepository.hasSession()
     loginCard.visibility = if (authenticated) View.GONE else View.VISIBLE
+    landingIntro.visibility = if (authenticated) View.GONE else View.VISIBLE
     authenticatedOperations.visibility = if (authenticated) View.VISIBLE else View.GONE
     pendingOperationsText.visibility = if (authenticated) View.VISIBLE else View.GONE
     if (!authenticated && trackingActive) setTrackingActive(false)

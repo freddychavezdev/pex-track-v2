@@ -108,3 +108,11 @@ html.app-dark.app-dark .order-refresh-button:hover { background:#164a52!importan
   .workspace-window[aria-labelledby="orders-view-title"] .panel-actions .control-button.primary { flex:1; }
   .workspace-window[aria-labelledby="orders-view-title"] .orders-notice { margin:0 -16px; padding-left:16px; padding-right:16px; }
 }
+
+/* Pantalla de entrada para usuarios sin sesión. */
+.app-shell.unauthenticated > .sidebar,.app-shell.unauthenticated > .content { display:none; }
+.landing-page { align-items:center; background:radial-gradient(circle at 75% 20%,rgba(45,212,191,.16),transparent 34%),linear-gradient(135deg,#071b24 0%,#0b2833 58%,#123f4c 100%); box-sizing:border-box; color:#e9fbfb; display:flex; flex-direction:column; inset:0; justify-content:center; overflow:auto; padding:32px 24px; position:fixed; text-align:center; z-index:100; }
+.landing-brand { align-items:center; display:flex; gap:12px; left:32px; position:absolute; top:28px; text-align:left; }.landing-brand strong,.landing-brand span { display:block; }.landing-brand strong { font-size:20px; }.landing-brand span { color:#9bc6cc; font-size:12px; margin-top:3px; }
+.landing-content { max-width:620px; }.landing-content .eyebrow { color:#5EEAD4; font-weight:700; letter-spacing:1.5px; }.landing-content h1 { font-size:clamp(30px,5vw,52px); line-height:1.08; margin:12px 0 18px; }.landing-content > p:not(.eyebrow) { color:#b7d4d8; font-size:16px; line-height:1.6; margin:0 auto 28px; max-width:520px; }.landing-action { min-width:190px; min-height:48px; }
+.landing-page > small { bottom:25px; color:#83aeb5; font-size:11px; position:absolute; }
+@media (max-width:650px) { .landing-page { padding:88px 20px 60px; }.landing-brand { left:20px; top:20px; }.landing-content h1 { font-size:34px; }.landing-content > p:not(.eyebrow) { font-size:14px; }.landing-page > small { bottom:18px; max-width:280px; } }
