@@ -62,6 +62,12 @@
 .map-focus-mode .map-stage app-operational-map { min-height:100%; }
 .map-expand { color:#1d5fae; background:#eaf2ff; border-color:#bcd7fb; font-weight:700; }
 .team-actions { align-items:center; display:flex; gap:13px; }.manage-teams-button { font-weight:700; }
+.team-actions .refresh-team-button { align-items:center; background:transparent; border:1px solid #5EEAD4; border-radius:9px; color:#0f766e; display:inline-flex; font-size:0!important; height:40px; justify-content:center; padding:0; width:40px; }
+.team-actions .refresh-team-button::before { content:'↻'; font-size:22px; line-height:1; }
+.team-actions .refresh-team-button:hover { background:#ccfbf1; }
+.team-actions .refresh-team-button:disabled { cursor:wait; opacity:.6; }
+html.app-dark .team-actions .refresh-team-button { border-color:#5EEAD4; color:#5EEAD4; }
+html.app-dark .team-actions .refresh-team-button:hover { background:#164a52; }
 
 .mobile-topbar { display:flex; align-items:center; gap:12px; }
 .mobile-menu-toggle,.menu-close,.mobile-menu-backdrop { display:none; }
