@@ -71,21 +71,17 @@ export class AdminService {
   }
 
   async listTeams(): Promise<TeamRecord[]> {
-    const { data, error } = await this.supabase.requireClient().rpc('operation_team_catalog');
-    if (error) throw error;
-    const { data: details, error: detailsError } = await this.supabase.requireClient().from('teams')
-      .select('id, code, technician_one_id, technician_two_id, vehicle_id, active, technician_one:technicians!teams_technician_one_id_fkey(profiles(full_name)), technician_two:technicians!teams_technician_two_id_fkey(profiles(full_name)), vehicle:vehicles(plate, model)')
+    const { data, error } = await this.supabase.requireClient().from('teams')
+      .select('id, code, technician_one_id, technician_two_id, vehicle_id, active, dispatch_status, technician_one:technicians!teams_technician_one_id_fkey(profiles(full_name)), technician_two:technicians!teams_technician_two_id_fkey(profiles(full_name)), vehicle:vehicles(plate, model)')
       .order('code');
-    if (detailsError) throw detailsError;
-    const dispatch = new Map<string, any>((data ?? []).map((row: any) => [row.id, row]));
-    return (details ?? []).map((row: any) => {
-      const profile = dispatch.get(row.id) ?? {};
+    if (error) throw error;
+    return (data ?? []).map((row: any) => {
       return {
         ...row,
-        dispatch_status: profile.dispatch_status ?? 'available',
-        base_label: profile.base_label ?? null,
-        base_latitude: profile.base_latitude ?? null,
-        base_longitude: profile.base_longitude ?? null,
+        dispatch_status: row.dispatch_status ?? 'available',
+        base_label: null,
+        base_latitude: null,
+        base_longitude: null,
         technician_one: row.technician_one ? { profile: row.technician_one.profiles } : null,
         technician_two: row.technician_two ? { profile: row.technician_two.profiles } : null
       };

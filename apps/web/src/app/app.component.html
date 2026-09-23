@@ -123,15 +123,15 @@
       <button class="dialog-close" type="button" aria-label="Cerrar planificación" (click)="showDispatchPlanning = false">×</button>
       <p class="eyebrow">PLANIFICACIÓN DE JORNADA · {{ importDate | date:'dd/MM/yyyy' }}</p>
       <h2 id="dispatch-planning-title">Reparto recomendado de OTs</h2>
-      <p class="dialog-description">La propuesta usa proximidad geográfica y equilibrio de carga. Puedes modificar cualquier cuadrilla antes de aprobar.</p>
+      <p class="dialog-description">La propuesta agrupa OTs cercanas y equilibra la carga entre cuadrillas disponibles. No requiere ubicación de las cuadrillas.</p>
       @if (dispatchPlanningError) { <p class="form-error">{{ dispatchPlanningError }}</p> }
       @if (dispatchPlanningMessage) { <p class="success-notice">{{ dispatchPlanningMessage }}</p> }
       @if (!dispatchPlanningError && dispatchPlan().length) {
-        <div class="planning-summary"><strong>{{ dispatchPlan().length }} OTs</strong><span>{{ dispatchPlanTeams().length }} cuadrillas disponibles</span><span>Arrastra la decisión con los selectores y luego confirma.</span></div>
+        <div class="planning-summary"><strong>{{ dispatchPlan().length }} OTs</strong><span>{{ dispatchPlanTeams().length }} cuadrillas disponibles</span><span>Modifica una asignación con el selector y luego confirma.</span></div>
         <div class="dispatch-plan-list">
           @for (team of dispatchPlanTeams(); track team.id) {
-            <article class="dispatch-team-card"><div class="dispatch-team-heading"><div><strong>{{ team.code }}</strong><span>{{ team.orders.length }} OT(s) asignada(s)</span></div><small>{{ team.totalDistanceKm | number:'1.1-1' }} km estimados entre puntos</small></div>
-              @for (item of team.orders; track item.order.id) { <div class="dispatch-plan-row"><div><strong>{{ item.order.code }}</strong><span>{{ item.order.address }}</span><small>Prioridad {{ item.order.priority }} · {{ item.distanceKm === null ? 'Sin coordenadas de referencia' : (item.distanceKm | number:'1.1-1') + ' km al siguiente punto' }}</small></div><select aria-label="Cuadrilla asignada" [ngModel]="item.teamId" (ngModelChange)="changeDispatchPlanTeam(item.order.id, $event)">@for (candidate of teams(); track candidate.id) { @if (candidate.active && (candidate.dispatch_status ?? 'available') === 'available') { <option [value]="candidate.id">{{ candidate.code }}</option> } }</select></div> }
+            <article class="dispatch-team-card"><div class="dispatch-team-heading"><div><strong>{{ team.code }}</strong><span>{{ team.orders.length }} OT(s) asignada(s)</span></div><small>Grupo geográfico recomendado</small></div>
+              @for (item of team.orders; track item.order.id) { <div class="dispatch-plan-row"><div><strong>{{ item.order.code }}</strong><span>{{ item.order.address }}</span><small>Prioridad {{ item.order.priority }} · {{ item.distanceKm === null ? 'Sin coordenadas de referencia' : (item.distanceKm | number:'1.1-1') + ' km del centro del grupo' }}</small></div><select aria-label="Cuadrilla asignada" [ngModel]="item.teamId" (ngModelChange)="changeDispatchPlanTeam(item.order.id, $event)">@for (candidate of teams(); track candidate.id) { @if (candidate.active && (candidate.dispatch_status ?? 'available') === 'available') { <option [value]="candidate.id">{{ candidate.code }}</option> } }</select></div> }
             </article>
           }
         </div>

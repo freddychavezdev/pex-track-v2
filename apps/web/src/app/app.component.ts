@@ -251,33 +251,69 @@ export class AppComponent implements OnDestroy, OnInit {
     if (!pendingOrders.length) { this.dispatchPlan.set([]); this.dispatchPlanningError = 'No hay OTs pendientes y sin asignar para esta jornada.'; return; }
 
     const markers = new Map(this.mapMarkers().map((marker) => [marker.marker_id, marker]));
-    const teamPositions = new Map<string, { latitude: number; longitude: number } | null>();
-    const assignedCounts = new Map<string, number>();
-    availableTeams.forEach((team) => {
-      const marker = markers.get(team.id);
-      teamPositions.set(team.id, marker?.marker_type === 'team'
-        ? { latitude: marker.latitude, longitude: marker.longitude }
-        : team.base_latitude !== null && team.base_latitude !== undefined && team.base_longitude !== null && team.base_longitude !== undefined
-          ? { latitude: team.base_latitude, longitude: team.base_longitude }
-          : null);
-      assignedCounts.set(team.id, 0);
+    const locationFor = (order: WorkOrderSummary): { latitude: number; longitude: number } | null => {
+      const marker = markers.get(order.id)
+        ?? (order.box ? this.mapMarkers().find((item) => item.marker_type === 'distribution_box' && item.code === order.box?.code) : undefined)
+        ?? (order.node ? this.mapMarkers().find((item) => item.marker_type === 'network_node' && item.code === order.node?.code) : undefined);
+      return marker ? { latitude: marker.latitude, longitude: marker.longitude } : null;
+    };
+    const locations = new Map(pendingOrders.map((order) => [order.id, locationFor(order)]));
+    const ordersWithLocation = pendingOrders.filter((order) => locations.get(order.id));
+    const grouped = new Map(availableTeams.map((team) => [team.id, [] as WorkOrderSummary[]]));
+    const centroid = new Map<string, { latitude: number; longitude: number } | null>(availableTeams.map((team) => [team.id, null]));
+    const capacity = Math.ceil(pendingOrders.length / availableTeams.length);
+    const ordered = [...pendingOrders].sort((first, second) => first.priority - second.priority || first.code.localeCompare(second.code));
+
+    // Primero crea grupos geográficos separados; después incorpora cada OT al
+    // grupo más cercano sin superar una carga equilibrada por cuadrilla.
+    const seeds: WorkOrderSummary[] = [];
+    while (seeds.length < availableTeams.length && seeds.length < ordersWithLocation.length) {
+      const candidate = ordersWithLocation.filter((order) => !seeds.some((seed) => seed.id === order.id)).sort((first, second) => {
+        if (!seeds.length) return first.priority - second.priority || first.code.localeCompare(second.code);
+        const distanceFor = (order: WorkOrderSummary) => Math.min(...seeds.map((seed) => {
+          const from = locations.get(order.id)!; const to = locations.get(seed.id)!;
+          return this.distanceKm(from.latitude, from.longitude, to.latitude, to.longitude);
+        }));
+        return distanceFor(second) - distanceFor(first) || first.priority - second.priority;
+      })[0];
+      if (!candidate) break;
+      seeds.push(candidate);
+    }
+    seeds.forEach((order, index) => {
+      const team = availableTeams[index];
+      grouped.get(team.id)!.push(order);
+      centroid.set(team.id, locations.get(order.id)!);
     });
 
-    const plan: DispatchPlanItem[] = [];
-    [...pendingOrders].sort((first, second) => first.priority - second.priority || first.code.localeCompare(second.code)).forEach((order) => {
-      const orderMarker = markers.get(order.id)
-        ?? (order.box ? this.mapMarkers().find((marker) => marker.marker_type === 'distribution_box' && marker.code === order.box?.code) : undefined)
-        ?? (order.node ? this.mapMarkers().find((marker) => marker.marker_type === 'network_node' && marker.code === order.node?.code) : undefined);
-      const candidates = availableTeams.map((team) => {
-        const position = teamPositions.get(team.id);
-        const distanceKm = position && orderMarker ? this.distanceKm(position.latitude, position.longitude, orderMarker.latitude, orderMarker.longitude) : null;
-        const load = assignedCounts.get(team.id) ?? 0;
-        return { team, distanceKm, score: load * 4 + (distanceKm ?? 20) };
-      }).sort((first, second) => first.score - second.score || first.team.code.localeCompare(second.team.code));
-      const selected = candidates[0];
-      assignedCounts.set(selected.team.id, (assignedCounts.get(selected.team.id) ?? 0) + 1);
-      if (orderMarker) teamPositions.set(selected.team.id, { latitude: orderMarker.latitude, longitude: orderMarker.longitude });
-      plan.push({ order, teamId: selected.team.id, teamCode: selected.team.code, distanceKm: selected.distanceKm });
+    ordered.filter((order) => !seeds.some((seed) => seed.id === order.id)).forEach((order) => {
+      const location = locations.get(order.id);
+      const candidates = availableTeams.filter((team) => (grouped.get(team.id)?.length ?? 0) < capacity);
+      const pool = candidates.length ? candidates : availableTeams;
+      const selected = [...pool].sort((first, second) => {
+        const score = (team: TeamSummary) => {
+          const center = centroid.get(team.id);
+          const distance = location && center ? this.distanceKm(location.latitude, location.longitude, center.latitude, center.longitude) : 0;
+          return distance + (grouped.get(team.id)?.length ?? 0) * 1.5;
+        };
+        return score(first) - score(second) || first.code.localeCompare(second.code);
+      })[0];
+      const current = grouped.get(selected.id)!;
+      current.push(order);
+      if (location) {
+        const known = current.map((item) => locations.get(item.id)).filter((item): item is { latitude: number; longitude: number } => item !== null);
+        centroid.set(selected.id, {
+          latitude: known.reduce((total, item) => total + item.latitude, 0) / known.length,
+          longitude: known.reduce((total, item) => total + item.longitude, 0) / known.length
+        });
+      }
+    });
+
+    const plan: DispatchPlanItem[] = availableTeams.flatMap((team) => {
+      const center = centroid.get(team.id);
+      return (grouped.get(team.id) ?? []).map((order) => {
+        const location = locations.get(order.id);
+        return { order, teamId: team.id, teamCode: team.code, distanceKm: location && center ? this.distanceKm(location.latitude, location.longitude, center.latitude, center.longitude) : null };
+      });
     });
     this.dispatchPlan.set(plan);
   }
