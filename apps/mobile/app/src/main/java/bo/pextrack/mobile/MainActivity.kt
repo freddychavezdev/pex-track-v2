@@ -22,6 +22,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.view.View
+import android.view.Gravity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -448,20 +449,29 @@ class MainActivity : AppCompatActivity() {
         cornerRadius = dp(14)
         setOnClickListener { saveNote(order, transcriptInput, noteSyncStatus) }
       }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(8) })
-      val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+      // Las acciones se apilan para que el ícono y la etiqueta nunca queden
+      // recortados en pantallas estrechas o con escalado de fuente alto.
+      val actions = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
       allowedTransitions(order.status).forEach { nextStatus ->
         actions.addView(MaterialButton(this).apply {
           text = statusActionLabel(nextStatus)
           setTextSize(14f)
           setAllCaps(false)
           cornerRadius = dp(14)
+          setIconResource(statusActionIcon(nextStatus))
+          iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+          iconPadding = dp(9)
+          iconTint = ColorStateList.valueOf(Color.WHITE)
+          gravity = Gravity.CENTER
+          isSingleLine = true
           val actionColor = orderActionColor(nextStatus)
           backgroundTintList = ColorStateList.valueOf(actionColor)
           setTextColor(Color.WHITE)
-          icon = null
           contentDescription = "${statusActionLabel(nextStatus)} orden ${order.code}"
           setOnClickListener { changeWorkOrderStatus(order, nextStatus) }
-        }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { if (nextStatus != allowedTransitions(order.status).last()) rightMargin = dp(8) })
+        }, LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.MATCH_PARENT, dp(52)
+        ).apply { if (nextStatus != allowedTransitions(order.status).last()) bottomMargin = dp(8) })
       }
       if (actions.childCount > 0) {
         row.addView(actions, LinearLayout.LayoutParams(
@@ -637,11 +647,19 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun statusActionLabel(status: String): String = when (status) {
-    "en_route" -> "↗ En camino"
-    "in_progress" -> "▶ Iniciar atención"
-    "completed" -> "✓ Completar"
-    "suspended" -> "⚠ Suspender"
+    "en_route" -> "Marcar en camino"
+    "in_progress" -> "Iniciar atención"
+    "completed" -> "Completar atención"
+    "suspended" -> "Suspender OT"
     else -> status
+  }
+
+  private fun statusActionIcon(status: String): Int = when (status) {
+    "en_route" -> R.drawable.ic_action_route
+    "in_progress" -> R.drawable.ic_action_play
+    "completed" -> R.drawable.ic_action_complete
+    "suspended" -> R.drawable.ic_action_suspend
+    else -> R.drawable.ic_action_route
   }
 
   private fun statusLabel(status: String): String = when (status) {
