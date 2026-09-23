@@ -44,6 +44,9 @@
 .inline-import-panel input[type="date"] { border:1px solid #dce4ee; border-radius:8px; color:#23334a; grid-column:1 / -1; padding:10px 11px; }
 .inline-import-panel .file-picker,.inline-import-panel .import-summary,.inline-import-panel .invalid-list,.inline-import-panel .form-error,.inline-import-panel .config-notice,.inline-import-panel .inline-import-save { grid-column:1 / -1; }
 .inline-import-panel .file-picker { margin-top:0; }
+.inline-import-panel .drop-zone { border-width:2px; }
+.inline-import-panel .drop-zone.drag-active { background:#eaf3ff; border-color:#2d74df; }
+.drop-zone-icon { align-items:center; background:#dceaff; border-radius:50%; color:#1d5dba; display:flex; font-size:24px; font-weight:700; height:34px; justify-content:center; line-height:1; width:34px; }
 .inline-import-save { justify-self:start; }
 @media (max-width:650px) { .inline-import-panel { grid-template-columns:1fr; margin:0 16px 16px; padding:16px; }.inline-import-panel > .text-button { justify-self:start; } }
 .deviation-text { color:#d54848; font-weight:600; }

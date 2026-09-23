@@ -69,6 +69,7 @@ export class AppComponent implements OnDestroy, OnInit {
   resetRequestSubmitting = false;
   passwordRecoverySubmitting = false;
   parsingImport = false;
+  importDragActive = false;
   savingImport = false;
   savingAssignment = false;
   generatingReport = false;
@@ -615,7 +616,34 @@ export class AppComponent implements OnDestroy, OnInit {
   async readImportFile(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file || this.parsingImport) return;
+    if (file) await this.processImportFile(file);
+    input.value = '';
+  }
+
+  onImportDragEnter(event: DragEvent): void {
+    event.preventDefault();
+    this.importDragActive = true;
+  }
+
+  onImportDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (!this.parsingImport) this.importDragActive = true;
+  }
+
+  onImportDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.importDragActive = false;
+  }
+
+  onImportDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.importDragActive = false;
+    const file = event.dataTransfer?.files?.[0];
+    if (file) void this.processImportFile(file);
+  }
+
+  private async processImportFile(file: File): Promise<void> {
+    if (this.parsingImport) return;
     this.parsingImport = true;
     this.importError = '';
     this.importResult = null;
@@ -625,7 +653,6 @@ export class AppComponent implements OnDestroy, OnInit {
       this.importError = error instanceof Error ? error.message : 'No se pudo leer el archivo.';
     } finally {
       this.parsingImport = false;
-      input.value = '';
     }
   }
 
