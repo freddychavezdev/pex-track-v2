@@ -51,10 +51,36 @@
 @media (max-width:650px) { .inline-import-panel { grid-template-columns:1fr; margin:0 16px 16px; padding:16px; }.inline-import-panel > .text-button { justify-self:start; } }
 .deviation-text { color:#d54848; font-weight:600; }
 
+/* El mapa es la superficie principal de supervisión. Las métricas quedan como
+   lectura rápida lateral, sin competir por el ancho útil del mapa. */
+.monitoring-layout { align-items:stretch; display:grid; gap:20px; grid-template-columns:minmax(0,1fr) minmax(292px,340px); margin-bottom:20px; }
+.monitoring-layout .workspace-grid { display:block; margin:0; min-width:0; }
+.monitoring-layout .map-panel { height:100%; }
+.monitoring-layout .map-stage { height:clamp(440px,60vh,580px); }
+.monitoring-layout .metric-grid { display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); margin:0; min-width:0; }
+.monitoring-layout .metric-card { display:flex; flex-direction:column; justify-content:space-between; min-height:0; padding:16px; }
+.monitoring-layout .metric-heading { align-items:flex-start; gap:8px; }.monitoring-layout .metric-heading > span:first-child { line-height:1.25; }
+.monitoring-layout .metric-value { margin-top:8px; }.monitoring-layout .metric-foot { line-height:1.3; margin-top:7px; }
+
+@media (max-width:1180px) {
+  .monitoring-layout { grid-template-columns:1fr; }
+  .monitoring-layout .metric-grid { grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-rows:auto; }
+  .monitoring-layout .metric-card { min-height:128px; }
+}
+
+@media (max-width:760px) {
+  .monitoring-layout { gap:14px; }
+  .monitoring-layout .map-stage { height:clamp(320px,52vh,440px); }
+  .monitoring-layout .metric-grid { gap:10px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .monitoring-layout .metric-card { min-height:138px; padding:15px; }
+}
+
 /* La vista ampliada concentra la atención en la operación, sin desmontar Leaflet. */
 .map-focus-mode .sidebar,
-.map-focus-mode .content > :not(.workspace-grid) { display:none; }
+.map-focus-mode .content > :not(.monitoring-layout),
+.map-focus-mode .monitoring-layout > :not(.workspace-grid) { display:none; }
 .map-focus-mode .content { max-width:none; padding:0; }
+.map-focus-mode .monitoring-layout { display:block; }
 .map-focus-mode .workspace-grid { background:#f5f7fb; display:block; inset:0; margin:0; padding:18px; position:fixed; z-index:1500; }
 .map-focus-mode .orders-panel { display:none; }
 .map-focus-mode .map-panel { display:flex; flex-direction:column; height:100%; }
