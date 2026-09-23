@@ -67,6 +67,36 @@ Deno.serve(async (request) => {
       }
       return response({ id: created.id, email });
     }
+    if (body.action === 'update') {
+      const userId = body.userId;
+      const email = body.email?.trim().toLowerCase();
+      const fullName = body.fullName?.trim();
+      const password = body.password ?? '';
+      if (!userId || !email || !fullName) return response({ error: 'Nombre y correo son obligatorios' }, 400);
+      if (password && password.length < 8) return response({ error: 'La nueva contraseña debe tener al menos 8 caracteres' }, 400);
+
+      const previous = await api(url, key, `/rest/v1/profiles?select=id,full_name&id=eq.${userId}`);
+      if (!previous[0]) return response({ error: 'El usuario seleccionado ya no existe' }, 404);
+      await api(url, key, `/rest/v1/profiles?id=eq.${userId}`, {
+        method: 'PATCH', body: JSON.stringify({ full_name: fullName })
+      });
+      try {
+        await api(url, key, `/auth/v1/admin/users/${userId}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            email,
+            ...(password ? { password } : {}),
+            user_metadata: { full_name: fullName }
+          })
+        });
+      } catch (error) {
+        await api(url, key, `/rest/v1/profiles?id=eq.${userId}`, {
+          method: 'PATCH', body: JSON.stringify({ full_name: previous[0].full_name })
+        }).catch(() => undefined);
+        throw error;
+      }
+      return response({ id: userId, email });
+    }
     if (body.action === 'set-active') {
       if (!body.userId || body.userId === actorUser.id || typeof body.active !== 'boolean') return response({ error: 'No puedes desactivar tu propia cuenta' }, 400);
       await api(url, key, `/rest/v1/profiles?id=eq.${body.userId}`, { method: 'PATCH', body: JSON.stringify({ active: body.active }) });

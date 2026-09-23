@@ -9,6 +9,8 @@
 
 .field-help { display:block; margin-top:5px; color:#7d8da0; font-size:12px; font-weight:400; }
 .field-help-error { color:#c94f4b; }
+.optional { color:#75879a; font-weight:400; }
+.row-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 
 /* Catálogos: una escala de lectura consistente con el resto de la aplicación. */
 :host { color-scheme:light; }
@@ -70,6 +72,7 @@
 :host-context(.app-dark) .empty { color:#a9c5ca; }
 :host-context(.app-dark) .field-help { color:#9fc5c7; }
 :host-context(.app-dark) .field-help-error { color:#ffb4ae; }
+:host-context(.app-dark) .optional { color:#9fc5c7; }
 
 @media (max-width:800px) {
   .admin-header h2 { font-size:24px; }

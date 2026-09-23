@@ -28,6 +28,7 @@ export class AdminPanelComponent implements OnInit {
   editingTechnician: Partial<TechnicianRecord> | null = null;
   editingVehicle: Partial<VehicleRecord> | null = null;
   editingTeam: Partial<TeamRecord> | null = null;
+  editingUser: { id: string; fullName: string; email: string; role: AppRole; password: string } | null = null;
   userForm = { fullName: '', email: '', password: '', role: 'technician' as AppRole };
 
   ngOnInit(): void { this.activeTab = this.initialTab; void this.reload(); }
@@ -65,6 +66,33 @@ export class AdminPanelComponent implements OnInit {
     this.message = ''; this.error = '';
     try { await this.service.setUserActive(user.id, !user.active); this.users.set(await this.service.listUsers()); }
     catch (e) { this.error = this.messageOf(e); }
+  }
+
+  editUser(user: UserProfile): void {
+    this.message = ''; this.error = '';
+    this.editingUser = { id: user.id, fullName: user.full_name, email: user.email ?? '', role: user.role, password: '' };
+  }
+
+  cancelUserEdit(): void { this.editingUser = null; }
+
+  async saveUser(): Promise<void> {
+    const user = this.editingUser;
+    if (!user) return;
+    this.message = ''; this.error = '';
+    if (!user.fullName.trim() || !user.email.trim()) {
+      this.error = 'Completa el nombre y el correo antes de guardar los cambios.';
+      return;
+    }
+    if (user.password.length > 0 && user.password.length < 8) {
+      this.error = 'La nueva contraseña debe tener al menos 8 caracteres.';
+      return;
+    }
+    try {
+      await this.service.updateUser({ userId: user.id, fullName: user.fullName, email: user.email, password: user.password || undefined });
+      this.message = 'Datos del usuario actualizados correctamente.';
+      this.editingUser = null;
+      this.users.set(await this.service.listUsers());
+    } catch (e) { this.error = this.messageOf(e); }
   }
 
   newTechnician(): void { this.editingTechnician = { availability: 'available', active: true }; }

@@ -3,6 +3,7 @@ import { AppRole, AuditLogRecord, TeamRecord, TechnicianRecord, UserProfile, Veh
 import { SupabaseClientService } from './supabase-client.service';
 
 export interface CreateUserRequest { email: string; password: string; fullName: string; role: AppRole; }
+export interface UpdateUserRequest { userId: string; email: string; fullName: string; password?: string; }
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -16,6 +17,11 @@ export class AdminService {
 
   async createUser(request: CreateUserRequest): Promise<void> {
     const { error } = await this.supabase.requireClient().functions.invoke('admin-users', { body: { action: 'create', ...request } });
+    if (error) throw await this.functionError(error);
+  }
+
+  async updateUser(request: UpdateUserRequest): Promise<void> {
+    const { error } = await this.supabase.requireClient().functions.invoke('admin-users', { body: { action: 'update', ...request } });
     if (error) throw await this.functionError(error);
   }
 
