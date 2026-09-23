@@ -590,14 +590,34 @@ class MainActivity : AppCompatActivity() {
       setTextColor(Color.parseColor("#182230"))
     })
     content.addView(TextView(this).apply {
-      text = "${order.code} · ubicación simulada para prueba"
+      text = "${order.code} · Ruta de atención"
       textSize = 13f
       setTextColor(Color.parseColor("#64748B"))
       setPadding(0, dp(5), 0, dp(12))
     })
-    content.addView(TechnicianRouteMapView(this, distanceKm), LinearLayout.LayoutParams(
+    val routeMap = TechnicianRouteMapView(this, distanceKm)
+    content.addView(routeMap, LinearLayout.LayoutParams(
       LinearLayout.LayoutParams.MATCH_PARENT, dp(270)
     ))
+    val mapControls = LinearLayout(this).apply {
+      gravity = Gravity.CENTER
+      orientation = LinearLayout.HORIZONTAL
+    }
+    mapControls.addView(MaterialButton(this).apply {
+      text = "−"
+      setTextSize(20f)
+      setAllCaps(false)
+      contentDescription = "Reducir zoom del mapa"
+      setOnClickListener { routeMap.zoomOut() }
+    }, LinearLayout.LayoutParams(dp(52), dp(44)).apply { rightMargin = dp(8) })
+    mapControls.addView(MaterialButton(this).apply {
+      text = "+"
+      setTextSize(20f)
+      setAllCaps(false)
+      contentDescription = "Ampliar mapa"
+      setOnClickListener { routeMap.zoomIn() }
+    }, LinearLayout.LayoutParams(dp(52), dp(44)))
+    content.addView(mapControls, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)))
     val metrics = LinearLayout(this).apply {
       orientation = LinearLayout.HORIZONTAL
       setPadding(0, dp(14), 0, dp(5))
@@ -607,7 +627,7 @@ class MainActivity : AppCompatActivity() {
     content.addView(metrics)
     content.addView(TextView(this).apply {
       text = if (technicianLocation == null) {
-        "No se pudo leer la última ubicación del dispositivo. Se muestra una posición de prueba cercana a la OT."
+        "No se pudo leer la última ubicación del dispositivo. La distancia se calculará nuevamente al recibir una señal."
       } else {
         "La OT se muestra cerca de tu última posición registrada. El tiempo es referencial y no considera tráfico."
       }

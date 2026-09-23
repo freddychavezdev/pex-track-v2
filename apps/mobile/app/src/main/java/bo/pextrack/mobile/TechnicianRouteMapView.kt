@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Typeface
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import kotlin.math.max
 
@@ -13,6 +15,14 @@ class TechnicianRouteMapView(
   context: Context,
   private val distanceKm: Double
 ) : View(context) {
+  private var zoom = 1f
+  private val scaleDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+    override fun onScale(detector: ScaleGestureDetector): Boolean {
+      zoom = (zoom * detector.scaleFactor).coerceIn(1f, 3f)
+      invalidate()
+      return true
+    }
+  })
   private val gridPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(213, 229, 232); strokeWidth = dp(1f) }
   private val roadPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(178, 207, 211); strokeWidth = dp(3f); style = Paint.Style.STROKE }
   private val routePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(45, 116, 223); strokeWidth = dp(4f); style = Paint.Style.STROKE }
@@ -23,6 +33,8 @@ class TechnicianRouteMapView(
   override fun onDraw(canvas: Canvas) {
     super.onDraw(canvas)
     canvas.drawColor(Color.rgb(239, 248, 248))
+    canvas.save()
+    canvas.scale(zoom, zoom, width / 2f, height / 2f)
     val left = paddingLeft.toFloat()
     val top = paddingTop.toFloat()
     val right = width - paddingRight.toFloat()
@@ -57,10 +69,26 @@ class TechnicianRouteMapView(
     drawMarker(canvas, technician[0], technician[1], technicianPaint, "T")
     drawMarker(canvas, order[0], order[1], orderPaint, "OT")
     drawLabel(canvas, "Tu posición", technician[0] - dp(34f), technician[1] + dp(34f))
-    drawLabel(canvas, "OT simulada", order[0] - dp(34f), order[1] - dp(20f))
+    drawLabel(canvas, "OT", order[0] - dp(14f), order[1] - dp(20f))
     labelPaint.textSize = dp(11f)
     labelPaint.color = Color.rgb(65, 89, 101)
     canvas.drawText("Distancia aprox. ${"%.2f".format(distanceKm)} km", left + dp(12f), bottom - dp(12f), labelPaint)
+    canvas.restore()
+  }
+
+  override fun onTouchEvent(event: MotionEvent): Boolean {
+    scaleDetector.onTouchEvent(event)
+    return true
+  }
+
+  fun zoomIn() {
+    zoom = (zoom + .25f).coerceAtMost(3f)
+    invalidate()
+  }
+
+  fun zoomOut() {
+    zoom = (zoom - .25f).coerceAtLeast(1f)
+    invalidate()
   }
 
   private fun drawMarker(canvas: Canvas, x: Float, y: Float, color: Paint, label: String) {
