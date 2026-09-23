@@ -9,3 +9,72 @@
 
 .field-help { display:block; margin-top:5px; color:#7d8da0; font-size:12px; font-weight:400; }
 .field-help-error { color:#c94f4b; }
+
+/* Catálogos: una escala de lectura consistente con el resto de la aplicación. */
+:host { color-scheme:light; }
+.admin-panel { min-height:100%; box-sizing:border-box; }
+.admin-header h2,.catalog-form h3,.catalog-list h3 { color:#142a3d; font-weight:800; letter-spacing:-.02em; }
+.admin-subtitle,.catalog-form p,.list-title p { color:#60748a; }
+.admin-tabs { min-height:48px; }
+.admin-tabs button { color:#5e7187; font-weight:600; }
+.admin-tabs button:hover { background:#eef8f7; color:#0f766e; }
+.admin-tabs button.active { color:#0f766e; border-bottom-color:#5EEAD4; }
+.admin-tabs .refresh { color:#0f766e; font-weight:700; }
+.catalog-form,.catalog-list { box-shadow:0 8px 24px rgba(32,50,75,.06); }
+.catalog-form label { color:#40566d; }
+.catalog-form input,.catalog-form select { box-sizing:border-box; min-height:44px; }
+.catalog-form input:focus,.catalog-form select:focus { border-color:#2bbfb2; box-shadow:0 0 0 3px rgba(94,234,212,.2); outline:0; }
+.catalog-row strong { color:#213b51; font-weight:800; }
+.catalog-row small { color:#5f7689; }
+.status-button,.text-action { font-weight:700; }
+.empty { color:#60788d; }
+.audit-head { color:#5d7488; font-weight:800; }
+.audit-row { color:#4f687d; }
+.audit-row small { color:#6f8797; }
+
+:host-context(.app-dark) { color-scheme:dark; background:#071b24; }
+:host-context(.app-dark) .admin-panel { background:#071b24; color:#dceff1; }
+:host-context(.app-dark) .admin-header h2,
+:host-context(.app-dark) .catalog-form h3,
+:host-context(.app-dark) .catalog-list h3 { color:#e8f8f8; }
+:host-context(.app-dark) .admin-subtitle,
+:host-context(.app-dark) .catalog-form p,
+:host-context(.app-dark) .list-title p { color:#a9c5ca; }
+:host-context(.app-dark) .close-button { background:#123542; border:1px solid #315866; color:#bfe8e6; }
+:host-context(.app-dark) .close-button:hover { background:#164a52; color:#5EEAD4; }
+:host-context(.app-dark) .admin-tabs { border-color:#28505d; }
+:host-context(.app-dark) .admin-tabs button { color:#a7c2c7; }
+:host-context(.app-dark) .admin-tabs button:hover { background:#123f4c; color:#8ce4df; }
+:host-context(.app-dark) .admin-tabs button.active,
+:host-context(.app-dark) .admin-tabs .refresh { color:#5EEAD4; }
+:host-context(.app-dark) .catalog-form,
+:host-context(.app-dark) .catalog-list { background:#0d2833; border-color:#28505d; box-shadow:0 10px 28px rgba(0,0,0,.2); }
+:host-context(.app-dark) .catalog-form label { color:#c8e2e5; }
+:host-context(.app-dark) .catalog-form input,
+:host-context(.app-dark) .catalog-form select { background:#102f3b; border-color:#3d6873; color:#e6f5f6; color-scheme:dark; }
+:host-context(.app-dark) .catalog-form input::placeholder { color:#88abb2; }
+:host-context(.app-dark) .catalog-form input:focus,
+:host-context(.app-dark) .catalog-form select:focus { border-color:#5EEAD4; box-shadow:0 0 0 3px rgba(94,234,212,.2); }
+:host-context(.app-dark) .catalog-row,
+:host-context(.app-dark) .audit-row { border-color:#28505d; }
+:host-context(.app-dark) .catalog-row strong { color:#e0f4f5; }
+:host-context(.app-dark) .catalog-row small { color:#a9c5ca; }
+:host-context(.app-dark) .status-button { background:#124d43; color:#a7f3d0; }
+:host-context(.app-dark) .status-button.inactive { background:#59431f; color:#ffe0a3; }
+:host-context(.app-dark) .text-action { background:#123f4c; color:#8ce4df; }
+:host-context(.app-dark) .list-title > span { background:#123f4c; color:#8ce4df; }
+:host-context(.app-dark) .audit-head { color:#9fc5c7; }
+:host-context(.app-dark) .audit-row { color:#c1dadd; }
+:host-context(.app-dark) .audit-row small { color:#9ab8c0; }
+:host-context(.app-dark) .audit-row span:first-child { color:#d8eff0; }
+:host-context(.app-dark) .empty { color:#a9c5ca; }
+:host-context(.app-dark) .field-help { color:#9fc5c7; }
+:host-context(.app-dark) .field-help-error { color:#ffb4ae; }
+
+@media (max-width:800px) {
+  .admin-header h2 { font-size:24px; }
+  .admin-subtitle { line-height:1.45; }
+  .list-title { align-items:flex-start; flex-wrap:wrap; gap:12px; }
+  .list-title > div { min-width:0; }
+  .list-title .primary-button { margin-left:auto; }
+}
