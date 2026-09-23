@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import 'leaflet/dist/leaflet.css';
-html, body { height:100%; margin:0; overflow:hidden; font-family:'DM Sans', Arial, sans-serif; background:#f5f7fb; }
+html, body { height:100%; margin:0; overflow:hidden; font-family:'Inter', Arial, sans-serif; background:#f5f7fb; }
 button, input, select, textarea { font:inherit; }
 /* Keep saved credentials readable. Chrome may still show its own account menu,
    but the PEX field itself remains light and high contrast. */
@@ -23,3 +23,28 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .team-actions .text-button { align-items:center; border:1px solid #d7e3f1; border-radius:9px; display:inline-flex; font-size:0; height:34px; justify-content:center; padding:0; width:34px; }
 .team-actions .text-button::before { color:#2d74df; content:'↻'; font-size:20px; line-height:1; }
 .team-actions .text-button:hover { background:#eef5ff; border-color:#86b5ee; }
+
+/* Tema PEX Track: la paleta ocean/teal de PrimeNG se extiende a las vistas propias. */
+.theme-toggle { align-items:center; background:var(--p-surface-0,#fff); border:1px solid var(--p-surface-200,#dce5ed); border-radius:10px; color:var(--p-primary-600,#0d9488); cursor:pointer; display:grid; font-size:18px; height:38px; justify-content:center; transition:background .18s ease, border-color .18s ease, transform .18s ease; width:38px; }
+.theme-toggle:hover { background:var(--p-primary-50,#f0fdfa); border-color:var(--p-primary-300,#5eead4); transform:translateY(-1px); }
+.app-dark body { background:#071b24; }
+.app-dark .app-shell { background:#071b24; color:#e3f3f5; }
+.app-dark .content { background:#071b24; }
+.app-dark .metric-card,.app-dark .panel,.app-dark .workspace-window-inner > .panel,.app-dark .catalog-form,.app-dark .catalog-list,.app-dark .history-dialog,.app-dark .route-dialog { background:#0d2833; border-color:#244653; box-shadow:0 8px 24px rgba(0,0,0,.18); }
+.app-dark .panel-header h2,.app-dark .report-panel h2,.app-dark .metric-value,.app-dark .topbar h1,.app-dark .admin-header h2,.app-dark .catalog-form h3,.app-dark .catalog-list h3,.app-dark .login-dialog h2,.app-dark .import-dialog h2 { color:#e7f7f8; }
+.app-dark .panel-header p,.app-dark .metric-heading,.app-dark .metric-foot,.app-dark .report-panel p,.app-dark .admin-subtitle,.app-dark .catalog-form p,.app-dark .list-title p,.app-dark .order-info span,.app-dark .table-row,.app-dark .history-row span,.app-dark .history-row small { color:#9ab8c0; }
+.app-dark .order-filters,.app-dark .table-row,.app-dark .admin-tabs,.app-dark .catalog-row,.app-dark .history-row { border-color:#244653; }
+.app-dark .search-input-wrap,.app-dark .search-results,.app-dark .search-results button,.app-dark .control-button,.app-dark .login-dialog,.app-dark .import-dialog,.app-dark .close-button,.app-dark .catalog-form input,.app-dark .catalog-form select,.app-dark .login-dialog input,.app-dark .import-dialog input[type="date"] { background:#102f3b; border-color:#315866; color:#e6f5f6; }
+.app-dark .search-input-wrap input,.app-dark .search-results strong,.app-dark .order-info strong,.app-dark .table-row strong,.app-dark .catalog-row strong,.app-dark .login-dialog label,.app-dark .import-dialog label:not(.file-picker),.app-dark .catalog-form label { color:#dceff1; }
+.app-dark .search-results button:hover,.app-dark .control-button:hover,.app-dark .close-button:hover { background:#17414f; }
+.app-dark .control-button.primary,.app-dark .primary-button { background:var(--p-primary-600,#0d9488); border-color:var(--p-primary-600,#0d9488); color:#fff; }
+.app-dark .map-legend,.app-dark .map-empty { background:rgba(9,31,40,.92); color:#d4ebee; }
+.app-dark .login-backdrop { background:rgba(2,12,17,.7); }
+.app-dark .file-picker { background:#123542; border-color:#4a92a0; color:#8ce4df; }
+.app-dark .success-notice,.app-dark .notice.success { background:#0c493e; color:#9bf2d2; }
+.app-dark .config-notice { background:#493617; color:#ffe0a3; }
+.app-dark .form-error,.app-dark .notice.error { color:#ffb4ae; }
+.app-dark .sidebar { background:#061821; border-right:1px solid #1b3b47; }
+.app-dark .nav-item.active,.app-dark .nav-item:hover { background:#123f4c; }
+.app-dark .sidebar-toggle,.app-dark .connection { border-color:#1b3b47; }
+.app-dark .theme-toggle { background:#123542; border-color:#3d6873; color:#f8d477; }

@@ -54,6 +54,7 @@ export class AppComponent implements OnDestroy, OnInit {
   mapExpanded = false;
   mobileMenuOpen = false;
   sidebarCollapsed = false;
+  isDarkMode = false;
   adminInitialTab: 'users' | 'technicians' | 'vehicles' | 'teams' | 'audit' = 'users';
   savingRoute = false;
   routeError = '';
@@ -118,6 +119,8 @@ export class AppComponent implements OnDestroy, OnInit {
   readonly searching = signal(false);
 
   ngOnInit(): void {
+    this.isDarkMode = localStorage.getItem('pex-track-theme') === 'dark';
+    this.applyTheme();
     window.addEventListener('online', this.onlineHandler);
     window.addEventListener('offline', this.offlineHandler);
     void this.refreshOperations();
@@ -129,6 +132,16 @@ export class AppComponent implements OnDestroy, OnInit {
     window.removeEventListener('offline', this.offlineHandler);
     this.stopMapPolling();
     if (this.realtimeChannel) void this.supabase.client?.removeChannel(this.realtimeChannel);
+  }
+
+  toggleTheme(): void {
+    this.isDarkMode = !this.isDarkMode;
+    localStorage.setItem('pex-track-theme', this.isDarkMode ? 'dark' : 'light');
+    this.applyTheme();
+  }
+
+  private applyTheme(): void {
+    document.documentElement.classList.toggle('app-dark', this.isDarkMode);
   }
 
   userInitials(): string {
