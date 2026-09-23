@@ -50,6 +50,7 @@
 .inline-import-save { justify-self:start; }
 @media (max-width:650px) { .inline-import-panel { grid-template-columns:1fr; margin:0 16px 16px; padding:16px; }.inline-import-panel > .text-button { justify-self:start; } }
 .deviation-text { color:#d54848; font-weight:600; }
+.legend-dot.completed { background:#16a34a; }.legend-dot.suspended { background:#dc2626; }
 
 /* El mapa es la superficie principal de supervisión. Las métricas quedan como
    lectura rápida lateral, sin competir por el ancho útil del mapa. */

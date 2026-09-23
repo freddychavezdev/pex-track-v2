@@ -75,6 +75,7 @@ class MainActivity : AppCompatActivity() {
   private var awaitingLocationSettings = false
   private var awaitingBackgroundLocationSettings = false
   private var trackingActive = false
+  private var currentWorkOrders: List<MobileWorkOrder> = emptyList()
   private lateinit var connectivityManager: ConnectivityManager
   private val networkCallback = object : ConnectivityManager.NetworkCallback() {
     override fun onAvailable(network: Network) {
@@ -383,8 +384,10 @@ class MainActivity : AppCompatActivity() {
     lifecycleScope.launch {
       operationsRepository.assignedWorkOrders()
         .onSuccess { orders ->
-          renderWorkOrders(orders)
-          showStatus(if (orders.isEmpty()) "No tienes OTs activas asignadas" else "${orders.size} OT(s) activa(s) asignada(s)")
+          currentWorkOrders = orders
+          val activeOrders = orders.filter { it.status !in setOf("completed", "suspended") }
+          renderWorkOrders(activeOrders)
+          showStatus(if (activeOrders.isEmpty()) "No tienes OTs activas asignadas" else "${activeOrders.size} OT(s) activa(s) asignada(s)")
         }
         .onFailure { error -> showStatus(error.message ?: "No se pudieron cargar las OTs") }
       refreshPendingOperations()
@@ -564,17 +567,15 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun showOrderMapDialog(order: MobileWorkOrder, technicianLocation: Location?) {
-    val baseLatitude = technicianLocation?.latitude ?: -16.5047
-    val baseLongitude = technicianLocation?.longitude ?: -68.1635
-    val seed = kotlin.math.abs(order.id.hashCode())
-    val latitudeOffset = (2 + seed % 4) * 0.00055
-    val longitudeOffset = (2 + (seed / 7) % 4) * 0.00055
-    val orderLatitude = baseLatitude + latitudeOffset
-    val orderLongitude = baseLongitude + longitudeOffset
-    val distance = FloatArray(1)
-    Location.distanceBetween(baseLatitude, baseLongitude, orderLatitude, orderLongitude, distance)
-    val distanceKm = distance[0] / 1000.0
-    val etaMinutes = maxOf(1, kotlin.math.ceil(distanceKm / 25.0 * 60.0).toInt())
+    val locatedOrders = currentWorkOrders.filter { it.latitude != null && it.longitude != null }
+    val nearestDistanceKm = technicianLocation?.let { location ->
+      locatedOrders.map { assignedOrder ->
+        val distance = FloatArray(1)
+        Location.distanceBetween(location.latitude, location.longitude, assignedOrder.latitude!!, assignedOrder.longitude!!, distance)
+        distance[0] / 1000.0
+      }.minOrNull()
+    }
+    val etaMinutes = nearestDistanceKm?.let { maxOf(1, kotlin.math.ceil(it / 25.0 * 60.0).toInt()) }
 
     val content = LinearLayout(this).apply {
       orientation = LinearLayout.VERTICAL
@@ -582,18 +583,18 @@ class MainActivity : AppCompatActivity() {
       setBackgroundColor(Color.WHITE)
     }
     content.addView(TextView(this).apply {
-      text = "Mapa de atención"
+      text = "Mapa de ruta"
       textSize = 21f
       setTypeface(typeface, Typeface.BOLD)
       setTextColor(Color.parseColor("#182230"))
     })
     content.addView(TextView(this).apply {
-      text = "${order.code} · Ruta de atención"
+      text = "${locatedOrders.size} OT(s) ubicadas · seleccionada ${order.code}"
       textSize = 13f
       setTextColor(Color.parseColor("#64748B"))
       setPadding(0, dp(5), 0, dp(12))
     })
-    val routeMap = TechnicianRouteMapView(this, distanceKm)
+    val routeMap = TechnicianRouteMapView(this, technicianLocation, currentWorkOrders, order.id)
     content.addView(routeMap, LinearLayout.LayoutParams(
       LinearLayout.LayoutParams.MATCH_PARENT, dp(270)
     ))
@@ -626,14 +627,14 @@ class MainActivity : AppCompatActivity() {
       orientation = LinearLayout.HORIZONTAL
       setPadding(0, dp(14), 0, dp(5))
     }
-    metrics.addView(mapMetric("Distancia", String.format(Locale.US, "%.2f km", distanceKm)), LinearLayout.LayoutParams(0, dp(62), 1f).apply { rightMargin = dp(8) })
-    metrics.addView(mapMetric("Llegada estimada", "$etaMinutes min"), LinearLayout.LayoutParams(0, dp(62), 1f))
+    metrics.addView(mapMetric("OTs en mapa", locatedOrders.size.toString()), LinearLayout.LayoutParams(0, dp(62), 1f).apply { rightMargin = dp(8) })
+    metrics.addView(mapMetric("Llegada estimada", etaMinutes?.let { "$it min" } ?: "Sin GPS"), LinearLayout.LayoutParams(0, dp(62), 1f))
     content.addView(metrics)
     content.addView(TextView(this).apply {
-      text = if (technicianLocation == null) {
-        "No se pudo leer la última ubicación del dispositivo. La distancia se calculará nuevamente al recibir una señal."
-      } else {
-        "La OT se muestra cerca de tu última posición registrada. El tiempo es referencial y no considera tráfico."
+      text = when {
+        locatedOrders.isEmpty() -> "Las OTs asignadas todavía no tienen coordenadas para mostrarse en el mapa."
+        technicianLocation == null -> "No se pudo leer la última ubicación del dispositivo. Activa el GPS para mostrar tu posición."
+        else -> "La ruta se ordena según la secuencia asignada. La distancia y el tiempo son referenciales y no consideran tráfico."
       }
       textSize = 12f
       setTextColor(Color.parseColor("#64748B"))

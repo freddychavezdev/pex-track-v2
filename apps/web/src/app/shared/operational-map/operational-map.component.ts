@@ -20,6 +20,8 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
   private markerLayer?: Leaflet.LayerGroup;
   private baseTileLayer?: Leaflet.TileLayer;
   private usingFallbackTiles = false;
+  private highlightedTeamId: string | null = null;
+  private highlightTimer?: ReturnType<typeof setTimeout>;
 
   async ngAfterViewInit(): Promise<void> {
     const element = this.mapElement?.nativeElement;
@@ -47,6 +49,7 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
   }
 
   ngOnDestroy(): void {
+    if (this.highlightTimer) clearTimeout(this.highlightTimer);
     this.map?.remove();
   }
 
@@ -62,10 +65,13 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
       const crewVehicle = `<svg class="crew-vehicle-icon" viewBox="0 0 64 44" aria-hidden="true"><path d="M8 28V21c0-2 1-4 4-4h6l5-9c1-2 3-3 5-3h15c3 0 5 1 7 4l5 8h4c3 0 5 2 5 5v6h-5a7 7 0 0 0-14 0H27a7 7 0 0 0-14 0H8Z" fill="#fff"/><path d="M24 17l4-7h14c1 0 2 1 3 2l4 5H24Z" fill="#8ed9ff"/><path d="M40 17V10" stroke="#1559c2" stroke-width="2"/><path d="M31 6h7" stroke="#ffd35c" stroke-linecap="round" stroke-width="3"/><circle cx="20" cy="29" r="5" fill="#193b77" stroke="#fff" stroke-width="2"/><circle cx="47" cy="29" r="5" fill="#193b77" stroke="#fff" stroke-width="2"/><circle cx="20" cy="29" r="1.8" fill="#8ed9ff"/><circle cx="47" cy="29" r="1.8" fill="#8ed9ff"/></svg>`;
       const eta = marker.marker_type === 'work_order' ? this.nearestEta(marker, teamMarkers) : null;
       const deviationKm = marker.marker_type === 'team' ? this.deviationKm(marker) : null;
-      const customerPin = `<svg class="customer-pin-icon" viewBox="0 0 48 56" aria-hidden="true"><path d="M24 2C12.4 2 3 11.2 3 22.7c0 15.1 18.2 29.2 20.1 30.6a1.5 1.5 0 0 0 1.8 0C26.8 51.9 45 37.8 45 22.7 45 11.2 35.6 2 24 2Z" fill="#f97316" stroke="#fff" stroke-width="3"/><circle cx="24" cy="19" r="6" fill="#fff"/><path d="M13.6 38c1.7-7 6-10.4 10.4-10.4S32.7 31 34.4 38" fill="#fff"/></svg>`;
+      const assignedToHighlightedTeam = marker.marker_type === 'work_order' && this.highlightedTeamId !== null && this.workOrders.some((order) => order.id === marker.marker_id && order.assigned_team_id === this.highlightedTeamId);
+      const statusClass = marker.marker_type === 'work_order' ? ` status-${marker.status}` : '';
+      const orderColor = marker.status === 'completed' ? '#16a34a' : marker.status === 'suspended' ? '#dc2626' : marker.status === 'in_progress' ? '#2563eb' : '#f97316';
+      const customerPin = `<svg class="customer-pin-icon" viewBox="0 0 48 56" aria-hidden="true"><path d="M24 2C12.4 2 3 11.2 3 22.7c0 15.1 18.2 29.2 20.1 30.6a1.5 1.5 0 0 0 1.8 0C26.8 51.9 45 37.8 45 22.7 45 11.2 35.6 2 24 2Z" fill="${orderColor}" stroke="#fff" stroke-width="3"/><circle cx="24" cy="19" r="6" fill="#fff"/><path d="M13.6 38c1.7-7 6-10.4 10.4-10.4S32.7 31 34.4 38" fill="#fff"/></svg>`;
       const markerContent = marker.marker_type === 'team'
         ? `<span class="operational-marker team${deviationKm !== null ? ' deviation' : ''}"><span class="marker-symbol">${crewVehicle}</span>${deviationKm !== null ? '<b class="deviation-badge" aria-label="Posible desvío">!</b>' : ''}</span>`
-        : `<span class="work-order-client-marker">${customerPin}</span>`;
+        : `<span class="work-order-client-marker${assignedToHighlightedTeam ? ' highlighted' : ''}${statusClass}">${customerPin}</span>`;
       const markerSize = marker.marker_type === 'team' ? 54 : 44;
       const icon = L.divIcon({
         className: 'operational-marker-wrapper',
@@ -73,12 +79,23 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
         iconSize: [markerSize, markerSize],
         iconAnchor: [markerSize / 2, marker.marker_type === 'team' ? markerSize / 2 : markerSize]
       });
-      L.marker([marker.latitude, marker.longitude] as Leaflet.LatLngExpression, { icon })
+      const leafletMarker = L.marker([marker.latitude, marker.longitude] as Leaflet.LatLngExpression, { icon })
         .bindTooltip(marker.marker_type === 'work_order' ? `Cliente · ${this.escapeHtml(marker.code)}` : this.escapeHtml(marker.code), { direction: 'top', offset: [0, -18], opacity: .94 })
         .bindPopup(`<strong>${this.escapeHtml(marker.code)}</strong><br>${this.escapeHtml(marker.label)}<br><small>${this.escapeHtml(marker.status)}${eta ? `<br>ETA aproximado: ${eta} min` : ''}${deviationKm !== null ? `<br><b>Posible desvío: ${deviationKm.toFixed(1)} km de la OT asignada</b>` : ''}</small>`)
         .addTo(markerLayer);
+      if (marker.marker_type === 'team') leafletMarker.on('click', () => this.highlightTeam(marker.marker_id));
     });
     this.fitOperation(validMarkers);
+  }
+
+  private highlightTeam(teamId: string): void {
+    this.highlightedTeamId = teamId;
+    if (this.highlightTimer) clearTimeout(this.highlightTimer);
+    this.renderMarkers();
+    this.highlightTimer = setTimeout(() => {
+      this.highlightedTeamId = null;
+      this.renderMarkers();
+    }, 2200);
   }
 
   zoomIn(): void { this.map?.zoomIn(); }
