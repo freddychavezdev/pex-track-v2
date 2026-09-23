@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.Context
 import android.content.res.ColorStateList
+import android.app.Dialog
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -12,6 +13,8 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.ColorDrawable
+import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -25,11 +28,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.view.View
 import android.view.Gravity
+import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.google.android.gms.location.LocationServices
 import bo.pextrack.mobile.auth.MobileAuthRepository
 import bo.pextrack.mobile.auth.SupabaseProvider
 import bo.pextrack.mobile.auth.TeamSessionStore
@@ -40,6 +45,7 @@ import bo.pextrack.mobile.data.PexTrackDatabase
 import bo.pextrack.mobile.sync.OfflineSyncScheduler
 import kotlinx.coroutines.launch
 import io.github.jan.supabase.auth.auth
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
   private lateinit var statusText: TextView
@@ -58,6 +64,7 @@ class MainActivity : AppCompatActivity() {
   private lateinit var suspensionReasonInput: EditText
   private lateinit var workOrdersContainer: LinearLayout
   private lateinit var ordersTitle: TextView
+  private lateinit var fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient
   private var speechRecognizer: SpeechRecognizer? = null
   private var activeTranscriptInput: EditText? = null
   private var activeDictationStatus: TextView? = null
@@ -151,6 +158,7 @@ class MainActivity : AppCompatActivity() {
     suspensionReasonInput = findViewById(R.id.suspensionReasonInput)
     workOrdersContainer = findViewById(R.id.workOrdersContainer)
     ordersTitle = findViewById(R.id.ordersTitle)
+    fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     connectivityManager.registerDefaultNetworkCallback(networkCallback)
     loginButton.setOnClickListener { signIn() }
@@ -418,6 +426,18 @@ class MainActivity : AppCompatActivity() {
         textSize = 15f
         setTextColor(Color.parseColor("#5F7086"))
       }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(6) })
+      row.addView(MaterialButton(this).apply {
+        text = "⌖  Ver mapa de la OT"
+        setTextSize(14f)
+        setAllCaps(false)
+        backgroundTintList = ColorStateList.valueOf(Color.parseColor("#E6FFFA"))
+        setTextColor(Color.parseColor("#0F766E"))
+        strokeColor = ColorStateList.valueOf(Color.parseColor("#5EEAD4"))
+        strokeWidth = dp(1)
+        cornerRadius = dp(14)
+        contentDescription = "Ver mapa y ruta de ${order.code}"
+        setOnClickListener { showOrderMap(order) }
+      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(12) })
       row.addView(statusBadge(statusLabel(order.status), statusColor), LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
       ).apply { topMargin = dp(10) })
@@ -531,6 +551,99 @@ class MainActivity : AppCompatActivity() {
         ).apply { topMargin = dp(12) })
       }
       workOrdersContainer.addView(row)
+    }
+  }
+
+  private fun showOrderMap(order: MobileWorkOrder) {
+    val hasPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    if (!hasPermission) {
+      showStatus("Activa el GPS para mostrar tu posición en el mapa")
+      return
+    }
+    fusedLocationClient.lastLocation
+      .addOnSuccessListener { location -> showOrderMapDialog(order, location) }
+      .addOnFailureListener { showOrderMapDialog(order, null) }
+  }
+
+  private fun showOrderMapDialog(order: MobileWorkOrder, technicianLocation: Location?) {
+    val baseLatitude = technicianLocation?.latitude ?: -16.5047
+    val baseLongitude = technicianLocation?.longitude ?: -68.1635
+    val seed = kotlin.math.abs(order.id.hashCode())
+    val latitudeOffset = (2 + seed % 4) * 0.00055
+    val longitudeOffset = (2 + (seed / 7) % 4) * 0.00055
+    val orderLatitude = baseLatitude + latitudeOffset
+    val orderLongitude = baseLongitude + longitudeOffset
+    val distance = FloatArray(1)
+    Location.distanceBetween(baseLatitude, baseLongitude, orderLatitude, orderLongitude, distance)
+    val distanceKm = distance[0] / 1000.0
+    val etaMinutes = maxOf(1, kotlin.math.ceil(distanceKm / 25.0 * 60.0).toInt())
+
+    val content = LinearLayout(this).apply {
+      orientation = LinearLayout.VERTICAL
+      setPadding(dp(22), dp(20), dp(22), dp(16))
+      setBackgroundColor(Color.WHITE)
+    }
+    content.addView(TextView(this).apply {
+      text = "Mapa de atención"
+      textSize = 21f
+      setTypeface(typeface, Typeface.BOLD)
+      setTextColor(Color.parseColor("#182230"))
+    })
+    content.addView(TextView(this).apply {
+      text = "${order.code} · ubicación simulada para prueba"
+      textSize = 13f
+      setTextColor(Color.parseColor("#64748B"))
+      setPadding(0, dp(5), 0, dp(12))
+    })
+    content.addView(TechnicianRouteMapView(this, distanceKm), LinearLayout.LayoutParams(
+      LinearLayout.LayoutParams.MATCH_PARENT, dp(270)
+    ))
+    val metrics = LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      setPadding(0, dp(14), 0, dp(5))
+    }
+    metrics.addView(mapMetric("Distancia", String.format(Locale.US, "%.2f km", distanceKm)), LinearLayout.LayoutParams(0, dp(62), 1f).apply { rightMargin = dp(8) })
+    metrics.addView(mapMetric("Llegada estimada", "$etaMinutes min"), LinearLayout.LayoutParams(0, dp(62), 1f))
+    content.addView(metrics)
+    content.addView(TextView(this).apply {
+      text = if (technicianLocation == null) {
+        "No se pudo leer la última ubicación del dispositivo. Se muestra una posición de prueba cercana a la OT."
+      } else {
+        "La OT se muestra cerca de tu última posición registrada. El tiempo es referencial y no considera tráfico."
+      }
+      textSize = 12f
+      setTextColor(Color.parseColor("#64748B"))
+    })
+    content.addView(MaterialButton(this).apply {
+      text = "Cerrar mapa"
+      setAllCaps(false)
+      setTextSize(14f)
+      backgroundTintList = ColorStateList.valueOf(Color.parseColor("#5EEAD4"))
+      setTextColor(Color.parseColor("#07343A"))
+      cornerRadius = dp(14)
+      setOnClickListener { (tag as? Dialog)?.dismiss() }
+    }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(16) })
+
+    val dialog = Dialog(this)
+    dialog.setContentView(content)
+    content.getChildAt(content.childCount - 1).tag = dialog
+    dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+    dialog.setOnShowListener {
+      dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.92f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+    }
+    dialog.show()
+    dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.92f).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+  }
+
+  private fun mapMetric(label: String, value: String): TextView = TextView(this).apply {
+    text = "$label\n$value"
+    textSize = 14f
+    setTextColor(Color.parseColor("#0F766E"))
+    setTypeface(typeface, Typeface.BOLD)
+    gravity = Gravity.CENTER
+    background = GradientDrawable().apply {
+      setColor(Color.parseColor("#E6FFFA"))
+      cornerRadius = dp(12).toFloat()
     }
   }
 
