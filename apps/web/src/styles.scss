@@ -80,3 +80,12 @@ html.app-dark.app-dark .inline-import-panel h3,html.app-dark.app-dark .inline-im
 html.app-dark.app-dark .inline-import-panel input[type="date"] { background:#102f3b!important; border-color:#3b6b78!important; color:#e6f5f6!important; }
 html.app-dark.app-dark .inline-import-panel .file-picker { background:#123b48!important; border-color:#5eead4!important; color:#8ce4df!important; }
 html.app-dark.app-dark .orders-notice { background:#0d2833!important; color:#b9d4d8!important; }
+/* Ventana de Órdenes: todos los bloques parten de la misma retícula interna. */
+.workspace-window[aria-labelledby="orders-view-title"] .panel { box-sizing:border-box; padding:28px 30px 0; }
+.workspace-window[aria-labelledby="orders-view-title"] .panel-header { padding:0 0 22px; }
+.workspace-window[aria-labelledby="orders-view-title"] .panel-actions { margin:0 0 20px; }
+.workspace-window[aria-labelledby="orders-view-title"] .inline-import-panel { margin:0 0 20px; }
+.workspace-window[aria-labelledby="orders-view-title"] .order-filters { padding:0 0 12px; }
+.workspace-window[aria-labelledby="orders-view-title"] .order-list { padding:0; }
+.workspace-window[aria-labelledby="orders-view-title"] .orders-notice { margin:0 -30px; padding:16px 30px 20px; }
+html.app-dark.app-dark .workspace-window[aria-labelledby="orders-view-title"] .order-list { background:#0d2833!important; }
