@@ -87,6 +87,7 @@ export class AppComponent implements OnDestroy, OnInit {
   savingImport = false;
   savingAssignment = false;
   savingDispatchPlan = false;
+  planningLoading = false;
   generatingReport = false;
   loginError = '';
   resetRequestMessage = '';
@@ -233,13 +234,22 @@ export class AppComponent implements OnDestroy, OnInit {
   }
 
   openOrdersView(): void { this.showOrdersView = true; this.mobileMenuOpen = false; }
-  openDispatchPlanning(): void {
+  async openDispatchPlanning(): Promise<void> {
     if (!this.canManageOperations()) return;
     this.showOrdersView = true;
     this.showDispatchPlanning = true;
+    this.planningLoading = true;
     this.dispatchPlanningError = '';
     this.dispatchPlanningMessage = '';
+    // El catálogo puede haberse editado en esta misma sesión. Se consulta de
+    // nuevo antes de proponer, evitando repartir contra códigos en memoria.
+    await this.refreshOperations();
+    this.planningLoading = false;
     this.generateDispatchPlan();
+  }
+
+  dispatchPlanningTeamOptions(): TeamSummary[] {
+    return this.teams().filter((team) => team.active && (team.dispatch_status ?? 'available') === 'available');
   }
 
   generateDispatchPlan(): void {
