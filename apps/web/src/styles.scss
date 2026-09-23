@@ -67,3 +67,16 @@ html.app-dark.app-dark .setup-banner { background:#103440!important; border-colo
 html.app-dark.app-dark .setup-banner h2,html.app-dark.app-dark .setup-banner > div > p:not(.eyebrow),html.app-dark.app-dark .setup-banner ol { color:#c6e5e8!important; }
 html.app-dark.app-dark .login-dialog,html.app-dark.app-dark .import-dialog,html.app-dark.app-dark .close-button { background:#0d2833!important; color:#dceff1!important; }
 html.app-dark.app-dark .login-dialog input,html.app-dark.app-dark .import-dialog input[type="date"],html.app-dark.app-dark .catalog-form input,html.app-dark.app-dark .catalog-form select { background:#102f3b!important; border-color:#315866!important; color:#e6f5f6!important; }
+/* Ritmo de layout compartido para ventanas secundarias. */
+.workspace-window { box-sizing:border-box; display:flex; justify-content:center; padding:28px clamp(16px,4vw,64px) 48px; }
+.workspace-window-inner { max-width:none; width:min(100%,1360px); }
+.control-button.primary,.primary-button,.p-button.p-button-primary { background:#5EEAD4!important; border-color:#5EEAD4!important; color:#07343a!important; font-weight:700; }
+.control-button.primary:hover,.primary-button:hover,.p-button.p-button-primary:hover { background:#2DD4BF!important; border-color:#2DD4BF!important; }
+.control-button:not(.primary) { border-color:#86cfc9; color:#17636b; }
+.map-controls .control-button:hover::after { max-width:180px; overflow:hidden; }
+html.app-dark.app-dark .workspace-window .order-list { background:#0d2833!important; }
+html.app-dark.app-dark .inline-import-panel { background:#103440!important; border-color:#326475!important; }
+html.app-dark.app-dark .inline-import-panel h3,html.app-dark.app-dark .inline-import-panel p,html.app-dark.app-dark .inline-import-panel label:not(.file-picker) { color:#d6edef!important; }
+html.app-dark.app-dark .inline-import-panel input[type="date"] { background:#102f3b!important; border-color:#3b6b78!important; color:#e6f5f6!important; }
+html.app-dark.app-dark .inline-import-panel .file-picker { background:#123b48!important; border-color:#5eead4!important; color:#8ce4df!important; }
+html.app-dark.app-dark .orders-notice { background:#0d2833!important; color:#b9d4d8!important; }
