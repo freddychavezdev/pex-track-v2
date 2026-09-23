@@ -33,8 +33,11 @@ interface DispatchPlanItem {
   order: WorkOrderSummary;
   teamId: string;
   teamCode: string;
-  distanceKm: number | null;
   sector: 'El Alto' | 'La Paz';
+  latitude: number;
+  longitude: number;
+  routeSequence: number;
+  distanceFromPreviousKm: number | null;
 }
 
 @Component({
@@ -359,19 +362,72 @@ export class AppComponent implements OnDestroy, OnInit {
         longitude: known.reduce((total, item) => total + item.longitude, 0) / known.length
       });
     });
-    return teams.flatMap((team) => {
-      const center = centroids.get(team.id)!;
-      return grouped.get(team.id)!.map((order) => {
-        const location = locations.get(order.id)!;
-        return { order, teamId: team.id, teamCode: team.code, sector, distanceKm: this.distanceKm(location.latitude, location.longitude, center.latitude, center.longitude) };
-      });
+    return teams.flatMap((team) => this.orderDispatchRoute(grouped.get(team.id)!.map((order) => {
+      const location = locations.get(order.id)!;
+      return {
+        order,
+        teamId: team.id,
+        teamCode: team.code,
+        sector,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        routeSequence: 0,
+        distanceFromPreviousKm: null
+      };
+    })));
+  }
+
+  /**
+   * Construye el orden de visita de una cuadrilla. Al no existir una base de
+   * salida obligatoria, se inicia por la OT más prioritaria y luego se aplica
+   * vecino más cercano sobre las OTs restantes. Así el recorrido no vuelve a
+   * una zona ya recorrida por mantener solamente el orden de carga.
+   */
+  private orderDispatchRoute(items: DispatchPlanItem[]): DispatchPlanItem[] {
+    const remaining = [...items].sort((first, second) =>
+      first.order.priority - second.order.priority || first.order.code.localeCompare(second.order.code)
+    );
+    const route: DispatchPlanItem[] = [];
+    let current: DispatchPlanItem | null = null;
+
+    while (remaining.length) {
+      let nextIndex = 0;
+      if (current) {
+        nextIndex = remaining.reduce((nearestIndex, candidate, index) => {
+          const nearest = remaining[nearestIndex];
+          const candidateDistance = this.distanceKm(current!.latitude, current!.longitude, candidate.latitude, candidate.longitude);
+          const nearestDistance = this.distanceKm(current!.latitude, current!.longitude, nearest.latitude, nearest.longitude);
+          if (candidateDistance !== nearestDistance) return candidateDistance < nearestDistance ? index : nearestIndex;
+          return candidate.order.priority !== nearest.order.priority
+            ? (candidate.order.priority < nearest.order.priority ? index : nearestIndex)
+            : (candidate.order.code.localeCompare(nearest.order.code) < 0 ? index : nearestIndex);
+        }, 0);
+      }
+      const [next] = remaining.splice(nextIndex, 1);
+      const distanceFromPreviousKm: number | null = current
+        ? this.distanceKm(current.latitude, current.longitude, next.latitude, next.longitude)
+        : null;
+      const sequenced: DispatchPlanItem = { ...next, routeSequence: route.length + 1, distanceFromPreviousKm };
+      route.push(sequenced);
+      current = sequenced;
+    }
+    return route;
+  }
+
+  private resequenceDispatchPlan(): void {
+    const byTeam = new Map<string, DispatchPlanItem[]>();
+    this.dispatchPlan().forEach((item) => {
+      const items = byTeam.get(item.teamId) ?? [];
+      items.push(item);
+      byTeam.set(item.teamId, items);
     });
+    this.dispatchPlan.set([...byTeam.values()].flatMap((items) => this.orderDispatchRoute(items)));
   }
 
   dispatchPlanTeams(): Array<{ id: string; code: string; orders: DispatchPlanItem[]; totalDistanceKm: number; sectors: string[] }> {
     return this.teams().filter((team) => team.active && (team.dispatch_status ?? 'available') === 'available').map((team) => {
-      const orders = this.dispatchPlan().filter((item) => item.teamId === team.id);
-      return { id: team.id, code: team.code, orders, totalDistanceKm: orders.reduce((total, item) => total + (item.distanceKm ?? 0), 0), sectors: [...new Set(orders.map((item) => item.sector))] };
+      const orders = this.dispatchPlan().filter((item) => item.teamId === team.id).sort((first, second) => first.routeSequence - second.routeSequence);
+      return { id: team.id, code: team.code, orders, totalDistanceKm: orders.reduce((total, item) => total + (item.distanceFromPreviousKm ?? 0), 0), sectors: [...new Set(orders.map((item) => item.sector))] };
     });
   }
 
@@ -381,6 +437,7 @@ export class AppComponent implements OnDestroy, OnInit {
     const moving = this.dispatchPlan().find((item) => item.order.id === orderId);
     const destinationSectors = this.dispatchPlan().filter((item) => item.teamId === teamId && item.order.id !== orderId).map((item) => item.sector);
     this.dispatchPlan.update((plan) => plan.map((item) => item.order.id === orderId ? { ...item, teamId, teamCode: team.code } : item));
+    this.resequenceDispatchPlan();
     this.dispatchPlanningMessage = moving && destinationSectors.length && destinationSectors.some((sector) => sector !== moving.sector)
       ? `Advertencia: al mover ${moving.order.code} se mezclan sectores de El Alto y La Paz en ${team.code}. La recomendación inicial evita esa combinación.`
       : '';
@@ -392,7 +449,7 @@ export class AppComponent implements OnDestroy, OnInit {
     this.dispatchPlanningError = '';
     this.dispatchPlanningMessage = '';
     try {
-      const assignments = this.dispatchPlanTeams().flatMap((team) => team.orders.map((item, index) => ({ workOrderId: item.order.id, teamId: team.id, routeSequence: index + 1 })));
+      const assignments = this.dispatchPlanTeams().flatMap((team) => team.orders.map((item) => ({ workOrderId: item.order.id, teamId: team.id, routeSequence: item.routeSequence })));
       await this.workOrders.applyDispatchPlan(this.importDate, assignments);
       this.dispatchPlanningMessage = `Se asignaron ${assignments.length} OT(s) según la planificación aprobada.`;
       await this.refreshOperations();

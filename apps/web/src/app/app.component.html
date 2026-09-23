@@ -123,7 +123,7 @@
       <button class="dialog-close" type="button" aria-label="Cerrar planificación" (click)="showDispatchPlanning = false">×</button>
       <p class="eyebrow">PLANIFICACIÓN DE JORNADA · {{ importDate | date:'dd/MM/yyyy' }}</p>
       <h2 id="dispatch-planning-title">Reparto recomendado de OTs</h2>
-      <p class="dialog-description">La propuesta agrupa OTs cercanas y equilibra la carga entre cuadrillas disponibles. No requiere ubicación de las cuadrillas.</p>
+      <p class="dialog-description">La propuesta protege sectores, agrupa OTs cercanas y ordena cada recorrido por proximidad. No requiere ubicación inicial de las cuadrillas.</p>
       @if (dispatchPlanningError) { <p class="form-error">{{ dispatchPlanningError }}</p> }
       @if (dispatchPlanningMessage) { <p class="success-notice">{{ dispatchPlanningMessage }}</p> }
       @if (planningLoading) { <div class="planning-loading" role="status"><span class="planning-spinner" aria-hidden="true"></span><div><strong>Actualizando cuadrillas y OTs</strong><small>Preparando una propuesta con los datos más recientes.</small></div></div> }
@@ -131,8 +131,8 @@
         <div class="planning-summary"><strong>{{ dispatchPlan().length }} OTs</strong><span>{{ dispatchPlanTeams().length }} cuadrillas disponibles</span><span>Modifica una asignación con el selector y luego confirma.</span></div>
         <div class="dispatch-plan-list">
           @for (team of dispatchPlanTeams(); track team.id) {
-            <article class="dispatch-team-card"><div class="dispatch-team-heading"><div><strong>{{ team.code }}</strong><span>{{ team.orders.length }} OT(s) asignada(s)</span></div><small>Sector recomendado: {{ team.sectors.join(' · ') }}</small></div>
-              @for (item of team.orders; track item.order.id) { <div class="dispatch-plan-row"><div><strong>{{ item.order.code }}</strong><span>{{ item.order.address }}</span><small>Prioridad {{ item.order.priority }} · {{ item.distanceKm === null ? 'Sin coordenadas de referencia' : (item.distanceKm | number:'1.1-1') + ' km del centro del grupo' }}</small></div><p-select class="dispatch-team-select" [ariaLabel]="'Asignar ' + item.order.code" [ngModel]="item.teamId" (ngModelChange)="changeDispatchPlanTeam(item.order.id, $event)" [options]="dispatchPlanningTeamOptions()" optionLabel="code" optionValue="id" [checkmark]="true" [filter]="true" filterBy="code" variant="filled" fluid /></div> }
+            <article class="dispatch-team-card"><div class="dispatch-team-heading"><div><strong>{{ team.code }}</strong><span>{{ team.orders.length }} OT(s) · recorrido aprox. {{ team.totalDistanceKm | number:'1.1-1' }} km</span></div><small>Sector recomendado: {{ team.sectors.join(' · ') }}</small></div>
+              @for (item of team.orders; track item.order.id) { <div class="dispatch-plan-row"><div><strong><span class="route-sequence">{{ item.routeSequence }}</span>{{ item.order.code }}</strong><span>{{ item.order.address }}</span><small>Prioridad {{ item.order.priority }} · {{ item.distanceFromPreviousKm === null ? 'Inicio de ruta · OT prioritaria' : (item.distanceFromPreviousKm | number:'1.1-1') + ' km desde la OT anterior' }}</small></div><p-select class="dispatch-team-select" [ariaLabel]="'Asignar ' + item.order.code" [ngModel]="item.teamId" (ngModelChange)="changeDispatchPlanTeam(item.order.id, $event)" [options]="dispatchPlanningTeamOptions()" optionLabel="code" optionValue="id" [checkmark]="true" [filter]="true" filterBy="code" variant="filled" fluid /></div> }
             </article>
           }
         </div>
