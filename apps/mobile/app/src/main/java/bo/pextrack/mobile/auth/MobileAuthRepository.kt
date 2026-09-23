@@ -6,6 +6,10 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.Json
+import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class MobileAuthRepository(private val context: Context) {
   private val sessionStore = TeamSessionStore(context)
@@ -29,9 +33,36 @@ class MobileAuthRepository(private val context: Context) {
     } catch (error: Throwable) {
       sessionStore.clear()
       runCatching { client.auth.signOut() }
-      error.message ?: "No se pudo iniciar sesión."
+      friendlyAuthError(error)
     }
   }
+
+  private fun friendlyAuthError(error: Throwable): String {
+    val details = generateSequence(error) { it.cause }
+      .mapNotNull { it.message }
+      .joinToString(" ")
+      .lowercase()
+
+    return when {
+      error.hasCause<UnknownHostException>() || error.hasCause<ConnectException>() ||
+        error.hasCause<SocketTimeoutException>() || error.hasCause<IOException>() ||
+        details.contains("unable to resolve host") || details.contains("failed to connect") ||
+        details.contains("timeout") || details.contains("http request") ->
+        "No hay conexión a Internet. Conéctate a una red e inténtalo nuevamente."
+      details.contains("invalid login credentials") || details.contains("invalid credentials") ->
+        "El correo o la contraseña son incorrectos. Verifica tus datos."
+      details.contains("email not confirmed") ->
+        "El correo aún no está confirmado. Solicita al supervisor que revise la cuenta."
+      details.contains("too many requests") || details.contains("rate limit") ->
+        "Se alcanzó el límite de intentos. Espera unos minutos e inténtalo nuevamente."
+      details.contains("cuadrilla activa") ->
+        "La cuenta no está vinculada a una cuadrilla activa. Contacta al supervisor."
+      else -> "No se pudo iniciar sesión. Verifica tus datos e inténtalo nuevamente."
+    }
+  }
+
+  private inline fun <reified T : Throwable> Throwable.hasCause(): Boolean =
+    generateSequence(this) { it.cause }.any { it is T }
 
   suspend fun signOut() {
     SupabaseProvider.client?.auth?.signOut()

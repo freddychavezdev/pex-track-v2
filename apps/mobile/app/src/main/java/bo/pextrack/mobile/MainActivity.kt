@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.net.ConnectivityManager
 import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -184,6 +185,10 @@ class MainActivity : AppCompatActivity() {
       showStatus("Ingresa tu correo y contraseña institucionales")
       return
     }
+    if (!hasValidatedInternet()) {
+      showStatus("No hay conexión a Internet. Conéctate a una red e inténtalo nuevamente.")
+      return
+    }
     loginButton.isEnabled = false
     showStatus("Verificando usuario y cuadrilla…")
     lifecycleScope.launch {
@@ -196,6 +201,13 @@ class MainActivity : AppCompatActivity() {
         loadWorkOrders()
       }
     }
+  }
+
+  private fun hasValidatedInternet(): Boolean {
+    val network = connectivityManager.activeNetwork ?: return false
+    val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+      capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
   }
 
   private fun signOut() {
