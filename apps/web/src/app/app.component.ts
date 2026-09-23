@@ -695,6 +695,8 @@ export class AppComponent implements OnDestroy, OnInit {
       const result = await this.workOrders.importRows(this.importResult.valid);
       this.importResult = null;
       await this.refreshOperations();
+      this.showImport = false;
+      this.showOrderTable = true;
       this.importSuccess = result.locationWarningCount
         ? `Se guardaron ${result.savedCount} OT(s). ${result.locationWarningCount} ubicación(es) no se pudieron registrar; las OTs sí fueron guardadas.`
         : `Se guardaron ${result.savedCount} OT(s) correctamente. La tabla se actualizó.`;
