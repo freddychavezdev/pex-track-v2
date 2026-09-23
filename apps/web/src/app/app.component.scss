@@ -36,6 +36,16 @@
 @media (max-width:650px) {
   .content { padding:20px 16px 32px; }.topbar h1 { font-size:27px; }.topbar { gap:12px; }.top-actions { gap:6px; }.user-button { font-size:13px; }.metric-grid { grid-template-columns:1fr 1fr; }.metric-card { min-height:142px; padding:16px; }.metric-heading { font-size:13px; }.metric-value { font-size:30px; }.metric-foot { font-size:12px; line-height:1.35; }.panel-header { padding:17px 16px 14px; align-items:flex-start; gap:10px; }.panel-header h2,.report-panel h2 { font-size:18px; }.panel-header p { font-size:13px; line-height:1.35; }.map-controls { flex-wrap:wrap; justify-content:flex-end; }.map-stage { height:315px; }.order-filters,.order-list,.team-table { padding-left:16px; padding-right:16px; }.order-row { align-items:flex-start; flex-wrap:wrap; gap:8px; }.order-info { min-width:calc(100% - 44px); }.order-row .pill { margin-left:39px; }.order-row .text-button { padding:4px 0; }.table-row { font-size:13px; line-height:1.35; }.report-panel { padding:20px; }.report-export-tools { align-items:stretch; flex-wrap:wrap; justify-content:flex-start; }.report-export-tools > span { width:100%; }.login-dialog,.import-dialog { padding:25px 20px; }.login-dialog h2,.import-dialog h2 { font-size:24px; }.login-dialog label,.import-dialog label:not(.file-picker) { font-size:15px; }.control-button,.text-button { font-size:14px; min-height:40px; }.search-input-wrap { padding:10px 12px; }.search-input-wrap small { display:none; }
 }
+
+.inline-import-panel { background:#f8fbff; border:1px solid #cfe0fa; border-radius:14px; display:grid; gap:12px; grid-template-columns:1fr auto; margin:0 20px 18px; padding:18px; }
+.inline-import-panel h3 { color:#17253a; font-size:17px; margin:3px 0 4px; }
+.inline-import-panel p { color:#64748b; font-size:12px; line-height:1.45; margin:0; }
+.inline-import-panel label:not(.file-picker) { color:#4d5c70; font-size:12px; font-weight:600; grid-column:1 / -1; margin-top:2px; }
+.inline-import-panel input[type="date"] { border:1px solid #dce4ee; border-radius:8px; color:#23334a; grid-column:1 / -1; padding:10px 11px; }
+.inline-import-panel .file-picker,.inline-import-panel .import-summary,.inline-import-panel .invalid-list,.inline-import-panel .form-error,.inline-import-panel .config-notice,.inline-import-panel .inline-import-save { grid-column:1 / -1; }
+.inline-import-panel .file-picker { margin-top:0; }
+.inline-import-save { justify-self:start; }
+@media (max-width:650px) { .inline-import-panel { grid-template-columns:1fr; margin:0 16px 16px; padding:16px; }.inline-import-panel > .text-button { justify-self:start; } }
 .deviation-text { color:#d54848; font-weight:600; }
 
 /* La vista ampliada concentra la atención en la operación, sin desmontar Leaflet. */
