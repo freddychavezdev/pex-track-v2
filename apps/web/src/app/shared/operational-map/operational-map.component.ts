@@ -68,9 +68,10 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
       const assignedToHighlightedTeam = marker.marker_type === 'work_order' && this.highlightedTeamId !== null && this.workOrders.some((order) => order.id === marker.marker_id && order.assigned_team_id === this.highlightedTeamId);
       const statusClass = marker.marker_type === 'work_order' ? ` status-${marker.status}` : '';
       const orderColor = marker.status === 'completed' ? '#16a34a' : marker.status === 'suspended' ? '#dc2626' : marker.status === 'in_progress' ? '#2563eb' : '#f97316';
+      const teamSignalClass = marker.marker_type === 'team' ? (this.hasRecentSignal(marker.observed_at) ? ' signal-online' : ' signal-offline') : '';
       const customerPin = `<svg class="customer-pin-icon" viewBox="0 0 48 56" aria-hidden="true"><path d="M24 2C12.4 2 3 11.2 3 22.7c0 15.1 18.2 29.2 20.1 30.6a1.5 1.5 0 0 0 1.8 0C26.8 51.9 45 37.8 45 22.7 45 11.2 35.6 2 24 2Z" fill="${orderColor}" stroke="#fff" stroke-width="3"/><circle cx="24" cy="19" r="6" fill="#fff"/><path d="M13.6 38c1.7-7 6-10.4 10.4-10.4S32.7 31 34.4 38" fill="#fff"/></svg>`;
       const markerContent = marker.marker_type === 'team'
-        ? `<span class="operational-marker team${deviationKm !== null ? ' deviation' : ''}"><span class="marker-symbol">${crewVehicle}</span>${deviationKm !== null ? '<b class="deviation-badge" aria-label="Posible desvío">!</b>' : ''}</span>`
+        ? `<span class="operational-marker team${teamSignalClass}${deviationKm !== null ? ' deviation' : ''}"><span class="marker-symbol">${crewVehicle}</span>${deviationKm !== null ? '<b class="deviation-badge" aria-label="Posible desvío">!</b>' : ''}</span>`
         : `<span class="work-order-client-marker${assignedToHighlightedTeam ? ' highlighted' : ''}${statusClass}">${customerPin}</span>`;
       const markerSize = marker.marker_type === 'team' ? 54 : 44;
       const icon = L.divIcon({
@@ -96,6 +97,10 @@ export class OperationalMapComponent implements AfterViewInit, OnChanges, OnDest
       this.highlightedTeamId = null;
       this.renderMarkers();
     }, 2200);
+  }
+
+  private hasRecentSignal(observedAt: string): boolean {
+    return Boolean(observedAt) && Date.now() - new Date(observedAt).getTime() <= 90 * 1000;
   }
 
   zoomIn(): void { this.map?.zoomIn(); }

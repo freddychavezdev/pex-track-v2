@@ -11,9 +11,13 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .operational-marker-wrapper { background: transparent; border: 0; }
 .operational-marker { align-items: center; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 2px 8px rgba(12, 29, 55, .3); color: #fff; display: flex; font-size: 11px; font-weight: 700; height: 30px; justify-content: center; position:relative; width: 30px; }
 .operational-marker.team { background:linear-gradient(145deg,#0b97e8,#1559c2); border:3px solid #fff; box-shadow:0 0 0 3px #72d6ff,0 7px 17px rgba(8,73,152,.55); height:54px; line-height:1; width:54px; z-index:3; }
+.operational-marker.team.signal-online { background:linear-gradient(145deg,#22c55e,#15803d); box-shadow:0 0 0 3px #86efac,0 7px 17px rgba(21,128,61,.5); }
+.operational-marker.team.signal-offline { background:linear-gradient(145deg,#ef4444,#b91c1c); box-shadow:0 0 0 3px #fca5a5,0 7px 17px rgba(185,28,28,.5); }
 .operational-marker.team .marker-symbol { align-items:center; display:flex; height:100%; justify-content:center; width:100%; }
 .crew-vehicle-icon { height:38px; overflow:visible; width:46px; }
 .operational-marker.team::after { border:2px solid rgba(54,184,255,.8); border-radius:50%; content:''; height:64px; left:50%; position:absolute; top:50%; transform:translate(-50%,-50%); width:64px; animation:team-marker-pulse 1.8s ease-out infinite; }
+.operational-marker.team.signal-online::after { border-color:rgba(134,239,172,.9); }
+.operational-marker.team.signal-offline::after { animation:none; border-color:rgba(252,165,165,.85); opacity:.75; }
 .operational-marker.deviation { background:#d54848; box-shadow:0 0 0 3px #ffb5b5,0 7px 17px rgba(150,35,35,.52); }
 .operational-marker .deviation-badge { align-items:center; background:#fff; border:2px solid #d54848; border-radius:50%; color:#be3030; display:flex; font-family:'DM Sans',Arial,sans-serif; font-size:12px; height:20px; justify-content:center; line-height:1; position:absolute; right:-7px; text-shadow:none; top:-7px; width:20px; z-index:4; }
 @keyframes team-marker-pulse { 0% { opacity:.85; transform:translate(-50%,-50%) scale(.72); } 75%,100% { opacity:0; transform:translate(-50%,-50%) scale(1.25); } }
