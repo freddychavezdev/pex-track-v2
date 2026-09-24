@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import Aura from '@primeuix/themes/aura';
 import { providePrimeNG } from 'primeng/config';
-import { AppComponent } from './app.component';
+import { AppComponent, operationalDateKey } from './app.component';
 import { WorkOrderSummary } from './core/models/operations.models';
 
 describe('AppComponent', () => {
@@ -30,6 +30,10 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Centro de monitoreo');
+  });
+
+  it('should keep the La Paz operational date after UTC midnight', () => {
+    expect(operationalDateKey(new Date('2026-09-24T00:10:00Z'))).toBe('2026-09-23');
   });
 
   it('should mark a team signal as stale after ten minutes', () => {

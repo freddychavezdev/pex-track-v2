@@ -21,6 +21,19 @@ import { OperationalMapComponent } from './shared/operational-map/operational-ma
 import { AdminPanelComponent } from './shared/admin-panel/admin-panel.component';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
+const OPERATION_TIME_ZONE = 'America/La_Paz';
+
+export function operationalDateKey(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: OPERATION_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
 interface EmergencyTeamSuggestion {
   team: TeamSummary;
   distanceKm: number | null;
@@ -106,7 +119,7 @@ export class AppComponent implements OnDestroy, OnInit {
   dispatchPlanningMessage = '';
   reportMessage = '';
   importResult: WorkOrderImportResult | null = null;
-  importDate = new Date().toISOString().slice(0, 10);
+  importDate = operationalDateKey();
   newOrderDate: Date | null = new Date();
   readonly taskTypeOptions = [
     { label: 'Asistencia técnica', value: 'technical_assistance' },
@@ -118,7 +131,7 @@ export class AppComponent implements OnDestroy, OnInit {
     { label: '1 · Urgente', value: 1 }, { label: '2 · Alta', value: 2 }, { label: '3 · Normal', value: 3 },
     { label: '4 · Baja', value: 4 }, { label: '5 · Programada', value: 5 }
   ];
-  newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance' as WorkOrderImportRow['taskType'], priority: 3, isEmergency: false, scheduledFor: new Date().toISOString().slice(0, 10), latitude: null as number | null, longitude: null as number | null, nodeId: '', boxId: '' };
+  newOrder = { code: '', customerName: '', customerPhone: '', address: '', taskType: 'technical_assistance' as WorkOrderImportRow['taskType'], priority: 3, isEmergency: false, scheduledFor: operationalDateKey(), latitude: null as number | null, longitude: null as number | null, nodeId: '', boxId: '' };
   readonly networkNodes = signal<NetworkNodeOption[]>([]);
   readonly distributionBoxes = signal<DistributionBoxOption[]>([]);
   activeOrderFilter: 'all' | WorkOrderStatus = 'all';
@@ -659,7 +672,7 @@ export class AppComponent implements OnDestroy, OnInit {
 
   updateNewOrderDate(date: Date | null): void {
     this.newOrderDate = date;
-    if (date) this.newOrder.scheduledFor = date.toISOString().slice(0, 10);
+    if (date) this.newOrder.scheduledFor = operationalDateKey(date);
   }
 
   async openHistory(order: WorkOrderSummary): Promise<void> {
